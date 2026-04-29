@@ -1,0 +1,28 @@
+<header class="navbar-sticky glass-dark">
+    <div class="container nav-container">
+        <a href="/" class="logo">
+            Event<span class="text-gradient">Hub</span>
+        </a>
+        
+        <nav class="nav-links d-flex align-center gap-3">
+            <a href="/events">Browse Events</a>
+            <a href="/user/tickets">My Tickets</a>
+            
+            <div class="user-menu" style="position: relative; display: inline-block;">
+                <button class="btn btn-outline d-flex align-center gap-1" style="padding: 0.5rem 1rem;">
+                    <span><%= user.fullName || 'My Account' %></span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                
+                <div class="dropdown-menu glass-dark" style="position: absolute; right: 0; top: 120%; min-width: 200px; border-radius: var(--radius-sm); border: 1px solid var(--border); display: none; flex-direction: column; overflow: hidden;">
+                    <a href="/user/profile" class="dropdown-item p-2">Profile Settings</a>
+                    <a href="/user/calendar" class="dropdown-item p-2">Event Calendar</a>
+                    <hr style="border-color: var(--border); margin: 0;">
+                    <a href="/auth/logout" class="dropdown-item text-danger p-2" style="color: #E63946;">Logout</a>
+                </div>
+            </div>
+        </nav>
+    </div>
+</header>

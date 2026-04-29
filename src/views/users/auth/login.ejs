@@ -1,0 +1,60 @@
+<%- include('../partials/head') %>
+<body class="bg-mesh">
+    <div class="floating-blob"></div>
+
+    <%- include('../partials/navbar-guest') %>
+
+    <main class="section container d-flex justify-center align-center" style="min-height: 80vh;">
+        <div class="glass-dark p-5" style="border-radius: var(--radius-lg); width: 100%; max-width: 450px;">
+            <div class="text-center mb-4">
+                <h2 class="glow-text">Welcome Back</h2>
+                <p class="text-muted mt-1">Sign in to manage your tickets and events.</p>
+            </div>
+
+            <form action="/auth/login" method="POST">
+                <div class="form-group animate stagger-1">
+                    <label class="label" for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="input" placeholder="name@example.com" required>
+                </div>
+
+                <div class="form-group animate stagger-2">
+                    <label class="label" for="password">Password</label>
+                    <div class="password-group">
+                        <input type="password" id="password" name="password" class="input" placeholder="••••••••" required>
+                        <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-between align-center mb-4 animate stagger-3">
+                    <div class="d-flex align-center gap-1">
+                        <input type="checkbox" id="remember">
+                        <label for="remember" class="text-muted" style="font-size: 0.85rem;">Remember me</label>
+                    </div>
+                    <a href="/auth/forgot-password" style="color: var(--primary); font-size: 0.85rem;">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary animate stagger-4" style="width: 100%;">
+                    Sign In
+                </button>
+                
+                <div class="text-center mt-3 animate stagger-4">
+                    <p class="text-dim mb-2" style="font-size: 0.8rem;">OR CONTINUE WITH</p>
+                    <a href="/auth/google" class="btn btn-outline" style="width: 100%;">Google</a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        document.querySelector('.password-toggle').addEventListener('click', function() {
+            const input = this.previousElementSibling;
+            input.type = input.type === 'password' ? 'text' : 'password';
+        });
+    </script>
+</body>
+</html>

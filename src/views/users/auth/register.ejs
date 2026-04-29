@@ -1,0 +1,82 @@
+<%- include('../partials/head') %>
+<body class="bg-mesh">
+    <div class="floating-blob"></div>
+
+    <%- include('../partials/navbar-guest') %>
+
+    <main class="section container d-flex justify-center align-center" style="min-height: 80vh;">
+        <div class="glass-dark p-5" style="border-radius: var(--radius-lg); width: 100%; max-width: 500px;">
+            <div class="text-center mb-4">
+                <h2 class="glow-text">Join EventHub</h2>
+                <p class="text-muted mt-1">Create an account to start booking or hosting events.</p>
+            </div>
+
+            <form action="/auth/register" method="POST">
+                <div class="form-group animate stagger-1">
+                    <label class="label" for="fullName">Full Name</label>
+                    <input type="text" id="fullName" name="fullName" class="input" placeholder="John Doe" required>
+                </div>
+
+                <div class="form-group animate stagger-1">
+                    <label class="label" for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="input" placeholder="name@example.com" required>
+                </div>
+
+                <div class="form-group animate stagger-2">
+                    <label class="label" for="role">I want to...</label>
+                    <select id="role" name="role" class="input" required>
+                        <option value="user">Attend Events (User)</option>
+                        <option value="organizer">Host Events (Organizer)</option>
+                    </select>
+                </div>
+
+                <div class="form-group animate stagger-3">
+                    <label class="label" for="password">Password</label>
+                    <div class="password-group">
+                        <input type="password" id="password" name="password" class="input" placeholder="Create a strong password" required>
+                        <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group animate stagger-3">
+                    <label class="label" for="confirmPassword">Confirm Password</label>
+                    <div class="password-group">
+                        <input type="password" id="confirmPassword" name="confirmPassword" class="input" placeholder="Confirm your password" required>
+                        <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+                            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary mt-2 animate stagger-4" style="width: 100%;">
+                    Create Account
+                </button>
+                
+                <div class="text-center mt-4 animate stagger-4">
+                    <p class="text-muted" style="font-size: 0.9rem;">
+                        Already have an account? <a href="/login" style="color: var(--primary); font-weight: 600;">Sign in here</a>
+                    </p>
+                </div>
+
+                <div class="text-center mt-4 animate stagger-4">
+                    <p class="text-dim mb-2" style="font-size: 0.8rem;">OR SIGN UP WITH</p>
+                    <div class="d-flex gap-2 justify-center">
+                        <a href="/auth/google" class="btn btn-outline" style="flex: 1;">Google</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        document.querySelector('.password-toggle').addEventListener('click', function() {
+            const input = this.previousElementSibling;
+            input.type = input.type === 'password' ? 'text' : 'password';
+        });
+    </script>
+</body>
+</html>
