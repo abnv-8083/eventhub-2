@@ -1,0 +1,321 @@
+<%- include('../../partials/head') %>
+<div id="custom-loader" class="loader-overlay">
+    <div class="loader-spinner"></div>
+    <div class="loader-text">CREATING YOUR ACCOUNT...</div>
+</div>
+<body class="bg-mesh">
+    
+    <div class="auth-split-layout">
+        
+        <div class="auth-image-side" style="background-image: url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=2000');">
+            <div class="auth-image-overlay">
+                <a href="/" class="logo mb-4" style="font-size: 2.5rem;">
+                    Event<span class="text-gradient">Hub</span>
+                </a>
+                <h1 style="font-size: 3.5rem; line-height: 1.1; margin-bottom: 1rem; color: #fff;">
+                    Start your journey<br>with us today.
+                </h1>
+                <p class="text-muted" style="font-size: 1.2rem; max-width: 400px;">
+                    Whether you are looking to attend the best local events or host your own, your premium experience starts here.
+                </p>
+            </div>
+        </div>
+
+        <div class="auth-form-side">
+            <div class="floating-blob" style="top: 40%; right: 10%;"></div>
+            
+            <a href="/" class="auth-back-btn">&larr; Back to Home</a>
+
+            <div class="auth-form-container w-100" style="max-width: 440px; margin: 0 auto;">
+                
+                <div class="text-center mb-4" id="form-header">
+                    <h2 style="font-size: 2rem; margin-bottom: 0.5rem;" id="form-title">Join EventHub</h2>
+                    <p class="text-muted" id="form-subtitle">Create your account in seconds.</p>
+                </div>
+
+                <form id="registerForm" novalidate>
+                    
+                    <div id="step-1">
+                        <div class="form-floating position-relative mb-4">
+                            <input class="form-control input" type="text" id="fullName" name="fullName" class="input" placeholder=" " required>
+                            <label for="fullName">Full Name</label>
+                        </div>
+
+                        <div class="form-floating position-relative mb-4">
+                            <input class="form-control input" type="email" id="email" name="email" class="input" placeholder=" " required>
+                            <label for="email">Email Address</label>
+                        </div>
+
+                        <div class="form-group animate stagger-2" style="margin-bottom: 1.5rem;">
+                            <select id="role" name="role" class="input" style="height: 3.8rem;" required>
+                                <option value="user">I want to Attend Events (User)</option>
+                                <option value="organizer">I want to Host Events (Organizer)</option>
+                            </select>
+                        </div>
+
+                        <div class="d-flex gap-2 animate stagger-3">
+                            <div class="form-floating position-relative mb-4">
+                                <input type="password" class="form-control input" name="password" id="password" placeholder=" " required>
+                                <label for="password">Password</label>
+                                <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
+                                    <i class="fi fi-rr-eye"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="form-floating position-relative mb-4">
+                                <input type="password" class="form-control input" name="confirmPassword" id="confirmPassword" placeholder=" " required>
+                                <label for="confirmPassword">Confirm Password</label>
+                                <!-- Notice the ID in the onclick matches the input ID -->
+                                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
+                                    <i class="fi fi-rr-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="step1-btn" class="btn btn-primary mt-2 animate stagger-4" style="width: 100%; height: 3.5rem; font-size: 1rem;">
+                            Create Account
+                        </button>
+                        
+                        <div class="text-center mt-4 animate stagger-4" id="login-link-container">
+                            <p class="text-muted" style="font-size: 0.9rem;">
+                                Already have an account?
+                                <a href="/user/login" style="color: var(--primary); font-weight: 600;">Sign in</a>
+                            </p>
+                        </div>
+
+                        <div class="d-flex align-center gap-3 mt-4 mb-4 animate stagger-4">
+                            <hr style="flex-grow: 1; border-color: var(--border); margin: 0;">
+                            <span class="text-dim" style="font-size: 0.8rem;">OR REGISTER WITH</span>
+                            <hr style="flex-grow: 1; border-color: var(--border); margin: 0;">
+                        </div>
+
+                        <a href="/user/auth/google" class="btn btn-google animate stagger-4" style="width: 100%; height: 3.5rem;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="margin-right: 10px;">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                            </svg>
+                            Sign up with Google
+                        </a>
+                    </div>
+
+                    <div id="step-2" style="display: none;">
+                        
+                        <div class="d-flex align-center justify-center gap-2 mb-4">
+                            <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--primary); opacity: 0.5;"></div>
+                            <div style="height: 2px; width: 30px; background: rgba(255,255,255,0.1);"></div>
+                            <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 10px var(--primary);"></div>
+                        </div>
+
+                        <div class="form-floating animate stagger-1">
+                            <input type="text" id="organizationName" name="organizationName" class="input" placeholder=" ">
+                            <label for="organizationName">Organization / Company Name</label>
+                        </div>
+
+                        <div class="form-floating animate stagger-2">
+                            <input type="text" id="city" name="city" class="input" placeholder=" ">
+                            <label for="city">Headquarters City</label>
+                        </div>
+
+                        <div class="form-floating animate stagger-3">
+                            <input type="tel" id="phone" name="phone" class="input" placeholder=" ">
+                            <label for="phone">Business Phone Number</label>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4 animate stagger-4">
+                            <button type="button" id="back-btn" class="btn btn-outline" style="height: 3.5rem; width: 30%;">
+                                &larr; Back
+                            </button>
+                            <button type="submit" class="btn btn-primary flex-grow-1" style="height: 3.5rem; font-size: 1rem;">
+                                Complete Setup
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const message = urlParams.get('message');
+
+            if (message) {
+                // Use your existing Toast object
+                Toast.error(message);
+                
+                // Optional: Clean the URL so the toast doesn't reappear on refresh
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+
+        // Password Toggle Logic
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fi-rr-eye', 'fi-rr-eye-crossed'); // Changes to the crossed-out eye
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fi-rr-eye-crossed', 'fi-rr-eye'); // Changes back to normal eye
+            }
+        }
+
+
+        // Multi-Step Form Logic
+        const roleSelect = document.getElementById('role');
+        const step1 = document.getElementById('step-1');
+        const step2 = document.getElementById('step-2');
+        const step1Btn = document.getElementById('step1-btn');
+        const backBtn = document.getElementById('back-btn');
+        const formTitle = document.getElementById('form-title');
+        const formSubtitle = document.getElementById('form-subtitle');
+        const loginLink = document.getElementById('login-link-container');
+        const registerForm = document.getElementById('registerForm');
+
+        // Dynamic Organizer Required Fields
+        const orgInputs = [
+            document.getElementById('organizationName'),
+            document.getElementById('city'),
+            document.getElementById('phone')
+        ];
+
+        // 1. Listen for Role Change
+        roleSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'organizer') {
+                step1Btn.type = 'button'; // Prevent auto-submit
+                step1Btn.innerHTML = 'Next &rarr;';
+            } else {
+                step1Btn.type = 'submit'; // Re-enable standard submit
+                step1Btn.innerHTML = 'Create Account';
+                
+                // Remove required from Step 2 fields if they switch back to User
+                orgInputs.forEach(input => input.removeAttribute('required'));
+            }
+        });
+
+        // 2. Handle "Next" Button Click
+        step1Btn.addEventListener('click', (e) => {
+            if (roleSelect.value === 'organizer') {
+                
+                // --- NEW CUSTOM VALIDATION LOGIC ---
+                let isStep1Valid = true;
+                const step1Inputs = step1.querySelectorAll('input[required], select[required]');
+                
+                step1Inputs.forEach(input => {
+                    // Check if the input is valid behind the scenes
+                    if (!input.checkValidity()) {
+                        isStep1Valid = false;
+                    }
+                    // This triggers your validation.js file to show the custom red text!
+                    input.dispatchEvent(new Event('blur')); 
+                });
+
+                // Check password match manually for step 1
+                const pwd = document.getElementById('password');
+                const confirmPwd = document.getElementById('confirmPassword');
+                if (pwd.value !== confirmPwd.value) {
+                    isStep1Valid = false;
+                    confirmPwd.classList.add('input-error');
+                    // Add your custom error text manually if they don't match
+                    let err = confirmPwd.parentElement.parentElement.querySelector('.error-text');
+                    if (!err) {
+                        err = document.createElement('span');
+                        err.className = 'error-text';
+                        confirmPwd.parentElement.parentElement.appendChild(err);
+                    }
+                    err.innerText = 'Passwords do not match.';
+                }
+
+                // If anything is invalid, stop here!
+                if (!isStep1Valid) {
+                    return; 
+                }
+                // -----------------------------------
+
+                // Smooth Transition
+                step1.style.display = 'none';
+                loginLink.style.display = 'none';
+                step2.style.display = 'block';
+                
+                // NOW make Step 2 fields required so the final submit catches them
+                orgInputs.forEach(input => input.setAttribute('required', 'true'));
+                
+                // Update Headers
+                formTitle.innerText = 'Organizer Profile';
+                formSubtitle.innerText = 'Step 2: Tell us about your business.';
+            }
+        });
+
+        
+
+        // 3. Handle "Back" Button Click
+        backBtn.addEventListener('click', () => {
+            step2.style.display = 'none';
+            step1.style.display = 'block';
+            loginLink.style.display = 'block';
+            
+            // Remove required so they can edit step 1 without errors
+            orgInputs.forEach(input => input.removeAttribute('required'));
+
+            // Revert Headers
+            formTitle.innerText = 'Join EventHub';
+            formSubtitle.innerText = 'Create your account in seconds.';
+        });
+
+        registerForm.addEventListener('submit', async (e)=>{
+            e.preventDefault()
+
+            if(!registerForm.checkValidity()){
+                registerForm.reportValidity()
+                return
+            }
+            const loader = document.getElementById('custom-loader')
+            loader.style.display = 'flex'
+
+            const formData = new FormData(registerForm)
+            const data = Object.fromEntries(formData.entries())
+
+            try {
+                const response = await axios.post('/user/signup', data)
+
+                if(response.data.success){
+                    Toast.success(response.data.message)
+                    setTimeout(()=>{
+                        window.location.href = '/user/verify-otp?action=signup'
+                    }, 2000)
+                }
+            } catch (error) {
+                loader.style.display = 'none'
+
+                const errorMessage = error.response?.data?.message || 'Something went wrong'
+                Toast.error(errorMessage)
+
+                if(errorMessage){
+                    const errors = errorMessage.split(', ')
+                    errors.forEach(err =>{
+                        const inputs = registerForm.querySelectorAll('input, select');
+                        inputs.forEach(input => {
+                            const label = input.parentElement.querySelector('label')?.innerText.toLowerCase();
+                            
+                            // If the error message contains the label text (like "email" or "password")
+                            if (label && err.toLowerCase().includes(label)) {
+                                // Use your existing showError function from validation.js
+                                // Note: Ensure validation.js functions are globally accessible or copy showError here
+                                showError(input, err);
+                            }
+                        });
+                    })
+                }
+            }
+        })
+    </script>
+</body>
+</html>

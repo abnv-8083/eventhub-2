@@ -1,0 +1,247 @@
+<%- include('../../partials/head') %>
+<body class="bg-mesh">
+    <div id="custom-loader" class="loader-overlay">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">VERIFYING...</div>
+    </div>
+
+    <div class="auth-split-layout">
+        <div class="auth-image-side" style="background-image: url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2000');">
+            <div class="auth-image-overlay">
+                <a href="/" class="logo mb-4" style="font-size: 2.5rem;">
+                    Event<span class="text-gradient">Hub</span>
+                </a>
+                <h1 style="font-size: 3.5rem; line-height: 1.1; margin-bottom: 1rem; color: #fff;">
+                    Secure your<br>account.
+                </h1>
+                <p class="text-muted" style="font-size: 1.2rem; max-width: 400px;">
+                    We've sent a 4-digit code to your email. Enter it below to continue.
+                    <br><br>
+                    <!-- Removed text-gradient and made it solid white -->
+                    <span id="userEmail" style="color: #ffffff; font-weight: 700;"><%= email %></span>
+                </p>
+            </div>
+        </div>
+
+        <div class="auth-form-side">
+            <div class="floating-blob" style="top: 20%; left: 10%;"></div>
+            
+            <div class="auth-form-container glass-dark p-5 text-center" style="border-radius: var(--radius-lg); max-width: 420px;">
+                <div class="mb-5">
+                    <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">Verify Email</h2>
+                    <p class="text-muted">Enter the code sent to your inbox.</p>
+                </div>
+
+                <form id="otpForm" novalidate>
+                    <div class="d-flex justify-center gap-3 mb-5 animate stagger-1">
+                        <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric">
+                        <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric">
+                        <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric">
+                        <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric">
+                    </div>
+
+                    <input type="hidden" id="otpAction" value="<%= action %>">
+
+                    <button type="submit" class="btn btn-primary animate stagger-2" style="width: 100%; height: 3.5rem;">
+                        Verify & Proceed
+                    </button>
+
+                    <div class="mt-4 text-center animate stagger-3">
+                        <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">
+                            Didn't receive the code? 
+                            <button type="button" id="resendBtn" style="background:none; border:none; font-weight: 600; padding: 0; margin-left: 4px; transition: all 0.3s ease;">Resend</button>
+                        </p>
+                        <p id="timer" class="text-dim mt-2" style="font-size: 0.8rem;">Resend available in <span id="seconds">60</span>s</p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .otp-input {
+            width: 60px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            transition: var(--transition);
+        }
+        .otp-input:focus {
+            border-color: var(--primary);
+            background: rgba(230, 57, 70, 0.1);
+            box-shadow: 0 0 15px rgba(230, 57, 70, 0.2);
+        }
+        .otp-input.filled {
+            border-color: var(--primary-hover);
+        }
+    </style>
+
+    <script>
+        const inputs = document.querySelectorAll('.otp-input');
+        const form = document.getElementById('otpForm');
+        const loader = document.getElementById('custom-loader');
+
+        // 1. Auto-focus, Backspace, and Smart Paste Logic
+        inputs.forEach((input, index) => {
+            
+            // Handle standard typing and backspacing
+            input.addEventListener('keyup', (e) => {
+                if (e.key >= '0' && e.key <= '9') {
+                    input.value = e.key; // Force it to only hold one number
+                    input.classList.add('filled');
+                    if (index < inputs.length - 1) inputs[index + 1].focus();
+                } else if (e.key === 'Backspace') {
+                    input.value = ''; // Clear it
+                    input.classList.remove('filled');
+                    if (index > 0) inputs[index - 1].focus();
+                }
+            });
+
+            // THE FIX: Handle copying and pasting a full code
+            input.addEventListener('paste', (e) => {
+                // Stop the browser from dumping the whole string into one box
+                e.preventDefault(); 
+                
+                // Grab whatever text they pasted
+                const pastedText = e.clipboardData.getData('text');
+                
+                // Strip out any spaces or letters, keeping only numbers
+                const cleanNumbers = pastedText.replace(/\D/g, ''); 
+
+                // Distribute the numbers across the inputs
+                for (let i = 0; i < inputs.length; i++) {
+                    if (i < cleanNumbers.length) {
+                        inputs[i].value = cleanNumbers[i];
+                        inputs[i].classList.add('filled');
+                        
+                        // Move focus to the next box, or blur if we hit the end
+                        if (i < inputs.length - 1) {
+                            inputs[i + 1].focus();
+                        } else {
+                            inputs[i].blur();
+                        }
+                    }
+                }
+            });
+});
+
+        // 2. Handle Submission via Axios
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const otpCode = Array.from(inputs).map(i => i.value).join('');
+            const emailspan = document.getElementById('userEmail')
+            const email = emailspan.innerHTML
+            const action = document.getElementById('otpAction').value
+            console.log(email)
+            
+            if (otpCode.length < 4) {
+                Toast.error('Please enter the full 4-digit code');
+                return;
+            }
+
+            loader.style.display = 'flex';
+
+            try {
+                const response = await axios.post('/user/verify-otp', { otp: otpCode, email: email, action });
+                if (response.data.success) {
+                    Toast.success(response.data.message);
+                    setTimeout(() => window.location.href = response.data.redirect, 1500);
+                }
+            } catch (error) {
+                loader.style.display = 'none';
+                Toast.error(error.response?.data?.message || 'Invalid OTP');
+            }
+        });
+
+        // --- ADD THIS TO THE BOTTOM OF YOUR SCRIPT IN otp.ejs ---
+
+        const resendBtn = document.getElementById('resendBtn');
+        const timerDisplay = document.getElementById('timer');
+        const secondsSpan = document.getElementById('seconds');
+
+        // --- UPDATED TIMER & RESEND LOGIC ---
+
+        let timeLeft = 60;
+        let timerId; // We declare this outside so we can clear it properly
+
+        function startResendTimer() {
+            // 1. SAFETY MEASURE: Clear any existing timer so they don't overlap
+            clearInterval(timerId); 
+            
+            timeLeft = 60;
+            
+            // 2. Instantly disable the button and fade it out
+            resendBtn.disabled = true;
+            resendBtn.style.color = 'rgba(255, 255, 255, 0.3)'; 
+            resendBtn.style.cursor = 'not-allowed';
+            
+            // 3. Show the countdown text
+            timerDisplay.style.display = 'block';
+            secondsSpan.innerText = timeLeft;
+
+            // 4. Start the 60-second countdown
+            timerId = setInterval(() => {
+                timeLeft--;
+                secondsSpan.innerText = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerId);
+                    // Re-enable the button and make it red again
+                    resendBtn.disabled = false;
+                    resendBtn.style.color = '#E63946'; // Your EventHub Red
+                    resendBtn.style.cursor = 'pointer';
+                    timerDisplay.style.display = 'none';
+                }
+            }, 1000);
+        }
+
+        // Start the timer when the page first loads
+        startResendTimer();
+
+        // Handle the Resend Button Click
+        resendBtn.addEventListener('click', async () => {
+            // Stop them if the button is currently disabled
+            if (resendBtn.disabled) return;
+            
+            // 🔥 THE FIX: Start the 60-second block IMMEDIATELY upon clicking
+            startResendTimer(); 
+            
+            const emailspan = document.getElementById('userEmail');
+            const email = emailspan.innerHTML;
+
+            // Show the loader
+            loader.style.display = 'flex';
+            document.querySelector('.loader-text').innerText = 'RESENDING OTP...';
+
+            try {
+                const response = await axios.post('/user/resend-otp', { email: email });
+                
+                if (response.data.success) {
+                    loader.style.display = 'none';
+                    Toast.success(response.data.message);
+                    
+                    // Clear the inputs for the new code
+                    inputs.forEach(input => {
+                        input.value = '';
+                        input.classList.remove('filled');
+                    });
+                    inputs[0].focus();
+                }
+            } catch (error) {
+                loader.style.display = 'none';
+                Toast.error(error.response?.data?.message || 'Failed to resend OTP. Please try again.');
+                
+                // Optional: If the request completely fails, you could instantly un-block the button here 
+                // by setting timeLeft = 0, but keeping them blocked prevents server spamming!
+            } finally {
+                document.querySelector('.loader-text').innerText = 'VERIFYING...';
+            }
+        });
+    </script>
+    
+</body>

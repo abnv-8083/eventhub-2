@@ -1,0 +1,93 @@
+<%- include('./head.ejs') %>
+
+
+<header class="navbar-sticky glass-dark">
+    <div class="container nav-container">
+        <a href="/" class="logo">
+            Event<span class="text-gradient">Hub</span>
+        </a>
+        
+        <nav class="nav-links d-flex align-center gap-3">
+            <a href="/events">Browse Events</a>
+            
+            <!-- Role-Specific Links -->
+            <% if (user.role === 'organizer') { %>
+                <a href="/organizer/dashboard" class="text-gradient" style="font-weight: 600;">Manage My Events</a>
+            <% } else { %>
+                <a href="/user/tickets">My Tickets</a>
+            <% } %>
+
+            <div class="user-menu" style="position: relative;">
+                <!-- Circular Avatar Button (Uses the first letter of their name) -->
+                
+                <button class="profile-avatar-btn" id="userMenuBtn" aria-label="Profile Menu">
+                    <% if(user.avatar) {%>
+                        <img src="<%= user.avatar %>" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                    <% }else{ %>
+                        <% const initial = user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'; %>
+                        <span><%= initial %></span>
+                    <% } %>
+                </button>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<!-- Dropdown rendered outside header to avoid backdrop-filter stacking context -->
+<div class="dropdown-menu glass-dark" id="userDropdown" style="position: fixed; z-index: 9999;">
+    <div class="dropdown-header">
+        <small class="text-dim d-block" style="font-size: 0.75rem;">Signed in as</small>
+        <strong style="color: white; font-size: 0.95rem;"><%= user.fullName || 'User' %></strong>
+    </div>
+    
+    <a href="/user/profile" class="dropdown-item">My Account</a>
+    <a href="/user/tickets" class="dropdown-item">My Tickets</a>
+    <hr style="border-color: var(--border); margin: 4px 0;">
+    <a id="logoutButton" class="dropdown-item text-danger" style="cursor: pointer;">Logout</a>
+</div>
+
+<script>
+    const btn = document.getElementById('userMenuBtn');
+    const menu = document.getElementById('userDropdown');
+
+    function positionMenu() {
+        const rect = btn.getBoundingClientRect();
+        menu.style.top = (rect.bottom + 12) + 'px';
+        menu.style.right = (window.innerWidth - rect.right) + 'px';
+        menu.style.left = 'auto';
+    }
+
+    document.addEventListener('click', (e) => {
+        // 1. If they click the avatar button, toggle the menu
+        if (btn && (btn === e.target || btn.contains(e.target))) {
+            e.preventDefault();
+            if (menu.style.display === 'flex') {
+                menu.style.display = 'none';
+            } else {
+                positionMenu();
+                menu.style.display = 'flex';
+            }
+        }
+        // 2. If they click outside the menu entirely, close it
+        else if (menu && !menu.contains(e.target)) {
+            menu.style.display = 'none';
+        }
+    });
+
+    // Reposition on scroll/resize
+    window.addEventListener('resize', () => {
+        if (menu.style.display === 'flex') positionMenu();
+    });
+
+    const logoutButton = document.getElementById('logoutButton')
+    logoutButton.addEventListener('click', async ()=>{
+        try {
+            const response = await axios.post('/user/logout')
+            if(response.data.success){
+                window.location.href = '/'
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    })
+</script>

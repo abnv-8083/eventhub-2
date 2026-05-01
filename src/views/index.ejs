@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventHub | Discover & Book Premium Events</title>
+    <link rel="stylesheet" href="/css/style.css?v=<%= Date.now() %>">
+</head>
+
+<body class="bg-mesh">
+    <div class="floating-blob"></div>
+
+    <% if (locals.user) { %>
+        <%- include('partials/navbar-auth') %>
+            <% } else { %>
+                <%- include('partials/navbar-guest') %>
+                    <% } %>
+
+                        <main>
+                            <section class="section container text-center"
+                                style="padding-top: 10rem; padding-bottom: 8rem; position: relative;">
+                                <!-- Background Glow -->
+                                <div class="hero-glow"
+                                    style="position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); width: 60%; height: 40%; background: radial-gradient(circle, rgba(230, 57, 70, 0.15) 0%, transparent 70%); z-index: -1;">
+                                </div>
+
+                                <div class="glass-dark d-inline-block p-2 mb-4 animate stagger-1"
+                                    style="border-radius: 50px; padding: 0.5rem 1.5rem !important; border: 1px solid rgba(255,255,255,0.1);">
+                                    <span class="text-gradient"
+                                        style="font-size: 0.85rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
+                                        Discover the Best Events in Kozhikode
+                                    </span>
+                                </div>
+
+                                <h1 class="animate stagger-2"
+                                    style="font-size: clamp(3rem, 8vw, 5rem); line-height: 1; margin-bottom: 1.5rem; letter-spacing: -2px;">
+                                    Unforgettable Experiences,<br>
+                                    <span class="text-gradient glow-text">Just a Tap Away.</span>
+                                </h1>
+
+                                <p class="text-muted animate stagger-3"
+                                    style="max-width: 650px; margin: 0 auto 3rem; font-size: 1.2rem; opacity: 0.8;">
+                                    The premier platform for tech summits, sports tournaments, and live workshops.
+                                    Secure your spot with instant QR validation.
+                                </p>
+                            </section>
+
+                            <!-- index.ejs Search Update -->
+                            <section class="container animate stagger-4"
+                                style="margin-top: -4rem; position: relative; z-index: 10;">
+                                <div class="glass-dark p-2 d-flex gap-2 align-center"
+                                    style="border-radius: var(--radius-lg); box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
+                                    <div class="flex-grow-1 d-flex align-center p-2">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" class="text-dim mr-3">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                        </svg>
+                                        <input type="text" class="input"
+                                            placeholder="Search events, organizers, or locations..."
+                                            style="background: transparent; border: none; box-shadow: none;">
+                                    </div>
+                                    <div style="width: 1px; height: 30px; background: var(--border);"></div>
+                                    <select class="input"
+                                        style="width: 180px; background: transparent; border: none; box-shadow: none;">
+                                        <option value="">All Categories</option>
+                                        <option value="tech">Technology</option>
+                                        <option value="sports">Sports</option>
+                                    </select>
+                                    <button class="btn btn-primary"
+                                        style="border-radius: var(--radius-md); padding: 0.8rem 2rem;">Find
+                                        Events</button>
+                                </div>
+                            </section>
+
+                            <section class="container section pt-0">
+                                <div class="d-flex justify-between align-center mb-4">
+                                    <h2>Trending <span class="text-gradient">This Week</span></h2>
+                                    <a href="/events" class="text-muted">View all &rarr;</a>
+                                </div>
+
+                                <div class="footer-grid" style="gap: 2rem;">
+                                    <% if (locals.events && events.length> 0) { %>
+                                        <% events.forEach(event=> { %>
+                                            <%- include('partials/event-card', { event: event }) %>
+                                                <% }) %>
+                                                    <% } else { %>
+                                                        <!-- Show 3 Skeleton Cards or a "No Events" message -->
+                                                        <div class="glass-dark p-5 text-center"
+                                                            style="border-radius: var(--radius-lg); border-style: dashed;">
+                                                            <div class="mb-3" style="font-size: 2rem; opacity: 0.5;">📅
+                                                            </div>
+                                                            <h3 class="text-white mb-2">No Events This Week</h3>
+                                                            <p class="text-dim mb-4">We're currently scouting for the
+                                                                best experiences in town.</p>
+                                                            <a href="/organizer/apply" class="btn btn-outline">
+                                                                Be the first to host an event &rarr;
+                                                            </a>
+                                                        </div>
+                                                        <% } %>
+                                </div>
+                            </section>
+                        </main>
+
+                        <footer>
+                            <div class="container footer-bottom">
+                                <p>&copy; 2026 EventHub Platform. All rights reserved.</p>
+                            </div>
+                        </footer>
+</body>
+
+</html>

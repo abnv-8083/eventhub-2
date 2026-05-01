@@ -1,0 +1,61 @@
+// src/models/User.js
+import mongoose from 'mongoose';
+
+const userSchema = new mongoose.Schema({
+    fullName: {
+        type: String,
+        required: [true, 'Please provide your full name'],
+        trim: true
+    },
+    email: {
+        type: String,
+        required: [true, 'Please provide your email'],
+        unique: true,
+        lowercase: true,
+        trim: true
+    },
+    password: {
+        type: String,
+        required: function(){
+            return !this.googleId
+        },
+        minlength: 8,
+        select: false // Hides the password from standard DB queries by default
+    },
+    role: {
+        type: String,
+        enum: ['user', 'organizer', 'admin'],
+        default: 'user'
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true,
+    },
+    avatar: {
+        type: String,
+        default: ''
+    },
+    
+    // ==========================================
+    // Organizer Specific Fields
+    // ==========================================
+    organizationName: {
+        type: String,
+        trim: true
+    },
+    city: {
+        type: String,
+        trim: true
+    },
+    phone: {
+        type: String,
+        trim: true
+    }
+}, {
+    timestamps: true // Automatically adds 'createdAt' and 'updatedAt' fields
+});
+
+const User = mongoose.model('User', userSchema);
+
+export default User;
