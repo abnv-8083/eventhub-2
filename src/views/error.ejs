@@ -1,0 +1,19 @@
+<%- include('partials/head') %>
+<body class="bg-mesh d-flex align-center justify-center" style="min-height: 100vh;">
+    <div class="floating-blob"></div>
+
+    <main class="text-center">
+        <div class="glass-dark p-5" style="border-radius: var(--radius-lg); border-color: rgba(230, 57, 70, 0.3);">
+            <h1 class="text-gradient" style="font-size: 4rem; margin-bottom: 0;">Uh oh!</h1>
+            <h2 class="mt-2 mb-3"><%= title %></h2>
+            <p class="text-muted" style="font-size: 1.1rem; max-width: 400px; margin: 0 auto;">
+                <%= message %>
+            </p>
+            <div class="mt-4">
+                <button onclick="history.back()" class="btn btn-outline mr-2">&larr; Go Back</button>
+                <a href="/" class="btn btn-primary">Return Home</a>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

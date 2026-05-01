@@ -1,0 +1,1144 @@
+/* 
+  EventHub Global Style System
+  Theme: Modern Red & Black (Dark-First)
+  Refined & Optimized
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css');
+
+:root {
+    /* Color Palette */
+    --primary: #E63946;
+    --primary-hover: #C12A36;
+    --bg-dark: #0A0A0A;
+    --bg-surface: #161616;
+    --bg-card: #1E1E1E;
+    --text-main: #FFFFFF;
+    --text-muted: rgba(255, 255, 255, 0.85); 
+    --text-dim: rgba(255, 255, 255, 0.6);   
+    --border: rgba(255, 255, 255, 0.1);
+    --border-red: rgba(230, 57, 70, 0.3);
+
+    /* Layout & Spacing */
+    --max-width: 1366px;
+    --header-height: 80px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --space-xs: 0.5rem;
+    --space-sm: 1rem;
+    --space-md: 1.5rem;
+    --space-lg: 2rem;
+    --space-xl: 3rem;
+    --space-xxl: 5rem;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================
+   1. RESET & BASE
+========================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    transition: var(--transition);
+}
+
+button, input, select, textarea {
+    font-family: inherit;
+    outline: none;
+}
+
+ul { list-style: none; }
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text-main);
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, #FF4D4D 0%, #E63946 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.glow-text { text-shadow: 0 0 20px rgba(230, 57, 70, 0.4); }
+.glow-primary { box-shadow: 0 0 20px rgba(230, 57, 70, 0.2); }
+
+/* ==========================================
+   2. LAYOUT & CONTAINERS
+========================================== */
+.container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.section { padding: 5rem 0; }
+
+section.container.animate.stagger-4 {
+    margin-bottom: 5rem !important; 
+}
+
+/* ==========================================
+   3. NAVIGATION BAR
+========================================== */
+header {
+    min-height: 70px;
+    background: rgba(10, 10, 10, 0.75);
+    backdrop-filter: blur(20px) saturate(180%);
+    width: 100%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.75rem 0;
+    transition: var(--transition);
+    position: relative;
+    overflow: visible;
+}
+
+.navbar-fixed {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+.navbar-sticky {
+    background: rgba(10, 10, 10, 0.7) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    padding: 0.5rem 0;
+    overflow: visible !important;
+}
+
+.nav-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logo span { color: var(--primary); }
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.nav-links .d-flex { gap: 1rem !important; }
+
+.nav-links a {
+    font-size: 0.95rem;
+    font-weight: 500;
+    position: relative;
+    padding: 0.5rem 0;
+}
+
+.nav-links a:hover { color: var(--primary); }
+
+.nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 0; height: 2px;
+    background: var(--primary);
+    transition: width 0.3s ease;
+}
+
+.nav-links a:hover::after { width: 100%; }
+
+/* ==========================================
+   4. USER PROFILE & DROPDOWN MENU
+========================================== */
+.user-menu { position: relative; }
+
+.profile-avatar-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(230, 57, 70, 0.1); 
+    border: 1px solid var(--primary);
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    padding: 0;
+    outline: none;
+}
+
+.profile-avatar-btn:hover {
+    background: var(--primary);
+    box-shadow: 0 4px 15px rgba(230, 57, 70, 0.3);
+    transform: translateY(-2px);
+}
+
+.dropdown-menu {
+    min-width: 220px;
+    display: none; 
+    flex-direction: column;
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    padding: 0.5rem 0;
+    background: rgba(22, 22, 22, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dropdown-header {
+    padding: 1rem 1.5rem 0.8rem !important; 
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+}
+
+/* Bulletproof Dropdown Link Hover */
+.dropdown-menu .dropdown-item {
+    padding: 0.6rem 1.5rem !important; 
+    font-weight: 400 !important; 
+    font-size: 0.9rem !important;
+    color: var(--text-muted) !important;
+    text-align: left;
+    width: 100%;
+    display: block !important; 
+    transition: all 0.3s ease !important;
+}
+
+.dropdown-menu .dropdown-item::after { display: none !important; }
+
+.dropdown-menu .dropdown-item:hover {
+    background-color: rgba(230, 57, 70, 0.1) !important; 
+    color: white !important;
+    padding-left: 1.85rem !important; 
+}
+
+.dropdown-menu .dropdown-item.text-danger:hover {
+    background-color: rgba(230, 57, 70, 0.15) !important;
+    color: #ff4d4d !important;
+}
+
+/* ==========================================
+   5. BUTTONS
+========================================== */
+.btn {
+    padding: 0.6rem 1.6rem !important; 
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap; 
+    height: 42px;
+    outline: none !important; 
+}
+
+.btn:focus { box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.3) !important; }
+.btn:active { transform: translateY(0); }
+
+.btn-primary {
+    background-color: var(--primary) !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(230, 57, 70, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(230, 57, 70, 0.3);
+}
+
+.btn-primary::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: 0.5s;
+}
+
+.btn-primary:hover::after { left: 100%; }
+
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid var(--primary) !important;
+    color: var(--primary) !important;
+}
+
+.btn-outline:hover {
+    background-color: var(--primary) !important;
+    color: white !important;
+    transform: translateY(-2px);
+}
+
+.btn-google {
+    background: #ffffff;
+    color: #1a1a1a;
+    border: 1px solid #ffffff;
+    font-weight: 600;
+}
+.btn-google:hover {
+    background: #f1f1f1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================
+   6. FORMS & INPUTS
+========================================== */
+.form-group { margin-bottom: 1.5rem; }
+
+.label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.input {
+    width: 100%;
+    padding: 1rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: white;
+    transition: var(--transition);
+}
+
+.input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.1);
+}
+
+.input:disabled, .input:readonly {
+    background-color: rgba(255, 255, 255, 0.02);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.input::placeholder { color: rgba(255, 255, 255, 0.6); }
+
+/* Floating Labels */
+.form-floating {
+    position: relative;
+    margin-bottom: 1.8rem !important;
+    width: 100%;
+}
+
+.form-floating .input {
+    height: 3.2rem !important; 
+    padding: 1.2rem 1rem 0.2rem !important;
+    font-size: 0.9rem !important;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.form-floating label {
+    position: absolute;
+    top: 1.6rem !important; 
+    left: 1.2rem;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.85rem;
+}
+
+.form-floating .input:focus ~ label,
+.form-floating .input:not(:placeholder-shown) ~ label {
+    top: 0.8rem !important;
+    font-size: 0.7rem !important;
+    color: var(--primary);
+    font-weight: 500;
+}
+
+/* Password Toggle */
+.password-group { position: relative; display: flex; align-items: center; }
+.password-group .input, .form-floating .input[type="password"] { padding-right: 3rem !important; }
+
+.password-toggle {
+    position: absolute;
+    right: 1.2rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0;
+    z-index: 10;
+}
+
+.form-floating .password-toggle {
+    top: 1.6rem !important; 
+    transform: translateY(-50%);
+}
+
+.password-toggle:hover { color: var(--primary); }
+.password-toggle svg { width: 20px; height: 20px; fill: none; stroke: currentColor; }
+
+/* Select Inputs */
+select.input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.2rem;
+    padding-right: 3rem;
+    cursor: pointer;
+}
+select.input option { background: var(--bg-surface); color: white; }
+
+/* Modern Switch */
+.modern-switch { position: relative; display: inline-block; width: 36px; height: 20px; margin-right: 8px; }
+.modern-switch input { opacity: 0; width: 0; height: 0; }
+.modern-switch .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.1); transition: .4s; border-radius: 34px; }
+.modern-switch .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 50%; }
+.modern-switch input:checked + .slider { background-color: var(--primary); }
+.modern-switch input:checked + .slider:before { transform: translateX(16px); }
+
+/* Form Errors */
+.input-error {
+    border: 1px solid #E63946 !important;
+    background: rgba(230, 57, 70, 0.05) !important;
+}
+.input-error::placeholder { color: #E63946 !important; font-weight: 500; opacity: 1; }
+
+.error-text {
+    color: #E63946;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: block;
+    animation: fadeIn 0.2s ease-out;
+}
+.form-floating .error-text {
+    position: absolute;
+    bottom: -1.2rem;
+    left: 0.2rem;
+}
+
+/* ==========================================
+   7. AUTH SPLIT SCREEN LAYOUT
+========================================== */
+.auth-split-layout {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.auth-image-side {
+    flex: 1;
+    display: none; 
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+@media (min-width: 992px) { .auth-image-side { display: flex; } }
+
+.auth-image-overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(10,10,10,0.9) 0%, rgba(230,57,70,0.4) 100%);
+    display: flex; flex-direction: column; justify-content: center; padding: 4rem;
+}
+.auth-image-overlay p { text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+
+.auth-form-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #050505 0%, #150f10 100%) !important;
+    position: relative;
+}
+
+.auth-form-container {
+    width: 100%;
+    max-width: 380px !important; 
+    padding: 0 1rem !important; 
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    position: relative;
+    z-index: 10;
+}
+
+.auth-form-container h2 { font-size: 1.75rem !important; }
+.auth-form-container .mb-5 { margin-bottom: 2rem !important; }
+.auth-form-container .btn { height: 3.2rem !important; font-size: 0.95rem !important; }
+
+.auth-back-btn {
+    position: absolute; top: 2rem; left: 2rem;
+    color: var(--text-muted); font-size: 0.9rem; z-index: 20;
+}
+.auth-back-btn:hover { color: var(--primary); }
+
+/* ==========================================
+   8. COMPONENTS (Cards, Search, Toasts, Modals)
+========================================== */
+/* Glassmorphism Classes */
+.glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.125);
+}
+
+.glass-dark {
+    background: rgba(15, 15, 15, 0.65) !important; 
+    backdrop-filter: blur(20px) saturate(160%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+}
+.glass-dark .d-flex { padding: 0.5rem 1rem !important; }
+.glass-dark input { color: white !important; font-size: 1rem; }
+.glass-dark input::placeholder { color: rgba(255, 255, 255, 0.5) !important; }
+
+/* Cards */
+.card {
+    background: rgba(22, 22, 22, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+}
+.card:hover {
+    transform: translateY(-10px) scale(1.02);
+    border-color: rgba(230, 57, 70, 0.4) !important;
+    background: rgba(30, 30, 30, 0.6) !important;
+    box-shadow: 0 20px 40px rgba(230, 57, 70, 0.2);
+}
+.card-img { transition: transform 0.6s ease; }
+.card:hover .card-img { transform: scale(1.05); }
+.card-badge {
+    background: rgba(10, 10, 10, 0.6) !important;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--primary) !important;
+    border-radius: 8px !important;
+}
+.card-content { padding: 1.5rem; }
+.card-title { margin-bottom: 0.5rem; font-size: 1.25rem; }
+.card-meta { font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+
+/* Search Container */
+.search-container {
+    padding: 0.8rem 1.5rem !important; 
+    min-height: 80px; 
+    display: flex; align-items: center; gap: 1.5rem;
+}
+.search-container svg { margin-right: 1rem; opacity: 0.6; }
+
+/* Toasts */
+/* ==========================================
+   UPGRADED TOAST NOTIFICATIONS (WITH TIMER)
+========================================== */
+#toast-container { 
+    position: fixed; top: 30px; right: 30px; z-index: 10000; 
+    display: flex; flex-direction: column; gap: 16px; 
+}
+
+.toast {
+    min-width: 320px;
+    max-width: 400px;
+    background: rgba(22, 22, 22, 0.85); 
+    backdrop-filter: blur(16px) saturate(180%);
+    border-radius: 12px; 
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-main); 
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+    transform: translateX(120%) scale(0.9); 
+    opacity: 0; 
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    
+    /* Crucial: Keeps the progress bar strictly inside the rounded corners */
+    overflow: hidden; 
+    position: relative;
+}
+
+.toast.show { transform: translateX(0) scale(1); opacity: 1; }
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 1.2rem 1.25rem;
+}
+
+/* Icon Glowing Effects */
+.toast-icon { display: flex; align-items: center; justify-content: center; }
+.toast-success .toast-icon svg { filter: drop-shadow(0 0 8px rgba(46, 204, 113, 0.4)); }
+.toast-error .toast-icon svg { filter: drop-shadow(0 0 8px rgba(230, 57, 70, 0.4)); }
+
+.toast-message { 
+    flex-grow: 1; 
+    font-size: 0.95rem; 
+    font-weight: 500; 
+    line-height: 1.4;
+    letter-spacing: 0.3px; 
+}
+
+.toast-close { 
+    cursor: pointer; color: var(--text-dim); transition: var(--transition); 
+    display: flex; align-items: center; 
+}
+.toast-close:hover { color: var(--text-main); transform: scale(1.1); }
+
+/* --- THE TIMER PROGRESS BAR --- */
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    transform-origin: left;
+    /* The duration is injected by JS so they always match perfectly! */
+    animation: toastTimer linear forwards;
+}
+
+.toast-success .toast-progress {
+    background: #2ecc71;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+}
+
+.toast-error .toast-progress {
+    background: var(--primary); /* EventHub Red */
+    box-shadow: 0 0 10px rgba(230, 57, 70, 0.5);
+}
+
+@keyframes toastTimer {
+    0% { transform: scaleX(1); }
+    100% { transform: scaleX(0); }
+}
+
+/* Kills the old left-border stripe if you have it elsewhere */
+.toast::before { display: none !important; }
+
+/* Modals */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
+    z-index: 2000; display: none; align-items: center; justify-content: center; padding: 2rem;
+    opacity: 0; transition: opacity 0.3s ease;
+}
+.modal-overlay.active { display: flex; opacity: 1; }
+.modal-container {
+    background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    width: 100%; max-width: 500px; position: relative;
+    transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); overflow: hidden;
+}
+.modal-overlay.active .modal-container { transform: scale(1); }
+.modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-body { padding: 2rem; }
+.modal-footer { padding: 1.5rem 2rem; background: rgba(255, 255, 255, 0.02); border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 1rem; }
+.modal-close { cursor: pointer; color: var(--text-dim); transition: var(--transition); font-size: 1.2rem; }
+.modal-close:hover { color: var(--primary); }
+
+.modal-delete .modal-header { border-bottom-color: rgba(230, 57, 70, 0.2); }
+.modal-delete .modal-icon { width: 60px; height: 60px; background: rgba(230, 57, 70, 0.1); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 1.5rem; }
+.modal-confirm .modal-icon { width: 60px; height: 60px; background: rgba(46, 204, 113, 0.1); color: #2ECC71; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 1.5rem; }
+
+/* Full Screen Loader */
+.loader-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(8px);
+    display: none; justify-content: center; align-items: center; z-index: 9999; flex-direction: column; gap: 1.5rem;
+}
+.loader-spinner {
+    width: 50px; height: 50px; border: 3px solid rgba(230, 57, 70, 0.1); border-top: 3px solid var(--primary);
+    border-radius: 50%; animation: spin 1s linear infinite;
+}
+.loader-text { color: var(--text-main); font-weight: 500; letter-spacing: 1px; font-size: 0.9rem; }
+
+/* ==========================================
+   9. ADMIN / DASHBOARD
+========================================== */
+.dashboard-layout { display: flex; min-height: 100vh; }
+.sidebar {
+    width: 280px; background: var(--bg-surface); border-right: 1px solid var(--border);
+    padding: 2rem 1rem; position: fixed; top: var(--header-height); height: calc(100vh - var(--header-height));
+    display: flex; flex-direction: column;
+}
+.sidebar-nav { flex: 1; overflow-y: auto; padding-right: 0.5rem; }
+.sidebar a { display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: var(--radius-sm); color: var(--text-muted); margin-bottom: 0.5rem; }
+.sidebar a:hover { background: rgba(230, 57, 70, 0.1); color: var(--primary); }
+.sidebar a.active {
+    background: rgba(230, 57, 70, 0.1); color: var(--primary);
+    box-shadow: inset 4px 0 0 var(--primary); position: relative; border: none;
+}
+.sidebar a.active::after {
+    content: ''; position: absolute; left: 0; top: 0; width: 10px; height: 100%;
+    background: var(--primary); filter: blur(15px); opacity: 0.3;
+}
+.dashboard-main { flex: 1; margin-left: 280px; padding: 2rem; }
+
+.data-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 1rem; }
+.data-table thead th { padding: 1.25rem 1.5rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); border-bottom: 2px solid var(--border); }
+.data-table tbody td { padding: 1.5rem; vertical-align: middle; border-bottom: 1px solid var(--border); color: var(--text-main); font-size: 0.95rem; }
+.data-table tbody tr { transition: var(--transition); }
+.data-table tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
+.data-table .secondary { color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem; }
+
+.status-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px; }
+.status-badge i { font-size: 0.5rem; }
+.status-pending { background: rgba(241, 196, 15, 0.1); color: #f1c40f; border: 1px solid rgba(241, 196, 15, 0.2); }
+.status-approved { background: rgba(46, 204, 113, 0.1); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.2); }
+.status-rejected { background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.2); }
+
+/* ==========================================
+   10. FOOTER & MISC
+========================================== */
+footer { background: var(--bg-surface); border-top: 1px solid var(--border); padding: 4rem 0 2rem; margin-top: 5rem; }
+.footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 3rem; margin-bottom: 3rem; }
+.footer-bottom { border-top: 1px solid var(--border); padding-top: 2rem; text-align: center; color: var(--text-dim); font-size: 0.9rem; }
+
+.trending-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem !important; }
+.trending-header h2 { font-size: 2.2rem; font-weight: 700; }
+.text-muted.view-all { font-size: 0.9rem; font-weight: 500; opacity: 0.6; }
+
+/* Backgrounds & Animations */
+.bg-mesh {
+    background-color: var(--bg-dark);
+    background-image:
+        radial-gradient(at 0% 0%, rgba(230, 57, 70, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(230, 57, 70, 0.05) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(230, 57, 70, 0.1) 0px, transparent 50%),
+        radial-gradient(at 0% 100%, rgba(230, 57, 70, 0.05) 0px, transparent 50%);
+}
+
+.floating-blob {
+    position: fixed; width: 300px; height: 300px; background: var(--primary);
+    filter: blur(100px); border-radius: 50%; z-index: -1; opacity: 0.15;
+    pointer-events: none; animation: blobFloat 15s infinite alternate;
+}
+
+@keyframes blobFloat { from { transform: translate(0, 0) scale(1); } to { transform: translate(100px, 50px) scale(1.2); } }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.animate { animation: fadeIn 0.8s ease forwards; }
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-dark); }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* Spacing & Flex Utilities */
+.m-0 { margin: 0 !important; } .mt-1 { margin-top: var(--space-xs) !important; } .mt-2 { margin-top: var(--space-sm) !important; } .mt-3 { margin-top: var(--space-md) !important; } .mt-4 { margin-top: var(--space-lg) !important; } .mt-5 { margin-top: var(--space-xl) !important; }
+.mb-1 { margin-bottom: var(--space-xs) !important; } .mb-2 { margin-bottom: var(--space-sm) !important; } .mb-3 { margin-bottom: var(--space-md) !important; } .mb-4 { margin-bottom: var(--space-lg) !important; } .mb-5 { margin-bottom: var(--space-xl) !important; }
+.p-0 { padding: 0 !important; } .p-1 { padding: var(--space-xs) !important; } .p-2 { padding: var(--space-sm) !important; } .p-3 { padding: var(--space-md) !important; } .p-4 { padding: var(--space-lg) !important; } .p-5 { padding: var(--space-xl) !important; }
+.gap-1 { gap: var(--space-xs) !important; } .gap-2 { gap: var(--space-sm) !important; } .gap-3 { gap: var(--space-md) !important; } .gap-4 { gap: var(--space-lg) !important; }
+
+.d-flex { display: flex !important; }
+.flex-column { flex-direction: column !important; }
+.justify-between { justify-content: space-between !important; }
+.justify-center { justify-content: center !important; }
+.align-center { align-items: center !important; }
+.text-center { text-align: center !important; }
+.d-flex.justify-between.align-center { align-items: baseline !important; margin-bottom: 2rem; }
+
+/* Google Maps Overrides */
+#mapContainer { border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+#locationInput { background-color: #fff; }
+.pac-container { border-radius: var(--radius-md); }
+
+/* ==========================================
+   11. RESPONSIVE DESIGN
+========================================== */
+@media (max-width: 1024px) {
+    .sidebar { width: 80px; }
+    .sidebar-nav span { display: none; }
+    .dashboard-main { margin-left: 80px; }
+}
+
+@media (max-width: 768px) {
+    .nav-links { display: none; }
+    .container { padding: 0 1rem; }
+}
+
+/* ==========================================
+   BULLETPROOF DROPDOWN OVERRIDES
+========================================== */
+
+.nav-links .dropdown-menu a.dropdown-item {
+    font-weight: 400 !important; 
+    font-size: 0.9rem !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    padding: 0.6rem 1.5rem !important;
+    display: block !important;
+    width: 100% !important;
+    transition: all 0.2s ease !important;
+    
+    /* NEW: Force the hand cursor and bring to front */
+    cursor: pointer !important; 
+    position: relative !important;
+    z-index: 50 !important;
+}
+
+.nav-links .dropdown-menu a.dropdown-item::after {
+    display: none !important;
+}
+
+.nav-links .dropdown-menu a.dropdown-item:hover {
+    color: #ffffff !important; 
+    background-color: rgba(230, 57, 70, 0.1) !important; 
+    padding-left: 1.85rem !important; 
+}
+
+.nav-links .dropdown-menu a.dropdown-item.text-danger {
+    color: #ff4d4d !important;
+    font-weight: 500 !important;
+}
+
+.nav-links .dropdown-menu a.dropdown-item.text-danger:hover {
+    background-color: rgba(230, 57, 70, 0.15) !important;
+    color: #ff4d4d !important;
+}
+
+/* ==========================================
+   SEAMLESS AUTH FORM STYLING (NO CARD)
+========================================== */
+
+/* 1. Ensure the container has no background or borders */
+.auth-form-container {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    backdrop-filter: none !important;
+}
+
+/* 2. Space out the headers so they don't touch the inputs */
+.auth-form-container .text-center.mb-5,
+.auth-form-container .text-center.mb-4 {
+    margin-bottom: 3rem !important; 
+}
+
+/* 3. Make inputs slightly darker to pop against the background */
+.form-floating .input {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+}
+
+.form-floating .input:focus {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.15) !important;
+}
+
+/* 4. FIX CHROME AUTOFILL IN DARK MODE */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active{
+    -webkit-box-shadow: 0 0 0 30px #111111 inset !important; /* Matches your dark bg */
+    -webkit-text-fill-color: #ffffff !important; /* Keeps text white */
+    transition: background-color 5000s ease-in-out 0s;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Make sure the floating label stays readable over the autofill */
+.form-floating .input:-webkit-autofill ~ label {
+    top: 0.8rem !important;
+    font-size: 0.7rem !important;
+    color: var(--primary);
+    font-weight: 500;
+}
+
+/* ==========================================
+   FIT-TO-SCREEN AUTH OVERRIDES (NO SCROLLING)
+========================================== */
+
+/* 1. Reduce outer padding of the right-side panel */
+.auth-form-side {
+    padding: 1rem 2rem !important; 
+}
+
+/* 2. Shrink the massive gap under the "Join EventHub" title */
+.auth-form-container .text-center.mb-5,
+.auth-form-container .text-center.mb-4 {
+    margin-bottom: 1.5rem !important; /* Reduced from 3rem */
+}
+
+/* 3. Tighten the space between the input fields */
+.form-floating {
+    margin-bottom: 1.2rem !important; /* Reduced from 1.8rem */
+}
+
+/* 4. Adjust error text so it still fits in the smaller gaps */
+.form-floating .error-text {
+    bottom: -1.1rem;
+    font-size: 0.75rem;
+}
+
+/* 5. Reduce the spacing around the "OR REGISTER WITH" text */
+.mt-4 { margin-top: 1rem !important; }
+.mb-4 { margin-bottom: 1rem !important; }
+
+/* 6. Slightly slim down the heights of the inputs and buttons */
+.form-floating .input,
+.auth-form-container .btn {
+    height: 3rem !important; /* Slimmed down from 3.2rem */
+}
+
+/* 7. Re-align floating label for the slimmer inputs */
+.form-floating label,
+.form-floating .password-toggle {
+    top: 1.5rem !important; 
+}
+
+/* ==========================================
+   FIX FLOATING LABEL WHITE RECTANGLE
+========================================== */
+
+/* 1. Kill the default white background block injected by Bootstrap */
+.form-floating > label::after {
+    background-color: transparent !important;
+}
+
+/* 2. Style the default inactive label */
+.form-floating > label {
+    color: rgba(255, 255, 255, 0.5) !important;
+    transition: all 0.2s ease-in-out;
+}
+
+/* 3. Add the sleek new hover/focus effect (No backgrounds, just text styling) */
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .input:-webkit-autofill ~ label {
+    color: #E63946 !important; /* Your EventHub Red */
+    transform: scale(0.85) translateY(-0.75rem) translateX(0.5rem) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px;
+    background: transparent !important;
+    /* Optional: Add a tiny text shadow for a subtle glow */
+    text-shadow: 0 0 8px rgba(230, 57, 70, 0.4); 
+}
+
+
+/* ==========================================
+   BULLETPROOF FLOATING LABEL ANIMATION
+========================================== */
+
+/* 1. Kill the default white background block */
+.form-floating > label::after {
+    display: none !important; 
+}
+
+/* 2. Default state (Inactive - sitting inside the input) */
+.form-floating > label {
+    color: rgba(255, 255, 255, 0.5) !important;
+    padding-top: 1rem !important; 
+    padding-left: 1.2rem !important;
+    transition: all 0.2s ease-in-out !important;
+}
+/* 3. Active state (When clicked/focused, or when text is inside) */
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .input:-webkit-autofill ~ label {
+    /* Adjust translateY to keep it inside the rounded box */
+    transform: scale(0.82) translateY(-0.6rem) translateX(0.1rem) !important; 
+    color: #E63946 !important; 
+    font-weight: 600;
+}
+
+/* ==========================================
+   PASSWORD TOGGLE EYE ICON
+========================================== */
+
+/* ==========================================
+   PASSWORD TOGGLE EYE ICON (FORCED POSITION)
+========================================== */
+
+.password-toggle {
+    position: absolute !important;
+    right: 15px !important;
+    
+    /* THE FIX: Anchor it to the bottom instead of the top */
+    bottom: 12px !important; 
+    top: auto !important; /* Kills any old 'top' rules */
+    transform: none !important; /* Kills the old centering translation */
+    
+    background: transparent !important;
+    border: none !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    font-size: 1.2rem !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    padding: 0 !important;
+    transition: color 0.2s ease-in-out !important;
+}
+
+.password-toggle:hover {
+    color: #E63946 !important; 
+}
+
+/* ==========================================
+   GLOBAL INPUT STYLING (MATCHING SCREENSHOT)
+========================================== */
+
+/* 1. The main input box styling */
+.form-floating .form-control,
+.form-floating .input {
+    background-color: #161616 !important; /* Sleek dark grey background */
+    border: 1px solid rgba(255, 255, 255, 0.08) !important; /* Subtle border */
+    border-radius: 12px !important; /* The smooth rounded corners from your image */
+    color: #ffffff !important;
+    box-shadow: none !important;
+    height: 3.5rem !important;
+    /* Ensure text doesn't type over the eye icon */
+    padding-right: 2.5rem !important; 
+}
+
+/* 2. The glow effect when you click inside */
+.form-floating .form-control:focus,
+.form-floating .input:focus {
+    border-color: #E63946 !important; /* EventHub Red */
+    background-color: #1a1a1a !important;
+    box-shadow: 0 0 0 2px rgba(230, 57, 70, 0.15) !important;
+}
+
+/* 3. The exact positioning and color of the "Password" placeholder text */
+.form-floating > label {
+    color: rgba(255, 255, 255, 0.6) !important;
+    font-weight: 500 !important;
+    padding-left: 1.2rem !important;
+    /* Centers the text perfectly when inactive */
+    display: flex;
+    align-items: center;
+    height: 100%;
+    top: 0 !important;
+    transform-origin: 0 0;
+}
+
+/* 4. Fix Chrome's ugly white autofill to match the dark theme perfectly */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active{
+    -webkit-box-shadow: 0 0 0 30px #161616 inset !important;
+    -webkit-text-fill-color: #ffffff !important;
+    transition: background-color 5000s ease-in-out 0s;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+}
+
+
+/* ==========================================
+   MASTER FLOATING LABEL FIX (RESOLVES CONFLICTS)
+========================================== */
+
+/* 1. Ensure the typed text has enough room at the bottom so it doesn't overlap the red label */
+.form-floating > .form-control,
+.form-floating > .input {
+    padding-top: 1.5rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-left: 1.2rem !important;
+}
+
+/* 2. Reset the label position to sit perfectly in the vertical center when empty */
+.form-floating > label {
+    position: absolute !important;
+    top: 50% !important;
+    left: 0 !important;
+    transform: translateY(-50%) !important;
+    height: auto !important;
+    padding: 0 0 0 1.2rem !important;
+    display: block !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    transition: all 0.2s ease-in-out !important;
+    transform-origin: 0 0 !important;
+    align-items: flex-start !important;
+}
+
+/* 3. Destroy Bootstrap's glitchy white border mask completely */
+.form-floating > label::after {
+    display: none !important;
+}
+
+/* 4. The precise active state (shrinks and snaps to the top-left inside the box) */
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .input:-webkit-autofill ~ label,
+.form-floating > input:-webkit-autofill ~ label {
+    top: 0.6rem !important; 
+    transform: translateY(0) scale(0.82) !important; 
+    color: #E63946 !important; 
+    font-weight: 600 !important;
+}
+
+.otp-input {
+    width: 65px; /* Slightly wider */
+    height: 75px; /* Slightly taller */
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: white;
+    
+    /* THE FIX: Massive font size */
+    font-size: 2.8rem !important; 
+    
+    font-weight: 700;
+    text-align: center;
+    transition: var(--transition);
+}
+
+/* ==========================================
+   BOOTSTRAP TEXT COLOR OVERRIDES
+========================================== */
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+.text-dim {
+    color: var(--text-dim) !important;
+}
+
+/* Ensure standard text is always white */
+p {
+    color: var(--text-main);
+}
