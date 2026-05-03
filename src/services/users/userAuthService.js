@@ -3,7 +3,7 @@ import HTTP_STATUS from "../../constant/statusCode.js";
 import bcrypt from 'bcrypt' 
 import AppError from "../../utils/AppError.js";
 import OTP from "../../models/users/otp.js";
-import sendEmail from "../../utils/sendEmail.js";
+import {sendOtpEmail, sendOrganizerCredentials} from "../../utils/sendEmail.js";
 import generateOTP from "../../utils/generateOtp.js";
 import passport from "passport";
 
@@ -18,14 +18,9 @@ export const findUser = async (userdata)=>{
         email: userdata.email,
         code: otp,
     })
-
-    await sendEmail({
-        email: userdata.email,
-        subject: 'Verify your EventHub Account',
-        message: `Your verification code is ${otp}. It expires in 5 minutes.`,
-        html: `<h1 style="color: #E63946;">EventHub Verification</h1>
-               <p>Your 4-digit code is: <strong>${otp}</strong></p>`
-    })
+    
+    await sendOtpEmail(userdata.email, otp, 'Verify Email OTP')
+    
 
     return true
 }
@@ -50,8 +45,11 @@ export const verifyAndCreateUser = async (email, otp, tempUserData)=>{
         city: tempUserData.city,
         phone:tempUserData.phone
     })
-
+    
     return await newUser.save()
+    if(tempUserData.role == 'organizer'){
+        await sendOrganizerCredentials(tempUserData.email, tempUserData.password, tempUserData.organizationName)
+    }
 }
 
 export const verifyLogin = async (email, password) =>{
@@ -78,13 +76,7 @@ export const forgotePasswordVerify = async (email) =>{
             email: email,
             code: otp,
         })
-        await sendEmail({
-            email: existingUser.email,
-            subject: "Verify Email for Reset Password",
-            message: `Your verification code is ${otp}. It expires in 5 minutes.`,
-            html: `<h1 style="color: #E63946;">EventHub Verification</h1>
-               <p>Your 4-digit code is: <strong>${otp}</strong></p>`
-        })
+        await sendOtpEmail(existingUser.email, otp, 'Reset Password')
         return existingUser
     }else if(!existingUser){
         throw new AppError('User not Found', HTTP_STATUS.NOT_FOUND)
@@ -98,13 +90,7 @@ export const updateUserOtp = async (email, newOtp) =>{
     if(!updateUser){
         throw new AppError('Internal Server Error', HTTP_STATUS.INTERNAL_SERVER_ERROR)
     }
-    await sendEmail({
-        email: email,
-        subject: 'Resend OTP',
-        message: `Your verification code is ${updateUser.code}. It expires in 5 minutes.`,
-        html: `<h1 style="color: #E63946;">EventHub Verification</h1>
-               <p>Your 4-digit code is: <strong>${updateUser.code}</strong></p>`
-    })
+    await sendOtpEmail(updateUser.email, updateUser.code, 'Resend OTP')
     return updateUser
 }
 

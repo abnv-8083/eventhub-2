@@ -122,6 +122,10 @@ header {
 }
 
 .navbar-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 1000; /* Keeps it above all your dashboard content */
+    width: 100%;
     background: rgba(10, 10, 10, 0.7) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
@@ -578,17 +582,30 @@ select.input option { background: var(--bg-surface); color: white; }
 .toast {
     min-width: 320px;
     max-width: 400px;
-    background: rgba(22, 22, 22, 0.85); 
-    backdrop-filter: blur(16px) saturate(180%);
+    
+    /* 1. LOWER OPACITY: Let the background bleed through more */
+    background: rgba(22, 22, 22, 0.35); 
+    
+    /* 2. HIGHER BLUR & SATURATION: Creates the heavy frosted effect */
+    backdrop-filter: blur(28px) saturate(200%);
+    -webkit-backdrop-filter: blur(28px) saturate(200%); /* For Safari */
+    
     border-radius: 12px; 
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    
+    /* 3. EDGE REFLECTION: Stronger top/left borders mimic light hitting glass */
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    
+    /* 4. INSET SHADOW: Adds depth inside the glass */
+    box-shadow: 
+        0 15px 40px rgba(0, 0, 0, 0.6), /* Outer dark shadow */
+        inset 0 1px 0 rgba(255, 255, 255, 0.1); /* Inner light reflection */
+        
     color: var(--text-main); 
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
     transform: translateX(120%) scale(0.9); 
     opacity: 0; 
     transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    
-    /* Crucial: Keeps the progress bar strictly inside the rounded corners */
     overflow: hidden; 
     position: relative;
 }
@@ -678,15 +695,61 @@ select.input option { background: var(--bg-surface); color: white; }
 
 /* Full Screen Loader */
 .loader-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(8px);
-    display: none; justify-content: center; align-items: center; z-index: 9999; flex-direction: column; gap: 1.5rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(22, 22, 22, 0.9); /* Dark semi-transparent background */
+    backdrop-filter: blur(12px); /* Beautiful frosted glass effect */
+    z-index: 9999;
+    display: flex; /* Kept as flex so we can center it */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
 }
-.loader-spinner {
-    width: 50px; height: 50px; border: 3px solid rgba(230, 57, 70, 0.1); border-top: 3px solid var(--primary);
-    border-radius: 50%; animation: spin 1s linear infinite;
+
+.custom-loader-img {
+    width: 180px; /* Adjust this to make your logo bigger or smaller */
+    height: auto;
+    
+    /* The animation link */
+    animation: elasticBounce 1.5s infinite ease-in-out;
 }
-.loader-text { color: var(--text-main); font-weight: 500; letter-spacing: 1px; font-size: 0.9rem; }
+
+@keyframes elasticBounce {
+    0%, 100% { 
+        transform: translateY(0) scaleY(1) scaleX(1); 
+        filter: drop-shadow(0 15px 10px rgba(230, 57, 70, 0.2));
+    }
+    15% { 
+        /* The Squash on impact */
+        transform: translateY(15px) scaleY(0.8) scaleX(1.15); 
+        filter: drop-shadow(0 5px 5px rgba(230, 57, 70, 0.6));
+    }
+    30% { 
+        /* The Stretch on the way up */
+        transform: translateY(-35px) scaleY(1.1) scaleX(0.9); 
+        filter: drop-shadow(0 30px 15px rgba(230, 57, 70, 0.1));
+    }
+    50% { transform: translateY(0) scaleY(1) scaleX(1); } 
+    65% { transform: translateY(-15px) scaleY(1.05) scaleX(0.95); } /* Mini bounce */
+    80% { transform: translateY(0) scaleY(1) scaleX(1); } 
+}
+
+.loader-text {
+    color: var(--text-main);
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    animation: fadeInOut 2s infinite ease-in-out;
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
 
 /* ==========================================
    9. ADMIN / DASHBOARD
@@ -1141,4 +1204,20 @@ input:-webkit-autofill:active{
 /* Ensure standard text is always white */
 p {
     color: var(--text-main);
+}
+
+/* Google Button Disabled State */
+.google-btn-disabled {
+    /* 1. Blur the entire button and remove the color */
+    filter: blur(3px) grayscale(100%) !important;
+    
+    /* 2. Drop the opacity slightly so it fades back */
+    opacity: 0.6;
+    
+    /* 3. Disable interactions */
+    cursor: not-allowed !important;
+    pointer-events: none;
+    
+    /* Smooth transition when it blurs */
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }

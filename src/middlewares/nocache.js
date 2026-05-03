@@ -1,5 +1,6 @@
 
-const noCache = (req, res, next) => {
+
+const noCacheMiddleware = (req, res, next) => {
     // Force the browser to never store the page on the hard drive or RAM
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     
@@ -12,4 +13,4 @@ const noCache = (req, res, next) => {
     next();
 };
 
-export default noCache 
+export default noCacheMiddleware 

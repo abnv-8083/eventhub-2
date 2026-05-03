@@ -9,4 +9,40 @@
     <script src="/js/validation.js" defer></script>
     <script src="/js/toast.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- GLOBAL TOAST NOTIFICATION HANDLER -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Grab all possible parameter names you might use
+            const errorMessage = urlParams.get('error');
+            const successMessage = urlParams.get('success');
+            const genericMessage = urlParams.get('message'); // Matches your screenshot!
+
+            // Helper function to clean the URL after showing the toast
+            const cleanUrl = () => {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            };
+
+            // If the library isn't loaded, don't crash
+            if (typeof Toast === 'undefined') {
+                console.error("Toast library is not loaded yet!");
+                return;
+            }
+
+            // Fire the correct toast based on what is in the URL
+            if (errorMessage) {
+                Toast.error(errorMessage);
+                cleanUrl();
+            } else if (successMessage) {
+                Toast.success(successMessage);
+                cleanUrl();
+            } else if (genericMessage) {
+                // Treat generic messages as errors (since it's a session expiration)
+                Toast.error(genericMessage);
+                cleanUrl();
+            }
+        });
+    </script>
 </head>
