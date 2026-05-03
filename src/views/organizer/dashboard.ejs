@@ -1,0 +1,74 @@
+<%- include('../partials/head') %>
+<body class="bg-mesh">
+    
+    <%- include('../partials/navbar-auth') %> 
+
+    <div class="dashboard-layout">
+        <%- include('../partials/organizer-sidebar') %>
+
+        <main class="dashboard-main">
+            <!-- Header Section -->
+            <div class="d-flex justify-between align-center mb-5 animate stagger-1">
+                <div>
+                    <h2 style="font-size: 2rem;">Overview</h2>
+                    <p class="text-muted">Welcome to your organizer headquarters, <%= organizer.organizationName %>.</p>
+                </div>
+                <a href="/organizer/events/new" class="btn btn-primary">
+                    <i class="fi fi-rr-plus" style="margin-right: 8px;"></i> Create Event
+                </a>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="footer-grid animate stagger-2" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+                
+                <div class="card card-content">
+                    <div class="d-flex justify-between align-center mb-2">
+                        <h3 class="text-dim" style="font-size: 0.95rem; margin: 0;">Total Revenue</h3>
+                    </div>
+                    <div style="font-size: 2.2rem; font-weight: 700;">₹0.00</div>
+                </div>
+
+                <div class="card card-content">
+                    <div class="d-flex justify-between align-center mb-2">
+                        <h3 class="text-dim" style="font-size: 0.95rem; margin: 0;">Tickets Sold</h3>
+                    </div>
+                    <div style="font-size: 2.2rem; font-weight: 700;">0</div>
+                </div>
+
+                <div class="card card-content">
+                    <div class="d-flex justify-between align-center mb-2">
+                        <h3 class="text-dim" style="font-size: 0.95rem; margin: 0;">Active Events</h3>
+                    </div>
+                    <div style="font-size: 2.2rem; font-weight: 700;">0</div>
+                </div>
+            </div>
+
+            <!-- Empty State Table -->
+            <div class="glass-dark p-4 animate stagger-3" style="border-radius: var(--radius-md);">
+                <div class="d-flex justify-between align-center mb-4">
+                    <h3 style="margin: 0; font-size: 1.25rem;">Recent Events</h3>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Event Details</th>
+                                <th>Date & Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="3" class="text-center p-5">
+                                    <p class="text-muted">No events found.</p>
+                                    <p class="text-dim">Ready to host? Click 'Create Event' to get started.</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

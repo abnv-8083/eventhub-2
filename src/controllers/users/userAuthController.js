@@ -3,7 +3,7 @@ import HTTP_STATUS from "../../constant/statusCode.js";
 import generateOTP from "../../utils/generateOtp.js";
 import OTP from "../../models/users/otp.js";
 import { response } from "express";
-import sendEmail from "../../utils/sendEmail.js";
+import {sendOtpEmail} from "../../utils/sendEmail.js";
 
 
 export const getLoginPage = (req,res)=>{
@@ -186,21 +186,41 @@ export const postLoginPage = async (req,res,next)=>{
         }else{
             req.session.cookie.maxAge = 2 * 60 * 60 * 1000;
         }
-        req.session.user = result
-        req.session.save((err)=>{
-            if(err){
-                console.error("Failed to save session:", err);
-                return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-                    success: false,
-                    message: 'Error saving session'
+        if(result.role == 'user'){
+            req.session.user = result
+            req.session.save((err)=>{
+                if(err){
+                    console.error("Failed to save session:", err);
+                    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+                        success: false,
+                        message: 'Error saving session'
+                    });
+                }
+                
+                return res.status(HTTP_STATUS.OK).json({
+                    success: true,
+                    message: `Hi ${result.fullName}`
                 });
-            }
-            
-            return res.status(HTTP_STATUS.OK).json({
-                success: true,
-                message: `Hi ${result.fullName}`
-            });
-        })
+            })
+        }else if(result.role == 'organizer'){
+            req.session.organizer = result
+            req.session.save((err)=>{
+                if(err){
+                    console.error("Failed to save session:", err);
+                    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+                        success: false,
+                        message: 'Error saving session'
+                    });
+                }
+                
+                return res.status(HTTP_STATUS.OK).json({
+                    success: true,
+                    message: `Hi ${result.fullName}`,
+                    redirect: '/organizer'
+                });
+            })
+        }
+        
     } catch (error) {
         next(error)
     }
@@ -234,7 +254,6 @@ export const postForgotPassword = async (req,res,next)=>{
 
 export const postResetPassword = async (req,res,next)=>{
     try {
-        console.log(req.body)
         const {newPassword, confirmPassword, email} = req.body
         const result = await userAuthService.resetUserPassword(newPassword, confirmPassword, email)
 
