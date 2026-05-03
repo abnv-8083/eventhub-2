@@ -1,0 +1,41 @@
+<!-- src/views/partials/admin-sidebar.ejs -->
+<aside class="sidebar">
+    <div class="sidebar-brand p-4">
+        <a href="/admin/dashboard" class="logo">
+            <h3 class="m-0">Event<span>Hub</span></h3>
+        </a>
+    </div>
+    
+    <nav class="sidebar-nav">
+        <!-- Dashboard Overview -->
+        <a href="/admin/dashboard" class="<%= title === 'Admin Dashboard' ? 'active' : '' %>">
+            <i class="fi fi-rr-apps"></i> <span>Overview</span>
+        </a>
+
+        <!-- Organizer Management -->
+        <a href="/admin/organizers" class="<%= title === 'Manage Organizers' ? 'active' : '' %>">
+            <i class="fi fi-rr-users-alt"></i> <span>Organizers</span>
+        </a>
+
+        <!-- Event Moderation -->
+        <a href="/admin/events" class="<%= title === 'All Events' ? 'active' : '' %>">
+            <i class="fi fi-rr-calendar-lines"></i> <span>All Events</span>
+        </a>
+
+        <!-- User Management -->
+        <a href="/admin/users" class="<%= title === 'Manage Users' ? 'active' : '' %>">
+            <i class="fi fi-rr-user"></i> <span>User Base</span>
+        </a>
+
+        <!-- System Settings -->
+        <a href="/admin/settings" class="<%= title === 'System Settings' ? 'active' : '' %>">
+            <i class="fi fi-rr-settings"></i> <span>Settings</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer mt-auto p-3">
+        <a href="/admin/logout" class="text-danger d-flex align-center gap-2" style="font-weight: 600;">
+            <i class="fi fi-rr-exit"></i> <span>Secure Logout</span>
+        </a>
+    </div>
+</aside>

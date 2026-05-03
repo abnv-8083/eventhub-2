@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+    <title>Admin Authentication | EventHub</title>
+</head>
+<body class="bg-mesh">
+    <div class="auth-split-layout">
+        <!-- Left Side: Professional Admin Branding -->
+        <div class="auth-image-side" style="background-image: url('/images/admin-bg.jpg');">
+            <div class="auth-image-overlay">
+                <h1 class="display-4 fw-bold">Command <span class="text-gradient">Center</span></h1>
+                <p class="text-muted opacity-75">Secure access for EventHub system administrators.</p>
+            </div>
+        </div>
+
+        <!-- Right Side: Login Form -->
+        <div class="auth-form-side">
+            <a href="/" class="auth-back-btn">&larr; Back to Home</a>
+            
+            <div class="auth-form-container animate">
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold">Admin Login</h2>
+                    <p class="text-dim">Enter your secure credentials to continue</p>
+                </div>
+
+                <form action="/admin/login" method="POST">
+                    <div class="form-floating">
+                        <input type="email" name="email" class="form-control input" id="adminEmail" placeholder="name@example.com" required>
+                        <label for="adminEmail">Admin Email</label>
+                    </div>
+
+                    <div class="form-floating password-group">
+                        <input type="password" name="password" class="form-control input" id="adminPass" placeholder="Password" required>
+                        <label for="adminPass">Security Key</label>
+                        <button type="button" class="password-toggle" onclick="togglePassword('adminPass')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 mt-3">
+                        Authenticate System
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(id) {
+            const input = document.getElementById(id);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+    </script>
+</body>
+</html>

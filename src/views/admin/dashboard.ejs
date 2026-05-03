@@ -1,0 +1,27 @@
+<!-- src/views/admin/dashboard.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head') %>
+    <title>Admin Dashboard | EventHub</title>
+</head>
+<body class="bg-mesh">
+    <div class="dashboard-layout">
+        <!-- Integrated Sidebar Partial -->
+        <%- include('../partials/admin-sidebar') %>
+
+        <main class="dashboard-main">
+            <header class="d-flex justify-between align-center mb-5 animate stagger-1">
+                <div>
+                    <h2 class="fw-bold">Command Center</h2>
+                    <p class="text-dim m-0">System administration and oversight</p>
+                </div>
+                <div class="profile-avatar-btn">A</div>
+            </header>
+
+            <!-- Rest of your dashboard content (Stats, Tables, etc.) -->
+            
+        </main>
+    </div>
+</body>
+</html>

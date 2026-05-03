@@ -1,4 +1,6 @@
 import HTTP_STATUS from "../../constant/statusCode.js"
+
+
 export const postLogout = (req,res, next)=>{
     try {
         delete req.session.organizer
