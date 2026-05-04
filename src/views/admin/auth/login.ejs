@@ -1,13 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <%- include('../../partials/head') %>
-    <title>Admin Authentication | EventHub</title>
-</head>
+
+<%- include('../../partials/head') %>
+<div id="custom-loader" class="loader-overlay" style="display: none;">
+    <img src="/images/loader-logo.png" alt="Loading..." class="custom-loader-img">
+    <div class="loader-text" id="loader-text">PLEASE WAIT...</div>
+</div>
+
 <body class="bg-mesh">
     <div class="auth-split-layout">
         <!-- Left Side: Professional Admin Branding -->
-        <div class="auth-image-side" style="background-image: url('/images/admin-bg.jpg');">
+        <div class="auth-image-side">
             <div class="auth-image-overlay">
                 <h1 class="display-4 fw-bold">Command <span class="text-gradient">Center</span></h1>
                 <p class="text-muted opacity-75">Secure access for EventHub system administrators.</p>
@@ -24,17 +25,18 @@
                     <p class="text-dim">Enter your secure credentials to continue</p>
                 </div>
 
-                <form action="/admin/login" method="POST">
+                <form id="adminLoginForm">
                     <div class="form-floating">
-                        <input type="email" name="email" class="form-control input" id="adminEmail" placeholder="name@example.com" required>
+                        <input type="email" name="email" class="form-control input" id="adminEmail" placeholder=" " required>
                         <label for="adminEmail">Admin Email</label>
                     </div>
 
                     <div class="form-floating password-group">
                         <input type="password" name="password" class="form-control input" id="adminPass" placeholder="Password" required>
                         <label for="adminPass">Security Key</label>
-                        <button type="button" class="password-toggle" onclick="togglePassword('adminPass')">
-                            <i class="bi bi-eye"></i>
+                        <!-- Updated onclick and icon class -->
+                        <button type="button" class="password-toggle" onclick="togglePassword('adminPass', this)">
+                            <i class="fi fi-rr-eye"></i>
                         </button>
                     </div>
 
@@ -47,10 +49,44 @@
     </div>
 
     <script>
-        function togglePassword(id) {
-            const input = document.getElementById(id);
-            input.type = input.type === 'password' ? 'text' : 'password';
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fi-rr-eye', 'fi-rr-eye-crossed'); // Crossed-out eye
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fi-rr-eye-crossed', 'fi-rr-eye'); // Normal eye
+            }
         }
+
+        const adminLoginForm = document.getElementById('adminLoginForm')
+
+        adminLoginForm.addEventListener('submit', async (e)=>{
+            e.preventDefault()
+
+            const loader = document.getElementById('custom-loader')
+
+            loader.style.display = 'flex'
+
+            const formData = new FormData(adminLoginForm)
+            const data = Object.fromEntries(formData.entries())
+
+            try {
+                const response = await axios.post('/admin/login',data)
+                if(response.data.success){
+                    Toast.success(response.data.message)
+                    setTimeout(()=>window.location.href = response.data.redirect,2000)
+                }
+            } catch (error) {
+                loader.style.display = 'none';
+                Toast.error(error.response?.data?.message || 'Invalid Credintails');
+            }
+        })
+
+
     </script>
 </body>
 </html>

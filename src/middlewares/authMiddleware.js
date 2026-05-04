@@ -40,3 +40,12 @@ export const isOrganizerAuthenticated = (req, res, next) => {
     // They are logged in, allow them to proceed
     next();
 };
+
+export const isAdminAuthenticated = (req, res, next) => {
+    if (!req.session || !req.session.admin) {
+        // They are not logged in, redirect them to the login page
+        return res.redirect('/admin/?message=Session Expired. Please log in.');
+    }
+    // They are logged in, allow them to proceed
+    next();
+};

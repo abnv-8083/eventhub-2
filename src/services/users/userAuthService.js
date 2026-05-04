@@ -1,6 +1,6 @@
 import User from "../../models/users/user.js";
 import HTTP_STATUS from "../../constant/statusCode.js";
-import bcrypt from 'bcrypt' 
+import argon2 from "argon2";
 import AppError from "../../utils/AppError.js";
 import OTP from "../../models/users/otp.js";
 import {sendOtpEmail, sendOrganizerCredentials} from "../../utils/sendEmail.js";
@@ -34,8 +34,7 @@ export const verifyAndCreateUser = async (email, otp, tempUserData)=>{
     }
 
 
-    const salt = await bcrypt.genSalt(12)
-    const hashPassword = await bcrypt.hash(tempUserData.password, salt)
+    const hashPassword = await argon2.hash(tempUserData.password)
     const newUser = new User({
         fullName: tempUserData.fullName,
         email: tempUserData.email,
@@ -53,12 +52,15 @@ export const verifyAndCreateUser = async (email, otp, tempUserData)=>{
 }
 
 export const verifyLogin = async (email, password) =>{
-
     const existingUser = await User.findOne({email:email}).select('+password')
     if(existingUser){
-        const checkPassword = await bcrypt.compare(password,existingUser.password)
+        const checkPassword = await argon2.verify(existingUser.password, password)
         if(checkPassword){
-            return existingUser
+            if(existingUser.role == 'admin'){
+                throw new AppError('Invalid Access', HTTP_STATUS.NOT_FOUND)
+            }else{
+                return existingUser
+            }
         }else{
             throw new AppError('Password is Incorrect', HTTP_STATUS.NOT_FOUND)
         }
@@ -110,13 +112,12 @@ export const resetUserPassword = async (newPassword,confirmPassword, email)=>{
 
     const getuser = await User.findOne({email:email}).select('+password')
 
-    const comparePassword = await bcrypt.compare(newPassword, getuser.password)
+    const comparePassword = await argon2.verify(getuser.password, newPassword)
     if(comparePassword){
         throw new AppError('This Password is currently Using Please give another Password', HTTP_STATUS.BAD_REQUEST)
     }
 
-    const salt = await bcrypt.genSalt(12)
-    const hashPassword = await bcrypt.hash(newPassword, salt)
+    const hashPassword = await argon2.hash(newPassword)
     
     const updateUserPassword = await User.findOneAndUpdate({email:email}, {password: hashPassword}, {upsert: true, next: true})
 

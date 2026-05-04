@@ -21,6 +21,8 @@ import noCacheMiddleware from './src/middlewares/nocache.js';
 import userAuthRouter from './src/routes/users/userAuthRoutes.js';
 import userRouter from './src/routes/users/userRoutes.js';
 import organizerRouter from './src/routes/organizers/organizerRoutes.js';
+import adminAuthRoutes from './src/routes/admin/adminAuthRoutes.js';
+import adminRoutes from './src/routes/admin/adminRoutes.js';
 import { setLocals } from './src/middlewares/setLocals.js';
 
 
@@ -96,9 +98,11 @@ if (process.env.NODE_ENV === 'development') {
     app.use(morgan('combined'));
 }
 
+app.use('/', userRouter)
 app.use('/user', userAuthRouter)
 app.use('/organizer', organizerRouter)
-app.use('/', userRouter)
+app.use('/admin', adminAuthRoutes)
+app.use('/admin', adminRoutes)
 
 
 // 404 Error Handler
@@ -111,7 +115,7 @@ app.use(errorHandler);
 // ==========================================
 // 5. Start Server
 // ==========================================
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8083;
 
 app.listen(PORT, () => {
     console.log(`🚀 EventHub Server is running on http://localhost:${PORT} or https://justly-mocha-preorder.ngrok-free.dev`);

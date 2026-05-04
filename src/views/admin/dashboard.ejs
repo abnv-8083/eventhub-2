@@ -1,4 +1,3 @@
-<!-- src/views/admin/dashboard.ejs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,20 +5,26 @@
     <title>Admin Dashboard | EventHub</title>
 </head>
 <body class="bg-mesh">
+    
+    <!-- 1. Include the global top navbar -->
+    <%- include('../partials/navbar-auth') %>
+
     <div class="dashboard-layout">
         <!-- Integrated Sidebar Partial -->
         <%- include('../partials/admin-sidebar') %>
-
+        
         <main class="dashboard-main">
-            <header class="d-flex justify-between align-center mb-5 animate stagger-1">
+            <!-- 2. Changed <header> to <div> so it doesn't pick up nav CSS -->
+            <div class="d-flex justify-between align-center mb-5 animate stagger-1">
                 <div>
                     <h2 class="fw-bold">Command Center</h2>
                     <p class="text-dim m-0">System administration and oversight</p>
                 </div>
-                <div class="profile-avatar-btn">A</div>
-            </header>
+                <!-- Note: The hardcoded Avatar "A" was removed from here 
+                     because the top navbar now handles your profile menu perfectly! -->
+            </div>
 
-            <!-- Rest of your dashboard content (Stats, Tables, etc.) -->
+            <!-- Rest of your dashboard content (Stats, Tables, etc.) goes here -->
             
         </main>
     </div>

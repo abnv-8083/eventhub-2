@@ -74,6 +74,42 @@
         <a id="organizerLogoutButton" class="dropdown-item text-danger" style="cursor: pointer;">Logout</a>
     </div> <!-- FIXED: Closed dropdown-menu -->
 
+<% }else if(admin) {%>
+    <header class="navbar-sticky glass-dark">
+        <div class="container nav-container">
+            <a href="/" class="logo">
+                Event<span class="text-gradient">Hub</span>
+            </a>
+            <nav class="nav-links d-flex align-center gap-3">
+                
+                <!-- <a href="/organizer/dashboard" class="text-gradient" style="font-weight: 600;">Manage My Events</a> -->
+
+                <div class="user-menu" style="position: relative;">
+                    <!-- Circular Avatar Button -->
+                    <button class="profile-avatar-btn" id="userMenuBtn" aria-label="Profile Menu">
+                        <% if(admin.avatar) {%>
+                            <img src="<%= admin.avatar %>" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                        <% }else{ %>
+                            <% const initial = admin.fullName ? admin.fullName.charAt(0).toUpperCase() : 'O'; %>
+                            <span><%= initial %></span>
+                        <% } %>
+                    </button>
+                </div>           
+            </nav>
+        </div>
+    </header>
+    
+    <div class="dropdown-menu glass-dark" id="userDropdown" style="position: fixed; display: none; z-index: 9999;">
+        <div class="dropdown-header">
+            <small class="text-dim d-block" style="font-size: 0.75rem;">Signed in as</small>
+            <strong style="color: white; font-size: 0.95rem;"><%= admin.fullName || 'Admin' %></strong>
+        </div> <!-- FIXED: Closed dropdown-header -->
+        
+        <a href="/organizer/profile" class="dropdown-item">My Account</a>
+        <hr style="border-color: var(--border); margin: 4px 0;">
+        <a id="adminLogoutButton" class="dropdown-item text-danger" style="cursor: pointer;">Logout</a>
+    </div> <!-- FIXED: Closed dropdown-menu -->
+
 <% } %>
 
 <script>
@@ -129,6 +165,17 @@
             const response = await axios.post('/organizer/logout');
             if(response.data.success){
                 window.location.href = '/';
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    });
+
+    document.getElementById('adminLogoutButton')?.addEventListener('click', async () => {
+        try {
+            const response = await axios.post('/admin/logout');
+            if(response.data.success){
+                window.location.href = '/admin';
             }
         } catch (error) {
             console.log(error);

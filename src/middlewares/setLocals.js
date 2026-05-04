@@ -7,6 +7,9 @@ export const setLocals = (req, res, next) => {
     
     // Organizers
     res.locals.organizer = req.session.organizer || null;
+
+    // Admins
+    res.locals.admin = req.session.admin || null
     
     next();
 };

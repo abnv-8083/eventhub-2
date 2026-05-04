@@ -1221,3 +1221,53 @@ p {
     /* Smooth transition when it blurs */
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+
+.auth-image-side {
+    flex: 1;
+    display: none; 
+    /* The deep, smooth red-to-black gradient */
+    background: radial-gradient(circle at 80% 50%, #4a0e13 0%, #150507 40%, #0a0a0a 100%) !important;
+    position: relative;
+}
+
+@media (min-width: 992px) { 
+    .auth-image-side { display: flex; } 
+}
+
+/* ==========================================
+   SIDEBAR POLISH & OVERRIDES
+========================================== */
+
+/* 1. Hide the scrollbar but keep it scrollable */
+.sidebar-nav {
+    padding-right: 0 !important; /* Removes the gap left by the old scrollbar */
+    margin-top: 1rem;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+.sidebar-nav::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+
+/* 2. Smooth Hover Animations */
+.sidebar a {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Make inactive links slide right slightly on hover */
+.sidebar a:not(.active):hover {
+    transform: translateX(6px);
+    background: rgba(255, 255, 255, 0.03) !important; /* Subtle white hover */
+    color: var(--text-main) !important;
+}
+
+/* 3. Refine the Logout Button area */
+.sidebar-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.05); /* Subtle separator line */
+    padding-top: 1rem !important;
+    margin-top: 1rem;
+}
+.sidebar-footer a:hover {
+    background: rgba(230, 57, 70, 0.1) !important;
+    transform: translateY(-2px) !important; /* Pops up instead of sliding right */
+}
