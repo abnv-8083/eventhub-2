@@ -1,7 +1,7 @@
 <%- include('../../partials/head') %>
-<div id="custom-loader" class="loader-overlay">
-    <div class="loader-spinner"></div>
-    <div class="loader-text">CREATING YOUR ACCOUNT...</div>
+<div id="custom-loader" class="loader-overlay" style="display: none;">
+    <img src="/images/loader-logo.png" alt="Loading..." class="custom-loader-img">
+    <div class="loader-text" id="loader-text">PLEASE WAIT...</div>
 </div>
 <body class="bg-mesh">
     
@@ -89,7 +89,7 @@
                             <hr style="flex-grow: 1; border-color: var(--border); margin: 0;">
                         </div>
 
-                        <a href="/user/auth/google" class="btn btn-google animate stagger-4" style="width: 100%; height: 3.5rem;">
+                        <a href="/user/auth/google" id="googleBtn" class="btn btn-google animate stagger-4" style="width: 100%; height: 3.5rem;">
                             <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="margin-right: 10px;">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -316,6 +316,35 @@
                 }
             }
         })
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Get the dropdown and the Google button
+            const roleSelector = document.getElementById('role'); // Match your select ID
+            const googleBtn = document.getElementById('googleBtn');       // Match your button ID
+
+            // 2. Listen for when the user changes the dropdown
+            roleSelector.addEventListener('change', function() {
+                // Check if the selected value is 'organizer' 
+                // (Make sure this matches the actual value="" in your <option> tag!)
+                if (this.value === 'organizer') {
+                    googleBtn.classList.add('google-btn-disabled');
+                    
+                    // Optional: Change the text to explain why it's disabled
+                    // googleBtn.innerHTML = 'Google Sign-in (Users Only)'; 
+                } else {
+                    googleBtn.classList.remove('google-btn-disabled');
+                    
+                    // Optional: Reset text
+                    // googleBtn.innerHTML = '<img src="/images/google-icon.svg" alt="Google"> Sign up with Google';
+                }
+            });
+            
+            // 3. Run it once on page load just in case the browser remembered the 'organizer' selection
+            if (roleSelector.value === 'organizer') {
+                googleBtn.classList.add('google-btn-disabled');
+            }
+        });
     </script>
 </body>
 </html>

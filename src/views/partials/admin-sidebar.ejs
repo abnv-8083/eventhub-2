@@ -1,0 +1,38 @@
+<!-- src/views/partials/admin-sidebar.ejs -->
+<aside class="sidebar">
+    <!-- Adjusted padding to align logo with nav items -->
+    <div class="sidebar-brand px-3 py-4">
+        <a href="/admin/dashboard" class="logo" style="text-decoration: none;">
+            <h3 class="m-0" style="font-size: 1.6rem; font-weight: 800;">Event<span>Hub</span></h3>
+        </a>
+    </div>
+    
+    <nav class="sidebar-nav px-2">
+        <a href="/admin/dashboard" class="<%= title === 'Admin Dashboard' ? 'active' : '' %>">
+            <i class="fi fi-rr-apps"></i> <span>Overview</span>
+        </a>
+
+        <a href="/admin/organizers" class="<%= title === 'Manage Organizers' ? 'active' : '' %>">
+            <i class="fi fi-rr-users-alt"></i> <span>Organizers</span>
+        </a>
+
+        <a href="/admin/events" class="<%= title === 'All Events' ? 'active' : '' %>">
+            <i class="fi fi-rr-calendar-lines"></i> <span>All Events</span>
+        </a>
+
+        <a href="/admin/users" class="<%= title === 'Manage Users' ? 'active' : '' %>">
+            <i class="fi fi-rr-user"></i> <span>User Base</span>
+        </a>
+
+        <a href="/admin/settings" class="<%= title === 'System Settings' ? 'active' : '' %>">
+            <i class="fi fi-rr-settings"></i> <span>Settings</span>
+        </a>
+    </nav>
+
+    <!-- mt-auto pushes this to the bottom, sidebar-footer adds the separator line -->
+    <div class="sidebar-footer mt-auto px-2 pb-3">
+        <a href="#" id="adminLogoutButton" class="text-danger d-flex align-center gap-2" style="font-weight: 600;">
+            <i class="fi fi-rr-exit"></i> <span>Secure Logout</span>
+        </a>
+    </div>
+</aside>

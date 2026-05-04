@@ -1,5 +1,7 @@
 // src/middlewares/authMiddleware.js
 
+import HTTP_STATUS from "../constant/statusCode.js";
+
 /**
  * Ensures the user is NOT logged in.
  * Use this for routes like Login, Signup, Forgot Password.
@@ -20,12 +22,30 @@ export const isGuest = (req, res, next) => {
  * Ensures the user IS logged in.
  * Use this to protect private routes like Profile, Tickets, or Dashboard.
  */
-export const isAuthenticated = (req, res, next) => {
-    if (!req.session || !req.session.user) {
+export const isUserAuthenticated = (req, res, next) => {
+    if (!req.session || (!req.session.user && !req.user)) {
         // They are not logged in, redirect them to the login page
-        return res.redirect('/user/login?message=Please log in to access this page');
+        return res.redirect('/user/login/?message=Session Expired. Please log in.')
     }
     
+    // They are logged in, allow them to proceed
+    next();
+};
+
+export const isOrganizerAuthenticated = (req, res, next) => {
+    if (!req.session || !req.session.organizer) {
+        // They are not logged in, redirect them to the login page
+        return res.redirect('/?message=Session Expired. Please log in.');
+    }
+    // They are logged in, allow them to proceed
+    next();
+};
+
+export const isAdminAuthenticated = (req, res, next) => {
+    if (!req.session || !req.session.admin) {
+        // They are not logged in, redirect them to the login page
+        return res.redirect('/admin/?message=Session Expired. Please log in.');
+    }
     // They are logged in, allow them to proceed
     next();
 };

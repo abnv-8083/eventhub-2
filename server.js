@@ -15,11 +15,15 @@ const {authenticate} = passport
 import AppError from './src/utils/AppError.js';
 import errorHandler from './src/middlewares/errorHandler.js';
 import './src/config/passport.js'
+import noCacheMiddleware from './src/middlewares/nocache.js';
 
 //Routes Import
 import userAuthRouter from './src/routes/users/userAuthRoutes.js';
 import userRouter from './src/routes/users/userRoutes.js';
-import noCache from './src/middlewares/nocache.js';
+import organizerRouter from './src/routes/organizers/organizerRoutes.js';
+import adminAuthRoutes from './src/routes/admin/adminAuthRoutes.js';
+import adminRoutes from './src/routes/admin/adminRoutes.js';
+import { setLocals } from './src/middlewares/setLocals.js';
 
 
 // Initialize environment variables
@@ -80,22 +84,13 @@ app.use(session({
     }
 }));
 
-app.use(noCache)
+app.use(noCacheMiddleware)
 
 // Initialize Passport for Auth
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use((req,res,next)=>{
-    if(req.originalUrl.includes('/organizer')){
-        res.locals.organizer = req.session.organizer || null
-    }else if(req.originalUrl.includes('/admin')){
-        res.locals.admin = req.session.admin || null
-    }else{
-        res.locals.user = req.session.user || null
-    }
-    next()
-})
+app.use(setLocals)
 
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev')); 
@@ -103,8 +98,11 @@ if (process.env.NODE_ENV === 'development') {
     app.use(morgan('combined'));
 }
 
-app.use('/user', userAuthRouter)
 app.use('/', userRouter)
+app.use('/user', userAuthRouter)
+app.use('/organizer', organizerRouter)
+app.use('/admin', adminAuthRoutes)
+app.use('/admin', adminRoutes)
 
 
 // 404 Error Handler
@@ -117,7 +115,7 @@ app.use(errorHandler);
 // ==========================================
 // 5. Start Server
 // ==========================================
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8083;
 
 app.listen(PORT, () => {
     console.log(`🚀 EventHub Server is running on http://localhost:${PORT} or https://justly-mocha-preorder.ngrok-free.dev`);

@@ -1,17 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EventHub | Discover & Book Premium Events</title>
-    <link rel="stylesheet" href="/css/style.css?v=<%= Date.now() %>">
-</head>
+<%- include('partials/head') %>
+
 
 <body class="bg-mesh">
     <div class="floating-blob"></div>
 
-    <% if (locals.user) { %>
+    <% if (user) { %>
         <%- include('partials/navbar-auth') %>
             <% } else { %>
                 <%- include('partials/navbar-guest') %>
@@ -108,6 +104,8 @@
                                 <p>&copy; 2026 EventHub Platform. All rights reserved.</p>
                             </div>
                         </footer>
+
+            
 </body>
 
 </html>
