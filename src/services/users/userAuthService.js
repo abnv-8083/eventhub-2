@@ -8,7 +8,7 @@ import generateOTP from "../../utils/generateOtp.js";
 import passport from "passport";
 
 export const findUser = async (userdata)=>{
-    const existingUser = await User.findOne({email: userdata.email})
+    const existingUser = await User.findOne({email: userdata.email, role: 'user'})
     if(existingUser){
         throw new AppError('User Already Registred', HTTP_STATUS.BAD_REQUEST)
     }

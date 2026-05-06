@@ -75,3 +75,61 @@ export const loginSchema = Joi.object({
     // This allows the "Remember Me" checkbox to pass validation if it exists in your form
     remember: Joi.any().optional() 
 });
+
+
+// Calculate the exact date 18 years ago from today
+const eighteenYearsAgo = new Date();
+eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18);
+
+export const updateProfileSchema = Joi.object({
+    // Only letters (upper/lower) and spaces allowed
+    fullName: Joi.string().trim().pattern(/^[a-zA-Z\s]+$/).min(3).max(50).required().messages({
+        'string.empty': 'Full Name is required.',
+        'string.pattern.base': 'Name can only contain letters and spaces. No numbers or special characters.',
+        'string.min': 'Full Name must be at least 3 characters long.',
+        'string.max': 'Full Name cannot exceed 50 characters.'
+    }),
+    
+    // Max date is exactly 18 years ago
+    dob: Joi.date().iso().max(eighteenYearsAgo).allow('', null).messages({
+        'date.max': 'You must be at least 18 years old to use this platform.',
+        'date.format': 'Please provide a valid date format.'
+    }),
+    
+    // Exactly numbers only, between 10 and 15 digits
+    phone: Joi.string().trim().pattern(/^[0-9]{10,15}$/).allow('', null).messages({
+        'string.pattern.base': 'Phone number must contain ONLY numbers (10-15 digits). No spaces or symbols.'
+    }),
+    
+    address: Joi.string().trim().max(250).allow('', null).messages({
+        'string.max': 'Address cannot exceed 250 characters.'
+    }),
+    
+    bio: Joi.string().trim().max(500).allow('', null).messages({
+        'string.max': 'Bio cannot exceed 500 characters.'
+    })
+});
+
+export const updatePasswordSchema = Joi.object({
+    action: Joi.string().valid('add', 'update').required(),
+    
+    currentPassword: Joi.string().when('action', {
+        is: 'update',
+        then: Joi.required().messages({
+            'string.empty': 'Current password is required.'
+        }),
+        otherwise: Joi.optional().allow('', null)
+    }),
+    
+    // NEW: Added .invalid() to prevent matching the current password
+    newPassword: Joi.string().min(8).invalid(Joi.ref('currentPassword')).required().messages({
+        'string.empty': 'New password is required.',
+        'string.min': 'New password must be at least 8 characters long.',
+        'any.invalid': 'New password cannot be the same as your current password.' 
+    }),
+    
+    confirmPassword: Joi.string().valid(Joi.ref('newPassword')).required().messages({
+        'any.only': 'Passwords do not match.',
+        'any.required': 'Please confirm your new password.'
+    })
+});

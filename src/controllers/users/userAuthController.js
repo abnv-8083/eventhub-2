@@ -1,4 +1,5 @@
 import * as userAuthService from "../../services/users/userAuthService.js"
+import * as userService from "../../services/users/userService.js"
 import HTTP_STATUS from "../../constant/statusCode.js";
 import generateOTP from "../../utils/generateOtp.js";
 import OTP from "../../models/users/otp.js";
@@ -45,11 +46,11 @@ export const getOtpPage = (req,res,next)=>{
     try {
         const action = req.query.action
         console.log(action)
-        if(!req.session.tempUser){
+        if(!req.session.tempData){
             return res.redirect('/user/signup?message=Please%20Register%20First');
         }
 
-        res.render('users/auth/otp', {title: 'OTP Verification',action , email: req.session.tempUser?.email || 'You Have not Given the Email'})
+        res.render('users/auth/otp', {title: 'OTP Verification',action , email: req.session.tempData?.email || 'You Have not Given the Email'})
     } catch (error) {
         next(error)
     }
@@ -58,7 +59,7 @@ export const getOtpPage = (req,res,next)=>{
 
 export const postSignupPage = async (req, res, next)=>{
     try {
-        req.session.tempUser = req.body
+        req.session.tempData = req.body
         const result = await userAuthService.findUser(req.body)
         if(!result){
             return res.status(HTTP_STATUS.NOT_FOUND).json({
@@ -89,8 +90,8 @@ export const postOtpPage = async (req, res, next)=>{
     try {
         const {email, otp, action} = req.body
 
-        if(action === 'signup'){
-            const tempUser = req.session.tempUser
+        if(action == 'signup'){
+            const tempUser = req.session.tempData
             const result = await userAuthService.verifyAndCreateUser(email, otp, tempUser)
             
             if(!result){
@@ -100,14 +101,14 @@ export const postOtpPage = async (req, res, next)=>{
                 })
             }
             
-            delete req.session.tempUser 
+            delete req.session.tempData 
             // 3. IMPORTANT: Send the response to stop the frontend loader
             return res.status(HTTP_STATUS.OK).json({
                 success: true,
                 message: 'Account Created Successfully',
                 redirect: '/user/login'
             });
-        }else if(action === "forgotPassword"){
+        }else if(action == "forgotPassword"){
 
             const result = await userAuthService.verifyAndResetPassword(email, otp)
             if(!result){
@@ -122,14 +123,38 @@ export const postOtpPage = async (req, res, next)=>{
                 message: 'OTP Verify Successfully',
                 redirect: '/user/reset-password'
             });
-
+        }else if(action == 'email-update'){
+            const userId = req.session.user._id
+            const result = await userAuthService.verifyAndResetPassword(email, otp)
+            if(!result){
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                    success: false,
+                    message:'User Verification Error',
+                })
+            }
+            const saveEmail = await userService.updateEmail(userId, email)
+            if(!saveEmail){
+                return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+                    success: false,
+                    message:'Internal Server Error',
+                })
+            }
+            
+            req.session.user = saveEmail
+            req.session.save((err) => {
+            if (err) return next(err);
+            res.status(HTTP_STATUS.OK).json({
+                success: true,
+                message: 'Email Updated Successfully',
+                redirect: '/user/profile',
+            });
+        });
         }else{
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Unknow Action'
             });
         }
-        
         
         
 
@@ -199,7 +224,8 @@ export const postLoginPage = async (req,res,next)=>{
                 
                 return res.status(HTTP_STATUS.OK).json({
                     success: true,
-                    message: `Hi ${result.fullName}`
+                    message: `Hi ${result.fullName}`,
+                    redirect: '/'
                 });
             })
         }else if(result.role == 'organizer'){
@@ -234,7 +260,7 @@ export const postForgotPassword = async (req,res,next)=>{
 
         const result = await userAuthService.forgotePasswordVerify(email)
 
-        req.session.tempUser = result
+        req.session.tempData = result
 
         if(!result){
             return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({

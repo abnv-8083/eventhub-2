@@ -11,6 +11,7 @@ export const isGuest = (req, res, next) => {
     if (req.session && req.session.user) {
         // They are already logged in! Send them away.
         // (You can change '/' to '/dashboard' if you prefer)
+        console.log('in auth guest middleware')
         return res.redirect('/'); 
     }
     

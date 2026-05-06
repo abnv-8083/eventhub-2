@@ -1,9 +1,6 @@
 
 <%- include('../../partials/head') %>
-<div id="custom-loader" class="loader-overlay" style="display: none;">
-    <img src="/images/loader-logo.png" alt="Loading..." class="custom-loader-img">
-    <div class="loader-text" id="loader-text">PLEASE WAIT...</div>
-</div>
+
 
 <body class="bg-mesh">
     <div class="auth-split-layout">
@@ -67,9 +64,8 @@
         adminLoginForm.addEventListener('submit', async (e)=>{
             e.preventDefault()
 
-            const loader = document.getElementById('custom-loader')
 
-            loader.style.display = 'flex'
+            loader.show()
 
             const formData = new FormData(adminLoginForm)
             const data = Object.fromEntries(formData.entries())
@@ -81,12 +77,10 @@
                     setTimeout(()=>window.location.href = response.data.redirect,2000)
                 }
             } catch (error) {
-                loader.style.display = 'none';
+                loader.hide()
                 Toast.error(error.response?.data?.message || 'Invalid Credintails');
             }
         })
-
-
     </script>
 </body>
 </html>

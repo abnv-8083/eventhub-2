@@ -16,6 +16,7 @@
   "type": "module",
   "dependencies": {
     "argon2": "^0.44.0",
+    "axios": "^1.16.0",
     "bcrypt": "^6.0.0",
     "cloudinary": "^1.41.3",
     "connect-flash-plus": "^0.2.1",
