@@ -1,8 +1,4 @@
 <%- include('../../partials/head') %>
-<div id="custom-loader" class="loader-overlay" style="display: none;">
-    <img src="/images/loader-logo.png" alt="Loading..." class="custom-loader-img">
-    <div class="loader-text" id="loader-text">PLEASE WAIT...</div>
-</div>
 
 <body class="bg-mesh">
 
@@ -85,7 +81,6 @@
     <script>
         const inputs = document.querySelectorAll('.otp-input');
         const form = document.getElementById('otpForm');
-        const loader = document.getElementById('custom-loader');
 
         // 1. Auto-focus, Backspace, and Smart Paste Logic
         inputs.forEach((input, index) => {
@@ -145,7 +140,7 @@
                 return;
             }
 
-            loader.style.display = 'flex';
+            Loader.show()
 
             try {
                 const response = await axios.post('/user/verify-otp', { otp: otpCode, email: email, action });
@@ -154,7 +149,7 @@
                     setTimeout(() => window.location.href = response.data.redirect, 1500);
                 }
             } catch (error) {
-                loader.style.display = 'none';
+                Loader.hide()
                 Toast.error(error.response?.data?.message || 'Invalid OTP');
             }
         });
@@ -215,15 +210,14 @@
             const emailspan = document.getElementById('userEmail');
             const email = emailspan.innerHTML;
 
-            // Show the loader
-            loader.style.display = 'flex';
-            document.querySelector('.loader-text').innerText = 'RESENDING OTP...';
+            // Show the Loader
 
+            Loader.show('RESENDING OTP...')
             try {
                 const response = await axios.post('/user/resend-otp', { email: email });
                 
                 if (response.data.success) {
-                    loader.style.display = 'none';
+                    Loader.hide()
                     Toast.success(response.data.message);
                     
                     // Clear the inputs for the new code
@@ -232,15 +226,16 @@
                         input.classList.remove('filled');
                     });
                     inputs[0].focus();
+
                 }
             } catch (error) {
-                loader.style.display = 'none';
+                Loader.hide()
                 Toast.error(error.response?.data?.message || 'Failed to resend OTP. Please try again.');
                 
                 // Optional: If the request completely fails, you could instantly un-block the button here 
                 // by setting timeLeft = 0, but keeping them blocked prevents server spamming!
             } finally {
-                document.querySelector('.loader-text').innerText = 'VERIFYING...';
+                Loader.hide()
             }
         });
     </script>

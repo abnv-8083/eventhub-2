@@ -1,8 +1,5 @@
 <%- include('../../partials/head') %>
-<div id="custom-loader" class="loader-overlay" style="display: none;">
-    <img src="/images/loader-logo.png" alt="Loading..." class="custom-loader-img">
-    <div class="loader-text" id="loader-text">PLEASE WAIT...</div>
-</div>
+
 <body class="bg-mesh">
     
     <div class="auth-split-layout">
@@ -141,19 +138,6 @@
 
     <script>
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const message = urlParams.get('message');
-
-            if (message) {
-                // Use your existing Toast object
-                Toast.error(message);
-                
-                // Optional: Clean the URL so the toast doesn't reappear on refresh
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-        });
-
         // Password Toggle Logic
         function togglePassword(inputId, btn) {
             const input = document.getElementById(inputId);
@@ -277,8 +261,8 @@
                 registerForm.reportValidity()
                 return
             }
-            const loader = document.getElementById('custom-loader')
-            loader.style.display = 'flex'
+
+            Loader.show()
 
             const formData = new FormData(registerForm)
             const data = Object.fromEntries(formData.entries())
@@ -293,7 +277,7 @@
                     }, 2000)
                 }
             } catch (error) {
-                loader.style.display = 'none'
+                Loader.hide()
 
                 const errorMessage = error.response?.data?.message || 'Something went wrong'
                 Toast.error(errorMessage)

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head') %>
+    <title>My Dashboard | EventHub</title>
+</head>
+<body class="bg-mesh">
+    
+    <%- include('../partials/navbar-auth') %>
+
+    <div class="dashboard-layout">
+        <%- include('../partials/user-sidebar', { title: 'User Dashboard' }) %>
+        
+        <main class="dashboard-main">
+            <div class="d-flex justify-between align-center mb-5 animate stagger-1">
+                <div>
+                    <h2 class="fw-bold">Welcome back, <%= user.fullName.split(' ')[0] %>!</h2>
+                    <p class="text-dim m-0">Ready for your next experience?</p>
+                </div>
+                <a href="/events" class="btn btn-primary">Find Events</a>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="row g-4 mb-5 animate stagger-2">
+                <div class="col-md-4">
+                    <div class="glass p-4 rounded-3 border-red" style="cursor: pointer; transition: var(--transition);" onclick="window.location.href='/user/tickets'">
+                        <div class="d-flex justify-between align-center mb-2">
+                            <p class="text-dim small text-uppercase fw-bold m-0">Upcoming Events</p>
+                            <i class="fi fi-rr-calendar-star text-gradient" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <h3 class="m-0" style="font-size: 2.5rem;">2</h3>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass p-4 rounded-3">
+                        <div class="d-flex justify-between align-center mb-2">
+                            <p class="text-dim small text-uppercase fw-bold m-0">Total Tickets</p>
+                            <i class="fi fi-rr-ticket text-dim" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <h3 class="m-0" style="font-size: 2.5rem;">5</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Up Next Section -->
+            <section class="animate stagger-3">
+                <h4 class="fw-bold mb-4">Up Next For You</h4>
+                
+                <!-- Ticket Card Glassmorphism Example -->
+                <div class="glass-dark rounded-3 p-0 overflow-hidden" style="max-width: 800px; border-left: 4px solid var(--primary);">
+                    <div class="row g-0 align-center">
+                        <div class="col-md-8 p-4">
+                            <div class="d-flex gap-2 align-center mb-3">
+                                <span class="badge" style="background: rgba(230, 57, 70, 0.2); color: var(--primary); padding: 5px 10px; border-radius: 6px; font-size: 0.8rem;">Tech Conference</span>
+                                <span class="text-dim" style="font-size: 0.85rem;"><i class="fi fi-rr-marker"></i> Kozhikode Trade Centre</span>
+                            </div>
+                            <h3 class="fw-bold mb-2">Kerala Tech Summit 2026</h3>
+                            <p class="text-muted mb-4">Join industry leaders for a day of networking and innovation.</p>
+                            
+                            <div class="d-flex gap-4">
+                                <div>
+                                    <p class="text-dim m-0" style="font-size: 0.8rem;">Date</p>
+                                    <p class="fw-bold m-0">Nov 15, 2026</p>
+                                </div>
+                                <div>
+                                    <p class="text-dim m-0" style="font-size: 0.8rem;">Time</p>
+                                    <p class="fw-bold m-0">09:00 AM</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 p-4 text-center" style="border-left: 1px dashed rgba(255,255,255,0.1);">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=Ticket-12345&color=fff&bgcolor=161616" alt="QR Code" class="mb-3" style="border-radius: 8px; border: 4px solid white;">
+                            <a href="/user/tickets/123" class="btn btn-outline btn-sm w-100">View Ticket</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

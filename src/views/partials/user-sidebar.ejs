@@ -1,0 +1,46 @@
+<!-- src/views/partials/user-sidebar.ejs -->
+<aside class="sidebar">
+    <div class="sidebar-brand px-3 py-4">
+        <a href="/user/dashboard" class="logo" style="text-decoration: none;">
+            <h3 class="m-0" style="font-size: 1.6rem; font-weight: 800;">Event<span>Hub</span></h3>
+        </a>
+    </div>
+    
+    <nav class="sidebar-nav px-2">
+        <a href="/user/dashboard" class="<%= locals.title === 'User Dashboard' ? 'active' : '' %>">
+            <i class="fi fi-rr-apps"></i> <span>Overview</span>
+        </a>
+
+        <a href="/user/tickets" class="<%= locals.title === 'My Tickets' ? 'active' : '' %>">
+            <i class="fi fi-rr-ticket"></i> <span>My Tickets</span>
+        </a>
+
+        <a href="/events" class="<%= locals.title === 'Browse Events' ? 'active' : '' %>">
+            <i class="fi fi-rr-search"></i> <span>Browse Events</span>
+        </a>
+
+        <a href="/user/profile" class="<%= locals.title === 'My Profile' ? 'active' : '' %>">
+            <i class="fi fi-rr-user"></i> <span>Profile Settings</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer mt-auto px-2 pb-3">
+        <a href="#" id="userSideLogoutBtn" class="text-danger d-flex align-center gap-2" style="font-weight: 600;">
+            <i class="fi fi-rr-exit"></i> <span>Secure Logout</span>
+        </a>
+    </div>
+</aside>
+
+<script>
+    document.getElementById('userSideLogoutBtn')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+            const response = await axios.post('/user/logout');
+            if(response.data.success){
+                window.location.href = '/user/login?message=Logged out successfully';
+            }
+        } catch (error) {
+            console.error("Logout failed", error);
+        }
+    });
+</script>

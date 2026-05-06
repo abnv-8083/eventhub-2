@@ -56,7 +56,7 @@ userAuthRouter.route('/reset-password')
 
 
 userAuthRouter.route('/verify-otp')
-    .get(isGuest, userAuthController.getOtpPage)
+    .get(userAuthController.getOtpPage)
     .post(userAuthController.postOtpPage)
 
 userAuthRouter.post('/logout', userAuthController.userLogout)

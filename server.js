@@ -24,7 +24,7 @@ import organizerRouter from './src/routes/organizers/organizerRoutes.js';
 import adminAuthRoutes from './src/routes/admin/adminAuthRoutes.js';
 import adminRoutes from './src/routes/admin/adminRoutes.js';
 import { setLocals } from './src/middlewares/setLocals.js';
-
+import * as userController from './src/controllers/users/userController.js';
 
 // Initialize environment variables
 dotenv.config();
@@ -98,7 +98,9 @@ if (process.env.NODE_ENV === 'development') {
     app.use(morgan('combined'));
 }
 
-app.use('/', userRouter)
+
+app.get('/', userController.getHomepage);
+app.use('/user', userRouter)
 app.use('/user', userAuthRouter)
 app.use('/organizer', organizerRouter)
 app.use('/admin', adminAuthRoutes)
