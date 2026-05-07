@@ -16,6 +16,7 @@ import AppError from './src/utils/AppError.js';
 import errorHandler from './src/middlewares/errorHandler.js';
 import './src/config/passport.js'
 import noCacheMiddleware from './src/middlewares/nocache.js';
+import { checkBlocked } from './src/middlewares/checkBlocked.js';
 
 //Routes Import
 import userAuthRouter from './src/routes/users/userAuthRoutes.js';
@@ -97,6 +98,8 @@ if (process.env.NODE_ENV === 'development') {
 } else {
     app.use(morgan('combined'));
 }
+
+app.use(checkBlocked)
 
 
 app.get('/', userController.getHomepage);

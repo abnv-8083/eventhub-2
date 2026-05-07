@@ -15,8 +15,6 @@ organizerRouter.get('/', (req,res)=>{
 })
 organizerRouter.get('/dashboard', organizerController.getDashboard);
 
-organizerRouter.use(isOrganizerAuthenticated)
-
 organizerRouter.post('/logout',organizerAuthController.postLogout )
 
 
