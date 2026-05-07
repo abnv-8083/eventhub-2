@@ -1,0 +1,19 @@
+<header class="navbar-sticky glass-dark">
+    <div class="container nav-container">
+        <a href="/admin/dashboard" class="logo">Event<span class="text-gradient">Hub Admin</span></a>
+        <nav class="nav-links d-flex align-center gap-3">
+            <a href="/admin/dashboard">Command Center</a>
+            <button class="profile-avatar-btn" id="userMenuBtn">
+                <span><%= admin.fullName.charAt(0).toUpperCase() %></span>
+            </button>
+        </nav>
+    </div>
+</header>
+
+<div class="dropdown-menu glass-dark" id="userDropdown" style="position: fixed; display: none; z-index: 9999;">
+    <div class="dropdown-header">
+        <small class="text-dim d-block">System Admin</small>
+        <strong style="color: white;"><%= admin.fullName %></strong>
+    </div>
+    <a id="adminLogoutButton" class="dropdown-item text-danger" style="cursor: pointer;">Logout</a>
+</div>

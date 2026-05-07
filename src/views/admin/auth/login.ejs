@@ -65,7 +65,7 @@
             e.preventDefault()
 
 
-            loader.show()
+            Loader.show()
 
             const formData = new FormData(adminLoginForm)
             const data = Object.fromEntries(formData.entries())
@@ -77,7 +77,7 @@
                     setTimeout(()=>window.location.href = response.data.redirect,2000)
                 }
             } catch (error) {
-                loader.hide()
+                Loader.hide()
                 Toast.error(error.response?.data?.message || 'Invalid Credintails');
             }
         })

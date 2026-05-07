@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+    <title>Manage Organizers | EventHub Admin</title>
+</head>
+<body class="bg-mesh">
+    
+    <%- include('../partials/navbars/admin-nav') %>
+
+    <div class="dashboard-layout">
+        <%- include('../../partials/admin-sidebar', { title: 'Manage Organizers' }) %>
+        
+        <main class="dashboard-main">
+            <div class="d-flex justify-between align-center mb-5 animate stagger-1">
+                <div>
+                    <h2 class="fw-bold">Event Organizers</h2>
+                    <p class="text-dim m-0">Review organizer applications and manage active hosts.</p>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <input type="text" class="input" placeholder="Search organization..." style="width: 250px; height: 42px;">
+                    <select class="input" style="width: 150px; height: 42px;">
+                        <option value="all">All Organizers</option>
+                        <option value="pending">Pending Approval</option>
+                        <option value="active">Active</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Organizers Table -->
+            <div class="glass-dark p-4 rounded-3 animate stagger-2">
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Organization</th>
+                                <th>Contact Info</th>
+                                <th>Events Hosted</th>
+                                <th>Account Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- EJS Loop placeholder -->
+                            <!-- <% organizers.forEach(org => { %> -->
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-center gap-3">
+                                        <div style="width: 45px; height: 45px; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                            🏢
+                                        </div>
+                                        <div>
+                                            <strong style="color: white; font-size: 1.05rem;">CodeAssist Tech</strong>
+                                            <p class="text-dim m-0" style="font-size: 0.8rem;">Representative: Anshad</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span style="color: white;">hello@codeassist.in</span><br>
+                                    <span class="text-dim" style="font-size: 0.85rem;">+91 90376 99188</span>
+                                </td>
+                                <td>
+                                    <span style="color: white; font-weight: 600; font-size: 1.1rem;">12</span>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-approved">
+                                        <i class="fi fi-rr-shield-check"></i> Verified
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a href="/admin/organizers/org_123" class="btn btn-outline btn-sm px-3 me-1" title="View Details">
+                                        <i class="fi fi-rr-eye"></i>
+                                    </a>
+                                    <button class="btn btn-outline btn-sm px-3 text-danger border-danger" title="Revoke Access">
+                                        <i class="fi fi-rr-ban"></i>
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-center gap-3">
+                                        <div style="width: 45px; height: 45px; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                            🏟️
+                                        </div>
+                                        <div>
+                                            <strong style="color: white; font-size: 1.05rem;">Kerala Super League</strong>
+                                            <p class="text-dim m-0" style="font-size: 0.8rem;">Representative: Rahul</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span style="color: white;">events@ksl.com</span><br>
+                                    <span class="text-dim" style="font-size: 0.85rem;">+91 98765 43210</span>
+                                </td>
+                                <td>
+                                    <span class="text-dim">0 (New)</span>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-pending">
+                                        <i class="fi fi-rr-time-fast"></i> Pending Review
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline btn-sm px-3 me-1 text-success border-success" title="Approve">
+                                        <i class="fi fi-rr-check"></i>
+                                    </button>
+                                    <button class="btn btn-outline btn-sm px-3 text-danger border-danger" title="Reject">
+                                        <i class="fi fi-rr-cross"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <!-- <% }) %> -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

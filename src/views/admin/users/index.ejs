@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+    <title>Manage Users | EventHub Admin</title>
+</head>
+<body class="bg-mesh">
+    
+    <%- include('../../partials/navbars/admin-nav') %>
+
+    <div class="dashboard-layout">
+        <%- include('../../partials/admin-sidebar', { title: 'Manage Users' }) %>
+        
+        <main class="dashboard-main">
+            <div class="d-flex justify-between align-center mb-5 animate stagger-1">
+                <div>
+                    <h2 class="fw-bold">User Base</h2>
+                    <p class="text-dim m-0">Manage all attendee accounts on the platform.</p>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4 animate stagger-2">
+                <div class="col-md-4">
+                    <div class="glass p-4 rounded-3 h-100 stat-card">
+                        <p class="text-dim small text-uppercase fw-bold mb-2">Total Users</p>
+                        <h3 class="fw-bold m-0" style="font-size: 2rem;"><%= totalUsers %></h3>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass p-4 rounded-3 h-100 stat-card">
+                        <p class="text-dim small text-uppercase fw-bold mb-2">Active This Week</p>
+                        <h3 class="fw-bold m-0" style="font-size: 2rem;">3,210</h3>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass p-4 rounded-3 h-100 border-red stat-card" style="background: rgba(230, 57, 70, 0.05);">
+                        <p class="text-dim small text-uppercase fw-bold mb-2">Banned Accounts</p>
+                        <h3 class="fw-bold m-0 text-danger" style="font-size: 2rem;"><%= bannedUsers %></h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4 gap-3">
+                <div class="search-wrapper flex-grow-1" style="position: relative; max-width: 400px;">
+                    <i class="fi fi-rr-search text-dim" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%);"></i>
+                    <input type="text" id="userSearch" class="input ps-5" placeholder="Search by name or email..." 
+                        value="<%= locals.filters?.search || '' %>" style="height: 45px;">
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <select id="statusFilter" class="input px-3">
+                        <option value="all" <%= filters?.status === 'all' ? 'selected' : '' %>>All Status</option>
+                        <option value="active" <%= filters?.status === 'active' ? 'selected' : '' %>>Active</option>
+                        <option value="blocked" <%= filters?.status === 'blocked' ? 'selected' : '' %>>Banned</option>
+                    </select>
+
+                    <select id="userSort" class="input px-3">
+                        <option value="newest" <%= filters?.sort === 'newest' ? 'selected' : '' %>>Newest Joined</option>
+                        <option value="oldest" <%= filters?.sort === 'oldest' ? 'selected' : '' %>>Oldest Joined</option>
+                        <option value="name-asc" <%= filters?.sort === 'name-asc' ? 'selected' : '' %>>Name (A-Z)</option>
+                    </select>
+
+                    <button type="button" id="clearFilters" class="action-btn" title="Clear All Filters" style="height: 45px; width: 45px;">
+                        <i class="fi fi-rr-refresh"></i>
+                    </button>
+
+                    <button type="button" id="applyFilters" class="btn btn-primary" style="height: 45px; padding: 0 20px;">
+                        Apply
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass-dark p-4 rounded-3 animate stagger-3">
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Joined</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (dbUsers && dbUsers.length > 0) { %>
+                                <% dbUsers.forEach(user => { %>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-center gap-3">
+                                                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(230, 57, 70, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden;">
+                                                    <% if(user.avatar) { %>
+                                                        <img src="<%= user.avatar %>" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                                    <% } else { %>
+                                                        <%= user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U' %>
+                                                    <% } %>
+                                                </div>
+                                                <div>
+                                                    <strong style="color: white;"><%= user.fullName %></strong>
+                                                    <p class="text-dim m-0" style="font-size: 0.8rem;">ID: <%= user._id.toString().substring(0, 8) %>...</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-dim"><%= user.email %></td>
+                                        <td class="text-dim">
+                                            <%= new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                                        </td>
+                                        <td>
+                                            <% if (!user.isBlocked) { %>
+                                                <span class="status-badge status-approved">
+                                                    <i class="fi fi-rr-check-circle"></i> Active
+                                                </span>
+                                            <% } else { %>
+                                                <span class="status-badge status-rejected">
+                                                    <i class="fi fi-rr-ban"></i> Banned
+                                                </span>
+                                            <% } %>
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="d-flex justify-content-end align-center gap-2">
+                                                <button class="action-btn action-btn-delete icon-only" title="Delete User" onclick="confirmDeleteUser('<%= user._id %>', this)">
+                                                    <i class="fi fi-rr-trash"></i>
+                                                </button>
+                                                <% if (!user.isBlocked) { %>
+                                                    <button class="action-btn action-btn-block" title="Block User" onclick="toggleBlockStatus('<%= user._id %>', 'block', this)">
+                                                        <i class="fi fi-rr-ban"></i> Block
+                                                    </button>
+                                                <% } else { %>
+                                                    <button class="action-btn action-btn-unblock" title="Unblock User" onclick="toggleBlockStatus('<%= user._id %>', 'unblock', this)">
+                                                        <i class="fi fi-rr-check"></i> Unblock
+                                                    </button>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="text-center p-5">
+                                        <p class="text-muted m-0">No users found.</p>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-4 px-3">
+                <p class="text-dim mb-0">Page <%= currentPage %> of <%= totalPages %></p>
+                <nav class="pagination-container">
+                    <ul class="pagination d-flex gap-2 list-unstyled mb-0">
+                        <% if (currentPage > 1) { %>
+                            <li>
+                                <button class="action-btn" onclick="changePage(<%= currentPage - 1 %>)">
+                                    <i class="fi fi-rr-angle-left"></i>
+                                </button>
+                            </li>
+                        <% } %>
+                        <% for(let i = 1; i <= totalPages; i++) { %>
+                            <li>
+                                <button class="action-btn <%= i == currentPage ? 'active-page' : '' %>" onclick="changePage(<%= i %>)">
+                                    <%= i %>
+                                </button>
+                            </li>
+                        <% } %>
+                        <% if (currentPage < totalPages) { %>
+                            <li>
+                                <button class="action-btn" onclick="changePage(<%= currentPage + 1 %>)">
+                                    <i class="fi fi-rr-angle-right"></i>
+                                </button>
+                            </li>
+                        <% } %>
+                    </ul>
+                </nav>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- 1. GLOBAL FUNCTIONS ---
+        
+        function changePage(pageNumber) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('page', pageNumber);
+            window.location.href = url.toString();
+        }
+
+        function applyFilters() {
+            const search = document.getElementById('userSearch').value.trim();
+            const status = document.getElementById('statusFilter').value;
+            const sort = document.getElementById('userSort').value;
+
+            const url = new URL(window.location.origin + window.location.pathname);
+            if (search) url.searchParams.set('search', search);
+            if (status !== 'all') url.searchParams.set('status', status);
+            if (sort !== 'newest') url.searchParams.set('sort', sort);
+            url.searchParams.set('page', 1);
+            window.location.href = url.toString();
+        }
+
+        // --- 2. ADMIN ACTIONS (Block/Delete) ---
+
+        async function toggleBlockStatus(userId, action, btnElement) {
+            if (action === 'block') {
+                const isConfirmed = await CustomConfirm.show({
+                    title: "Block User?",
+                    message: "This user will lose all access to the platform immediately.",
+                    confirmText: "Block User",
+                    actionType: "danger",
+                    icon: "fi-rr-ban"
+                });
+                if (!isConfirmed) return;
+            }
+
+            Loader.show(action === 'block' ? 'BLOCKING USER...' : 'UNBLOCKING USER...');
+            try {
+                const response = await axios.post('/admin/users/toggle-block', { userId });
+                if (response.data.success) {
+                    Toast.success(response.data.message);
+                    const row = btnElement.closest('tr');
+                    const statusBadge = row.querySelector('.status-badge');
+
+                    if (action === 'block') {
+                        statusBadge.className = 'status-badge status-rejected';
+                        statusBadge.innerHTML = '<i class="fi fi-rr-ban"></i> Banned';
+                        btnElement.className = 'action-btn action-btn-unblock';
+                        btnElement.title = 'Unblock User';
+                        btnElement.setAttribute('onclick', `toggleBlockStatus('${userId}', 'unblock', this)`);
+                        btnElement.innerHTML = '<i class="fi fi-rr-check"></i> Unblock';
+                    } else {
+                        statusBadge.className = 'status-badge status-approved';
+                        statusBadge.innerHTML = '<i class="fi fi-rr-check-circle"></i> Active';
+                        btnElement.className = 'action-btn action-btn-block';
+                        btnElement.title = 'Block User';
+                        btnElement.setAttribute('onclick', `toggleBlockStatus('${userId}', 'block', this)`);
+                        btnElement.innerHTML = '<i class="fi fi-rr-ban"></i> Block';
+                    }
+                }
+            } catch (error) {
+                Toast.error(error.response?.data?.message || `Failed to ${action} user.`);
+            } finally {
+                Loader.hide();
+            }
+        }
+
+        async function confirmDeleteUser(userId, btnElement) {
+            const isConfirmed = await CustomConfirm.show({
+                title: "Delete User?",
+                message: "This action is permanent and cannot be undone.",
+                confirmText: "Permanently Delete",
+                actionType: "danger",
+                icon: "fi-rr-trash"
+            });
+            if (!isConfirmed) return;
+
+            Loader.show('DELETING USER...');
+            try {
+                const response = await axios.post('/admin/users/delete', { userId });
+                if (response.data.success) {
+                    Toast.success(response.data.message);
+                    const row = btnElement.closest('tr');
+                    row.style.transition = 'all 0.4s ease';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(20px)';
+                    setTimeout(() => {
+                        row.remove();
+                        const totalUsersEl = document.querySelector('.stat-card h3');
+                        if (totalUsersEl) totalUsersEl.innerText = parseInt(totalUsersEl.innerText) - 1;
+                    }, 400);
+                }
+            } catch (error) {
+                Toast.error(error.response?.data?.message || "Failed to delete user.");
+            } finally {
+                Loader.hide();
+            }
+        }
+
+        // --- 3. DOM LISTENERS ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('applyFilters')?.addEventListener('click', applyFilters);
+            document.getElementById('clearFilters')?.addEventListener('click', () => {
+                window.location.href = window.location.pathname;
+            });
+            document.getElementById('userSearch')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') applyFilters();
+            });
+        });
+    </script>
+</body>
+</html>

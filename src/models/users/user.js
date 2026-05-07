@@ -51,6 +51,10 @@ const userSchema = new mongoose.Schema({
     phone: {
         type: String,
         trim: true
+    },
+    isBlocked: {
+        type: Boolean,
+        default: false,
     }
 }, {
     timestamps: true // Automatically adds 'createdAt' and 'updatedAt' fields

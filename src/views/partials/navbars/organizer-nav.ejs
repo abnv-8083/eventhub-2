@@ -1,0 +1,25 @@
+<header class="navbar-sticky glass-dark">
+    <div class="container nav-container">
+        <a href="/organizer/dashboard" class="logo">Event<span class="text-gradient">Hub</span></a>
+        <nav class="nav-links d-flex align-center gap-3">
+            <a href="/organizer/dashboard" class="text-gradient">Manage My Events</a>
+            <button class="profile-avatar-btn" id="userMenuBtn">
+                <% if(organizer.avatar) { %>
+                    <img src="<%= organizer.avatar %>" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                <% } else { %>
+                    <span>O</span>
+                <% } %>
+            </button>
+        </nav>
+    </div>
+</header>
+
+<div class="dropdown-menu glass-dark" id="userDropdown" style="position: fixed; display: none; z-index: 9999;">
+    <div class="dropdown-header">
+        <small class="text-dim d-block">Organizer</small>
+        <strong style="color: white;"><%= organizer.organizationName %></strong>
+    </div>
+    <a href="/organizer/profile" class="dropdown-item">My Account</a>
+    <hr style="border-color: var(--border); margin: 4px 0;">
+    <a id="organizerLogoutButton" class="dropdown-item text-danger" style="cursor: pointer;">Logout</a>
+</div>
