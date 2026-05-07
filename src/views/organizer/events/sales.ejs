@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+    <title>Event Sales | EventHub</title>
+</head>
+<body class="bg-mesh">
+    
+    <%- include('../partials/navbars/organizer-nav') %>
+
+    <div class="dashboard-layout">
+        <%- include('../../partials/organizer-sidebar', { title: 'My Events' }) %>
+        
+        <main class="dashboard-main">
+            <!-- Header Section -->
+            <div class="d-flex justify-between align-center mb-4 animate stagger-1">
+                <div class="d-flex align-center gap-3">
+                    <a href="/organizer/events" class="btn btn-outline btn-sm px-3" title="Back to Events">
+                        <i class="fi fi-rr-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h2 class="fw-bold m-0">Sales & Attendees</h2>
+                        <!-- In reality, you would pass the event name via EJS like <%= event.title %> -->
+                        <p class="text-dim m-0">Kerala Tech Summit 2026</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline btn-sm">
+                        <i class="fi fi-rr-download me-2"></i> Export CSV
+                    </button>
+                    <a href="/organizer/events/123/edit" class="btn btn-primary btn-sm">
+                        Event Settings
+                    </a>
+                </div>
+            </div>
+
+            <!-- Key Metrics for this Event -->
+            <div class="row g-4 mb-5 animate stagger-2">
+                <div class="col-md-4">
+                    <div class="glass p-4 rounded-3 h-100" style="border-bottom: 3px solid #2ecc71;">
+                        <div class="d-flex justify-between align-center mb-2">
+                            <p class="text-dim small text-uppercase fw-bold m-0">Net Revenue</p>
+                            <i class="fi fi-rr-coins text-success" style="font-size: 1.2rem;"></i>
+                        </div>
+                        <h3 class="fw-bold m-0" style="font-size: 2.2rem; color: #2ecc71;">₹ 85,500</h3>
+                        <p class="text-dim m-0 mt-2" style="font-size: 0.8rem;">After platform fees</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass p-4 rounded-3 h-100 border-red" style="background: rgba(230, 57, 70, 0.05);">
+                        <div class="d-flex justify-between align-center mb-2">
+                            <p class="text-dim small text-uppercase fw-bold m-0">Tickets Sold</p>
+                            <i class="fi fi-rr-ticket text-primary" style="font-size: 1.2rem;"></i>
+                        </div>
+                        <h3 class="fw-bold m-0" style="font-size: 2.2rem;">342 <span class="text-dim" style="font-size: 1.2rem;">/ 500</span></h3>
+                        
+                        <!-- Progress Bar -->
+                        <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 12px;">
+                            <div style="width: 68%; height: 100%; background: var(--primary); border-radius: 3px; box-shadow: 0 0 10px rgba(230,57,70,0.5);"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass p-4 rounded-3 h-100">
+                        <div class="d-flex justify-between align-center mb-2">
+                            <p class="text-dim small text-uppercase fw-bold m-0">Page Views</p>
+                            <i class="fi fi-rr-eye text-dim" style="font-size: 1.2rem;"></i>
+                        </div>
+                        <h3 class="fw-bold m-0" style="font-size: 2.2rem;">1,204</h3>
+                        <p class="text-dim m-0 mt-2" style="font-size: 0.85rem;">
+                            <span class="text-success"><i class="fi fi-rr-arrow-trend-up"></i> 28.4%</span> conversion rate
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendee / Transaction Table -->
+            <div class="glass-dark p-4 rounded-3 animate stagger-3">
+                <div class="d-flex justify-between align-center mb-4">
+                    <h4 class="fw-bold m-0">Attendee Transactions</h4>
+                    <div style="position: relative; width: 250px;">
+                        <i class="fi fi-rr-search text-dim" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%);"></i>
+                        <input type="text" class="input" placeholder="Search by name or ID..." style="padding-left: 2.5rem; height: 2.5rem;">
+                    </div>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Attendee Details</th>
+                                <th>Ticket Type</th>
+                                <th>Amount Paid</th>
+                                <th>Date & Time</th>
+                                <th class="text-end">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- EJS Loop placeholder -->
+                            <!-- <% transactions.forEach(txn => { %> -->
+                            <tr>
+                                <td>
+                                    <span style="font-family: monospace; color: var(--primary); font-weight: 600;">#ORD-9823A</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-center gap-3">
+                                        <div style="width: 35px; height: 35px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+                                            A
+                                        </div>
+                                        <div>
+                                            <strong style="color: white; display: block; line-height: 1.2;">Abhinav M.</strong>
+                                            <span class="text-dim" style="font-size: 0.8rem;">abhinav@example.com</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span style="background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; color: white; border: 1px solid rgba(255,255,255,0.1);">
+                                        General Admission
+                                    </span>
+                                </td>
+                                <td>
+                                    <span style="color: white; font-weight: 600;">₹ 1,500.00</span>
+                                </td>
+                                <td class="text-dim" style="font-size: 0.9rem;">
+                                    Oct 24, 2025<br>
+                                    <small>14:32 IST</small>
+                                </td>
+                                <td class="text-end">
+                                    <span class="status-badge status-approved">
+                                        <i class="fi fi-rr-check-circle"></i> Paid
+                                    </span>
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td>
+                                    <span style="font-family: monospace; color: var(--primary); font-weight: 600;">#ORD-9824B</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-center gap-3">
+                                        <div style="width: 35px; height: 35px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+                                            S
+                                        </div>
+                                        <div>
+                                            <strong style="color: white; display: block; line-height: 1.2;">Sarah J.</strong>
+                                            <span class="text-dim" style="font-size: 0.8rem;">sarah.j@example.com</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span style="background: rgba(230,57,70,0.1); padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; color: var(--primary); border: 1px solid rgba(230,57,70,0.2);">
+                                        VIP Pass
+                                    </span>
+                                </td>
+                                <td>
+                                    <span style="color: white; font-weight: 600;">₹ 3,500.00</span>
+                                </td>
+                                <td class="text-dim" style="font-size: 0.9rem;">
+                                    Oct 24, 2025<br>
+                                    <small>15:05 IST</small>
+                                </td>
+                                <td class="text-end">
+                                    <span class="status-badge status-approved">
+                                        <i class="fi fi-rr-check-circle"></i> Paid
+                                    </span>
+                                </td>
+                            </tr>
+                            <!-- <% }) %> -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

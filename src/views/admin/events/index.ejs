@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+</head>
+<body class="bg-mesh">
+    
+    <%- include('../partials/navbars/admin-nav') %>
+
+    <div class="dashboard-layout">
+        <%- include('../../partials/admin-sidebar', { title: 'All Events' }) %>
+        
+        <main class="dashboard-main">
+            <div class="d-flex justify-between align-center mb-5 animate stagger-1">
+                <div>
+                    <h2 class="fw-bold">Platform Events</h2>
+                    <p class="text-dim m-0">Monitor, approve, and moderate events created by organizers.</p>
+                </div>
+                
+                <!-- Admin Search/Filter -->
+                <div class="d-flex gap-2">
+                    <input type="text" class="input" placeholder="Search events..." style="width: 250px; height: 42px;">
+                    <select class="input" style="width: 150px; height: 42px;">
+                        <option value="all">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Admin Event Table -->
+            <div class="glass-dark p-4 rounded-3 animate stagger-2">
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Event Details</th>
+                                <th>Organizer</th>
+                                <th>Date Created</th>
+                                <th>System Status</th>
+                                <th class="text-end">Moderation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- EJS Loop placeholder -->
+                            <tr>
+                                <td>
+                                    <strong style="color: white;">Kozhikode Football League</strong>
+                                    <p class="text-dim m-0" style="font-size: 0.8rem;">Sports • 1000 Capacity</p>
+                                </td>
+                                <td>
+                                    <span style="color: white;">Prime Heaven Sports</span>
+                                    <p class="text-dim m-0" style="font-size: 0.8rem;">org_29384</p>
+                                </td>
+                                <td class="text-dim">Oct 20, 2025</td>
+                                <td>
+                                    <!-- Status Badge -->
+                                    <span class="status-badge status-pending">
+                                        <i class="fi fi-rr-time-fast"></i> Requires Review
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline btn-sm px-3 me-1 text-success border-success" title="Approve">
+                                        <i class="fi fi-rr-check"></i>
+                                    </button>
+                                    <button class="btn btn-outline btn-sm px-3 text-danger border-danger" title="Reject/Ban">
+                                        <i class="fi fi-rr-cross"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td>
+                                    <strong style="color: white;">React.js Masterclass</strong>
+                                    <p class="text-dim m-0" style="font-size: 0.8rem;">Workshop • 50 Capacity</p>
+                                </td>
+                                <td>
+                                    <span style="color: white;">CodeAssist Inc.</span>
+                                </td>
+                                <td class="text-dim">Oct 18, 2025</td>
+                                <td>
+                                    <span class="status-badge status-approved">
+                                        <i class="fi fi-rr-check-circle"></i> Approved
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline btn-sm px-3 text-danger border-danger" title="Take Down">
+                                        <i class="fi fi-rr-trash"></i> Take Down
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

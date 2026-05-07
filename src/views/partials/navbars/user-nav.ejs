@@ -1,0 +1,27 @@
+<header class="navbar-sticky glass-dark">
+    <div class="container nav-container">
+        <a href="/" class="logo">Event<span class="text-gradient">Hub</span></a>
+        <nav class="nav-links d-flex align-center gap-3">
+            <a href="/events">Browse Events</a>
+            <a href="/user/tickets">My Tickets</a>
+            <button class="profile-avatar-btn" id="userMenuBtn">
+                <% if(user.avatar) { %>
+                    <img src="<%= user.avatar %>" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                <% } else { %>
+                    <span><%= user.fullName.charAt(0).toUpperCase() %></span>
+                <% } %>
+            </button>
+        </nav>
+    </div>
+</header>
+
+<div class="dropdown-menu glass-dark" id="userDropdown" style="position: fixed; display: none; z-index: 9999;">
+    <div class="dropdown-header">
+        <small class="text-dim d-block">Signed in as</small>
+        <strong style="color: white;"><%= user.fullName %></strong>
+    </div>
+    <a href="/user/profile" class="dropdown-item">My Account</a>
+    <a href="/user/tickets" class="dropdown-item">My Tickets</a>
+    <hr style="border-color: var(--border); margin: 4px 0;">
+    <a id="userLogoutButton" class="dropdown-item text-danger" style="cursor: pointer;">Logout</a>
+</div>

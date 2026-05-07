@@ -1423,3 +1423,119 @@ p {
     0% { transform: scale(0.85); opacity: 0.5; }
     100% { transform: scale(1.15); opacity: 1; }
 }
+
+.stat-card {
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s ease;
+    cursor: default; /* Change to pointer if you plan to make them clickable links */
+}
+
+.stat-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(230, 57, 70, 0.4) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(230, 57, 70, 0.1);
+    /* Ensure the background stays dark and solid glass */
+    background: rgba(22, 22, 22, 0.8) !important; 
+}
+
+/* Keep the banned card's red background strong on hover */
+.stat-card.border-red:hover {
+    background: rgba(30, 15, 15, 0.9) !important;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    height: 34px;
+    padding: 0 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+}
+
+.action-btn.icon-only {
+    padding: 0;
+    width: 34px; /* Makes it a perfect square */
+}
+
+/* Suspend (Warning) Hover State */
+.action-btn-suspend:hover {
+    background: rgba(241, 196, 15, 0.1);
+    border-color: rgba(241, 196, 15, 0.4);
+    color: #f1c40f;
+    transform: translateY(-2px);
+}
+
+/* Block (Danger) Hover State */
+.action-btn-block:hover {
+    background: rgba(230, 57, 70, 0.1);
+    border-color: rgba(230, 57, 70, 0.4);
+    color: #E63946;
+    transform: translateY(-2px);
+}
+
+.action-btn-unblock:hover {
+    background: rgba(46, 204, 113, 0.1);
+    border-color: rgba(46, 204, 113, 0.4);
+    color: #2ecc71;
+    transform: translateY(-2px);
+}
+
+.action-btn-delete:hover {
+    background: rgba(230, 57, 70, 0.1);
+    border-color: rgba(230, 57, 70, 0.4);
+    color: #E63946;
+    transform: translateY(-2px);
+}
+
+/* Update this section in style.css */
+.data-table tbody tr {
+    transition: var(--transition);
+    border-bottom: 1px solid var(--border); /* Ensures lines stay visible */
+}
+
+.data-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+
+#statusFilter, #userSort {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 0 40px 0 15px !important; /* Extra padding on right for our custom icon */
+    font-size: 0.9rem !important;
+    height: 45px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    outline: none !important;
+
+    /* THIS HIDES THE DEFAULT ARROW */
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+
+    /* THIS ADDS OUR CUSTOM CLEAN ARROW */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 15.5l-6-6h12z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 14px !important;
+}
+
+/* Fix for the dropdown list background */
+#statusFilter option, #userSort option {
+    background-color: #1a1a1a !important; /* Solid dark background */
+    color: white !important;
+    padding: 10px !important;
+}
+
+#statusFilter:hover, #userSort:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}

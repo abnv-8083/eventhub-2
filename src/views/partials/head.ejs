@@ -9,6 +9,8 @@
     <script src="/js/validation.js" defer></script>
     <script src="/js/toast.js" defer></script>
     <script src="/js/loader.js" defer></script>
+    <script src="/js/confirm.js" defer></script>
+    <script src="/js/navbar.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <!-- Leaflet Map CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -52,4 +54,20 @@
             }
         });
     </script>
+    <!-- Global Confirmation Modal -->
+    <div class="modal-overlay" id="customConfirmModal" style="z-index: 9999;">
+        <div class="modal-container" style="max-width: 400px; padding: 0;">
+            <div class="modal-body text-center p-5">
+                <div id="confirmIconBg" style="width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1.5rem;">
+                    <i id="confirmIcon" class="fi"></i>
+                </div>
+                <h3 class="fw-bold mb-2 text-white" id="confirmTitle"></h3>
+                <p class="text-dim mb-4" id="confirmMessage" style="font-size: 0.95rem;"></p>
+                <div class="d-flex gap-3 mt-2">
+                    <button class="btn btn-outline flex-grow-1" id="confirmCancelBtn" style="border-color: rgba(255,255,255,0.2) !important; color: white !important;">Cancel</button>
+                    <button class="btn flex-grow-1" id="confirmActionBtn">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </head>

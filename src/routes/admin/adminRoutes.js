@@ -9,5 +9,9 @@ adminRoutes.use(isAdminAuthenticated)
 
 adminRoutes.get('/dashboard',adminController.getAdminDashboard)
 
+adminRoutes.get('/users', adminController.getAdminUser)
 
+adminRoutes.post('/users/toggle-block',adminController.toggleUserBlock)
+
+adminRoutes.post('/users/delete', adminController.deleteUser);
 export default adminRoutes

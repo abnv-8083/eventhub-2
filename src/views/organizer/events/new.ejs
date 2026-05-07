@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+</head>
+<body class="bg-mesh">
+    
+    <%- include('../partials/navbars/organizer-nav') %>
+
+    <div class="dashboard-layout">
+        <%- include('../../partials/organizer-sidebar', { title: 'Create Event' }) %>
+        
+        <main class="dashboard-main">
+            <div class="d-flex align-center mb-4 animate stagger-1">
+                <a href="/organizer/events" class="btn btn-outline btn-sm me-3 px-3">&larr; Back</a>
+                <div>
+                    <h2 class="fw-bold m-0">Create New Event</h2>
+                    <p class="text-dim m-0">Fill in the details to publish your event to the platform.</p>
+                </div>
+            </div>
+
+            <form id="createEventForm" class="row g-4 animate stagger-2" novalidate>
+                <!-- Left Column: Details -->
+                <div class="col-lg-8">
+                    <div class="glass-dark p-4 rounded-3 h-100">
+                        <h4 class="mb-4 fw-bold">Event Details</h4>
+                        
+                        <div class="form-floating mb-4">
+                            <input type="text" id="title" name="title" class="form-control input" placeholder=" " required minlength="5">
+                            <label for="title">Event Title</label>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-4">
+                                    <select id="category" name="category" class="input" style="height: 3.5rem;" required>
+                                        <option value="" disabled selected>Select Category</option>
+                                        <option value="technology">Technology</option>
+                                        <option value="sports">Sports</option>
+                                        <option value="music">Music & Concerts</option>
+                                        <option value="workshop">Workshops</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-4">
+                                    <input type="number" id="capacity" name="capacity" class="form-control input" placeholder=" " required min="1">
+                                    <label for="capacity">Total Capacity</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-4">
+                                    <input type="date" id="eventDate" name="eventDate" class="form-control input" placeholder=" " required>
+                                    <label for="eventDate">Event Date</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-4">
+                                    <input type="time" id="eventTime" name="eventTime" class="form-control input" placeholder=" " required>
+                                    <label for="eventTime">Start Time</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-floating mb-4">
+                            <input type="text" id="location" name="location" class="form-control input" placeholder=" " required>
+                            <label for="location">Venue / Location Address</label>
+                        </div>
+
+                        <div class="form-floating mb-0">
+                            <textarea id="description" name="description" class="form-control input" placeholder=" " required style="height: 150px; resize: none; padding-top: 1.5rem;"></textarea>
+                            <label for="description">Event Description</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Banner & Pricing -->
+                <div class="col-lg-4 d-flex flex-column gap-4">
+                    
+                    <!-- Cover Image Upload -->
+                    <div class="glass-dark p-4 rounded-3 text-center">
+                        <h6 class="fw-bold mb-3">Event Banner</h6>
+                        <div class="p-4 rounded-3" style="border: 2px dashed rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); cursor: pointer; transition: 0.3s;" onclick="document.getElementById('eventBanner').click()">
+                            <i class="fi fi-rr-picture text-dim" style="font-size: 2.5rem;"></i>
+                            <p class="text-dim m-0 mt-2" style="font-size: 0.85rem;">Click to upload image<br>(1920x1080 recommended)</p>
+                            <input type="file" id="eventBanner" name="image" accept="image/*" style="display: none;" required>
+                        </div>
+                    </div>
+
+                    <!-- Ticketing / Pricing -->
+                    <div class="glass-dark p-4 rounded-3 flex-grow-1">
+                        <h6 class="fw-bold mb-3">Ticketing Setup</h6>
+                        
+                        <div class="d-flex justify-between align-center mb-4 p-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border);">
+                            <span class="text-dim" style="font-size: 0.9rem;">Is this a free event?</span>
+                            <label class="modern-switch m-0">
+                                <input type="checkbox" id="isFree" name="isFree" onchange="togglePrice(this)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="form-floating mb-4" id="priceContainer">
+                            <input type="number" id="price" name="price" class="form-control input" placeholder=" " required min="1">
+                            <label for="price">Ticket Price (₹)</label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mt-auto" style="height: 3.5rem;">Publish Event</button>
+                    </div>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        function togglePrice(checkbox) {
+            const priceContainer = document.getElementById('priceContainer');
+            const priceInput = document.getElementById('price');
+            if (checkbox.checked) {
+                priceContainer.style.opacity = '0.3';
+                priceContainer.style.pointerEvents = 'none';
+                priceInput.removeAttribute('required');
+                priceInput.value = '0';
+            } else {
+                priceContainer.style.opacity = '1';
+                priceContainer.style.pointerEvents = 'all';
+                priceInput.setAttribute('required', 'true');
+                priceInput.value = '';
+            }
+        }
+
+        const createForm = document.getElementById('createEventForm');
+        createForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            if (!createForm.checkValidity()) {
+                createForm.reportValidity();
+                return;
+            }
+
+            Loader.show('CREATING EVENT...');
+            
+            // Note: Since there is a file upload, we MUST use FormData directly
+            const formData = new FormData(createForm);
+
+            try {
+                // Ensure your route supports multipart/form-data (Multer)
+                const response = await axios.post('/organizer/events', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+
+                if (response.data.success) {
+                    Toast.success('Event Published Successfully!');
+                    setTimeout(() => window.location.href = '/organizer/events', 1500);
+                }
+            } catch (error) {
+                Toast.error(error.response?.data?.message || 'Failed to create event');
+            } finally {
+                Loader.hide();
+            }
+        });
+    </script>
+</body>
+</html>

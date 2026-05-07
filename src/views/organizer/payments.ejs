@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head') %>
+</head>
+<body class="bg-mesh">
+    
+    <%- include('../partials/navbars/organizer-nav') %>
+
+    <div class="dashboard-layout">
+        <%- include('../partials/organizer-sidebar', { title: 'Payments & Revenue' }) %>
+        
+        <main class="dashboard-main">
+            <div class="mb-5 animate stagger-1">
+                <h2 class="fw-bold">Financial Overview</h2>
+                <p class="text-dim m-0">Track your ticket sales revenue and manage payout settings.</p>
+            </div>
+
+            <!-- Revenue Stats -->
+            <div class="row g-4 mb-5 animate stagger-2">
+                <div class="col-md-4">
+                    <div class="glass p-4 rounded-3 border-red" style="background: rgba(230, 57, 70, 0.05);">
+                        <p class="text-dim small text-uppercase fw-bold mb-2">Available for Payout</p>
+                        <h3 class="fw-bold m-0" style="font-size: 2.5rem; color: #2ecc71;">₹ 45,500.00</h3>
+                        <button class="btn btn-primary btn-sm mt-3 w-100">Withdraw Funds</button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass p-4 rounded-3 h-100">
+                        <p class="text-dim small text-uppercase fw-bold mb-2">Total Lifetime Earnings</p>
+                        <h3 class="fw-bold m-0" style="font-size: 2.2rem;">₹ 1,24,000.00</h3>
+                        <p class="text-dim m-0 mt-2" style="font-size: 0.85rem;"><i class="fi fi-rr-arrow-trend-up text-success"></i> +12% from last month</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-dark p-4 rounded-3 h-100">
+                        <div class="d-flex justify-between align-center mb-3">
+                            <h6 class="fw-bold m-0">Bank Details</h6>
+                            <button class="btn btn-outline btn-sm px-2 py-1" style="font-size: 0.75rem;">Edit</button>
+                        </div>
+                        <div class="p-3 rounded-3" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border);">
+                            <p class="text-dim m-0 mb-1" style="font-size: 0.8rem;">State Bank of India</p>
+                            <p class="text-white fw-bold m-0" style="letter-spacing: 2px;">**** **** 4321</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="glass-dark p-4 rounded-3 animate stagger-3">
+                <h4 class="mb-4 fw-bold">Recent Ticket Sales</h4>
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Transaction ID</th>
+                                <th>Event</th>
+                                <th>Buyer</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- EJS Loop placeholder -->
+                            <tr>
+                                <td><span style="font-family: monospace; color: var(--primary);">TXN-98432A</span></td>
+                                <td>Kerala Tech Summit</td>
+                                <td>
+                                    <span style="color: white;">Rahul K.</span><br>
+                                    <small class="text-dim">rahul@example.com</small>
+                                </td>
+                                <td><span style="color: #2ecc71; font-weight: 600;">+₹ 1,500.00</span></td>
+                                <td class="text-dim">Oct 24, 2025</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
