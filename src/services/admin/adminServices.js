@@ -65,3 +65,43 @@ export const deleteUserById = async (userId) => {
     }
     return deletedUser;
 };
+
+export const fetchAllOrganizers = async (query) => {
+    const mongoQuery = { role: 'organizer' }; // Ensure we only target organizers
+
+    // 1. Search Logic
+    if (query.search) {
+        mongoQuery.$or = [
+            { organizationName: { $regex: query.search, $options: 'i' } },
+            { email: { $regex: query.search, $options: 'i' } }
+        ];
+    }
+
+    // 2. Status Logic
+    if (query.status !== 'all') {
+        mongoQuery.status = query.status; // e.g., 'pending', 'active', 'suspended'
+    }
+
+    // 3. Pagination & Sort
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+    
+    let sortOption = { createdAt: -1 };
+    if (query.sort === 'name-asc') sortOption = { organizationName: 1 };
+
+    const dbOrganizers = await User.find(mongoQuery)
+        .sort(sortOption)
+        .skip(skip)
+        .limit(limit);
+
+    const filteredTotal = await User.countDocuments(mongoQuery);
+
+    return {
+        dbOrganizers,
+        totalOrganizers: await User.countDocuments({ role: 'organizer' }),
+        pendingApprovals: await User.countDocuments({ status: 'pending' }),
+        totalPages: Math.ceil(filteredTotal / limit),
+        currentPage: page
+    };
+};

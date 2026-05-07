@@ -14,4 +14,6 @@ adminRoutes.get('/users', adminController.getAdminUser)
 adminRoutes.post('/users/toggle-block',adminController.toggleUserBlock)
 
 adminRoutes.post('/users/delete', adminController.deleteUser);
+
+adminRoutes.get('/organizers', adminController.getAdminOrganizer)
 export default adminRoutes
