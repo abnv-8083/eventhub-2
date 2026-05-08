@@ -3,7 +3,11 @@ import passport from "passport";
 import * as userAuthController from '../../controllers/users/userAuthController.js'
 import * as validation from '../../middlewares/validate.js'
 import { isGuest } from "../../middlewares/authMiddleware.js";
+import noCacheMiddleware from "../../middlewares/nocache.js";
 const userAuthRouter = Router()
+
+
+userAuthRouter.use(noCacheMiddleware)
 
 userAuthRouter.get('/auth/google',
     passport.authenticate('google', {scope: ['profile', 'email']})

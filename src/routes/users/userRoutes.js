@@ -1,13 +1,14 @@
 import { Router } from "express";
 import * as userController from '../../controllers/users/userController.js'
 const userRouter = Router()
-import { isUserAuthenticated } from "../../middlewares/authMiddleware.js";
+import { isUserAuthenticated, isBlocked } from "../../middlewares/authMiddleware.js";
 import { upload } from "../../config/cloudinary.js";
 import { validateUpdateProfile } from "../../middlewares/validate.js";
+import noCacheMiddleware from "../../middlewares/nocache.js";
 
 userRouter.get('/', userController.getHomepage)
 
-// userRouter.use(isUserAuthenticated)
+userRouter.use(isUserAuthenticated, isBlocked, noCacheMiddleware)
 
 userRouter.route('/dashboard')
     .get(userController.getDashboard)

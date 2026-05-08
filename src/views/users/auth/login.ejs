@@ -88,6 +88,23 @@
             </div>
         </div>
     </div>
+    <div class="modal-overlay" id="statusModal">
+        <div class="modal-container glass-dark" style="max-width: 420px; text-align: center;">
+            <div class="modal-header border-bottom-0 pb-0 justify-content-end">
+                <i class="fi fi-rr-cross modal-close" onclick="closeStatusModal()"></i>
+            </div>
+            <div class="modal-body pt-0 pb-4">
+                <div id="statusModalIcon" class="mb-3 mx-auto d-flex align-items-center justify-content-center" 
+                    style="width: 70px; height: 70px; border-radius: 50%;">
+                    </div>
+                <h4 class="text-white mb-2" id="statusModalTitle">Account Status</h4>
+                <p class="text-dim m-0" id="statusModalMessage" style="font-size: 0.95rem; line-height: 1.5;"></p>
+            </div>
+            <div class="modal-footer border-top-0 justify-content-center pt-0">
+                <button class="btn btn-primary w-100" onclick="closeStatusModal()">I Understand</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Add this inside your <script> tag in login.ejs
@@ -132,6 +149,39 @@
                 Toast.error(error.response?.data?.message || 'Invalid Credintails');
             }
         })
+
+        // Modal Logic
+        function showStatusModal(status, message) {
+            const modal = document.getElementById('statusModal');
+            const iconContainer = document.getElementById('statusModalIcon');
+            const title = document.getElementById('statusModalTitle');
+            const msg = document.getElementById('statusModalMessage');
+
+            // Configure visuals based on status
+            if (status === 'pending') {
+                iconContainer.style.background = 'rgba(241, 196, 15, 0.15)';
+                iconContainer.style.color = '#f1c40f';
+                iconContainer.innerHTML = '<i class="fi fi-sr-time-check" style="font-size: 2rem;"></i>';
+                title.innerText = 'Application Pending';
+            } else if (status === 'rejected') {
+                iconContainer.style.background = 'rgba(230, 57, 70, 0.15)';
+                iconContainer.style.color = '#E63946';
+                iconContainer.innerHTML = '<i class="fi fi-sr-ban" style="font-size: 2rem;"></i>';
+                title.innerText = 'Application Rejected';
+            }
+
+            msg.innerText = message;
+            
+            // Show Modal
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        function closeStatusModal() {
+            const modal = document.getElementById('statusModal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
 
     </script>
 </body>

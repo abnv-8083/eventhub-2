@@ -273,7 +273,7 @@
                 if(response.data.success){
                     Toast.success(response.data.message)
                     setTimeout(()=>{
-                        window.location.href = '/user/verify-otp?action=signup'
+                        window.location.href = `/user/verify-otp?action=${response.data.action}`
                     }, 2000)
                 }
             } catch (error) {
