@@ -2,18 +2,18 @@ import { Router } from "express";
 import passport from "passport";
 import * as userAuthController from '../../controllers/users/userAuthController.js'
 import * as validation from '../../middlewares/validate.js'
-import { isGuest } from "../../middlewares/authMiddleware.js";
+import { isUserGuest ,isUserAuthenticated} from "../../middlewares/authMiddleware.js";
 import noCacheMiddleware from "../../middlewares/nocache.js";
 const userAuthRouter = Router()
 
 
 userAuthRouter.use(noCacheMiddleware)
 
-userAuthRouter.get('/auth/google',
+userAuthRouter.get('/auth/google',isUserGuest,
     passport.authenticate('google', {scope: ['profile', 'email']})
 )
 
-userAuthRouter.get('/google/callback',
+userAuthRouter.get('/google/callback',isUserGuest,
     passport.authenticate('google',{failureRedirect: '/user/login'}),
     (req,res)=>{
         if(req.user){
@@ -41,26 +41,26 @@ userAuthRouter.get('/google/callback',
 )
 
 userAuthRouter.route('/login')
-    .get(isGuest,userAuthController.getLoginPage)
+    .get(isUserGuest,userAuthController.getLoginPage)
     .post(validation.validateLogin, userAuthController.postLoginPage)
 userAuthRouter.route('/signup')
-    .get(isGuest,userAuthController.getRegisterPage)
+    .get(isUserGuest,userAuthController.getRegisterPage)
     .post(validation.validateRegister,userAuthController.postSignupPage)
 
 userAuthRouter.route('/forgot-password')
-    .get(isGuest,userAuthController.getForgotePasswordPage)
+    .get(isUserGuest,userAuthController.getForgotePasswordPage)
     .post(userAuthController.postForgotPassword)
 
 userAuthRouter.post('/resend-otp', userAuthController.postResendOtp)
     
 
 userAuthRouter.route('/reset-password')
-    .get(isGuest, userAuthController.getResetPasswordPage)
+    .get(isUserGuest, userAuthController.getResetPasswordPage)
     .post(userAuthController.postResetPassword)
 
 
 userAuthRouter.route('/verify-otp')
-    .get(userAuthController.getOtpPage)
+    .get(isUserGuest,userAuthController.getOtpPage)
     .post(userAuthController.postOtpPage)
 
 userAuthRouter.post('/logout', userAuthController.userLogout)

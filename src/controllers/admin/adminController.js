@@ -1,7 +1,8 @@
 import HTTP_STATUS from "../../constant/statusCode.js";
 import * as adminServices from '../../services/admin/adminServices.js'
 import User from "../../models/users/user.js";
-
+import { getIO, getActiveUsers } from "../../utils/socket.js";
+import Notification from "../../models/notifications/notification.js";
 
 export const getAdminDashboard = (req,res,next)=>{
     try {
@@ -111,10 +112,77 @@ export const updateOrganizerStatus = async (req, res, next) => {
         // 1. Update the database
         const updatedOrg = await User.findByIdAndUpdate(orgId, { status }, { new: true });
 
+        // ==========================================
+        // 2. SOCKET NOTIFICATION
+        // ==========================================
+        const io = getIO();
+
+        // Emit to the Organizer's room (supports multiple tabs)
+        io.to(orgId.toString()).emit('statusUpdate', {
+            status: updatedOrg.status,
+            message: `Your organizer account application has been ${updatedOrg.status}!`,
+        });
 
         return res.status(HTTP_STATUS.OK).json({ 
             success: true, 
             message: `Organizer successfully marked as ${status}.` 
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getNotifications = async (req, res, next) => {
+    try {
+        const adminId = req.session.admin._id;
+        
+        // Fetch the 20 most recent notifications for this admin
+        const notifications = await Notification.find({ recipient: adminId })
+                                              .sort({ createdAt: -1 })
+                                              .limit(20);
+                                              
+        const unreadCount = notifications.filter(n => !n.isRead).length;
+
+        return res.status(200).json({
+            success: true,
+            notifications,
+            unreadCount
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const markNotificationsRead = async (req, res, next) => {
+    try {
+        const adminId = req.session.admin._id;
+        
+        // Update all unread notifications for this admin to 'isRead: true'
+        await Notification.updateMany(
+            { recipient: adminId, isRead: false },
+            { $set: { isRead: true } }
+        );
+
+        return res.status(200).json({ success: true });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const deleteNotification = async (req, res, next) => {
+    try {
+        const { notificationId } = req.params;
+        const adminId = req.session.admin._id;
+
+        // Delete only if it belongs to the current admin
+        await Notification.findOneAndDelete({ 
+            _id: notificationId, 
+            recipient: adminId 
+        });
+
+        return res.status(200).json({ 
+            success: true, 
+            message: 'Notification deleted' 
         });
     } catch (error) {
         next(error);

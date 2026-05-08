@@ -19,57 +19,23 @@
     <!-- Cropper JS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-    <% if (locals.user || locals.organizer) { %>
+    <% if (locals.user || locals.organizer || locals.admin) { %>
+        <script src="/socket.io/socket.io.js"></script>
+        
         <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                // Get the current user's ID
-                const currentUserId = '<%= locals.user?._id || locals.organizer?._id %>';
-                
-                // Connect to Socket.io
-                const socket = io({ query: { userId: currentUserId } });
+            // 1. Extract the ID for whoever is logged in
+            const currentUserId = '<%= locals.user?._id || locals.organizer?._id || locals.admin?._id %>';
+            
+            // 2. Connect to the Socket server
+            window.socket = io();
 
-                // Listen for status updates
-                socket.on('statusUpdate', (data) => {
-                    
-                    // 1. Show Toast Notification
-                    if (data.status === 'approved') {
-                        Toast.success(data.message);
-                    } else if (data.status === 'rejected' || data.status === 'suspended') {
-                        Toast.error(data.message);
-                    } else {
-                        Toast.info(data.message);
-                    }
-
-                    // 2. Update Navbar Notification UI (If the elements exist)
-                    const dot = document.getElementById('notificationDot');
-                    const list = document.getElementById('notificationList');
-                    const emptyMsg = document.getElementById('emptyNotificationMsg');
-
-                    if (dot) dot.style.display = 'block';
-                    if (emptyMsg) emptyMsg.remove();
-
-                    if (list) {
-                        const itemHtml = `
-                            <div class="notification-item unread animate-fade-in">
-                                <div class="notification-icon-circle ${data.status === 'approved' ? 'success' : ''}">
-                                    <i class="fi fi-rr-bell"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <p class="text-white small mb-1" style="line-height: 1.4;">${data.message}</p>
-                                    <span class="text-dim x-small">Just now</span>
-                                </div>
-                            </div>
-                        `;
-                        list.insertAdjacentHTML('afterbegin', itemHtml);
-                    }
-
-                    // 3. Auto-refresh page if approved so they gain Organizer Access
-                    if (data.status === 'approved') {
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 2500);
-                    }
-                });
+            // 3. BULLETPROOF FIX: Use 'connect' so it re-registers automatically 
+            // if the server restarts or the internet connection drops!
+            window.socket.on('connect', () => {
+                if (currentUserId && currentUserId !== '') {
+                    window.socket.emit('register', currentUserId);
+                    console.log("✅ Socket reconnected and registered ID:", currentUserId);
+                }
             });
         </script>
     <% } %>
