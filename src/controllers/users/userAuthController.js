@@ -246,6 +246,11 @@ export const postLoginPage = async (req,res,next)=>{
                     status: 'rejected', 
                     message: 'Unfortunately, your application to become an organizer has been rejected.' 
                 });
+            }else if(result.isBlocked){
+                return res.status(HTTP_STATUS.FORBIDDEN).json({ 
+                    success: false, 
+                    message: 'Your Account is Currenty Blocked' 
+                });
             }
         }
         if(remember === "on" || remember === true){
