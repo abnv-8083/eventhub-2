@@ -17,7 +17,12 @@ export const initSocket = (httpServer) => {
 
         // Listen for the client registering their Database User ID
         socket.on('register', (userId) => {
+            // Join a Socket.IO room named after the userId. 
+            // This natively supports multiple tabs for the same user!
+            socket.join(userId);
+            // We still set it here to not break legacy code if it exists
             activeUsers.set(userId, socket.id);
+            console.log(`✅ User Registered on Socket Room: ${userId}`)
         });
 
         // Handle Disconnections

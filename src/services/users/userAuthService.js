@@ -7,6 +7,7 @@ import {sendOtpEmail, sendOrganizerCredentials} from "../../utils/sendEmail.js";
 import generateOTP from "../../utils/generateOtp.js";
 import passport from "passport";
 import { getIO, getActiveUsers } from "../../utils/socket.js";
+import Notification from "../../models/notifications/notification.js";
 
 export const findUser = async (userdata)=>{
     if(userdata.role == 'organizer'){
@@ -74,20 +75,36 @@ export const verifyAndCreateUser = async (email, otp, tempUserData)=>{
             status: 'pending',
         })
 
-        const io = getIO();
-        const activeUsers = getActiveUsers();
+        // ==========================================
+        // REAL-TIME NOTIFICATION LOGIC
+        // ==========================================
+        try {
+            const io = getIO();
+            const activeUsers = getActiveUsers();
+            
+            // 1. Find all admins to notify
+            const admins = await User.find({ role: 'admin' });
 
-        const admins = await User.find({role: 'admin'})
+            for (const admin of admins) {
+                const message = `New Organizer Application: ${newUser.organizationName || newUser.fullName} is waiting for approval.`;
+                
+                // 2. Save to Database (for the reload/history)
+                await Notification.create({
+                    recipient: admin._id,
+                    message: message,
+                    status: 'info'
+                });
 
-        admins.forEach(admin =>{
-            const adminSocketId = activeUsers.get(admin._id.toString());
-            if (adminSocketId) {
-                io.to(adminSocketId).emit('statusUpdate', {
+                // 3. Emit via Socket (for the REAL-TIME update)
+                // Since the user is joined to a room named after their ID, we can emit directly to it!
+                io.to(admin._id.toString()).emit('statusUpdate', {
                     status: 'info',
-                    message: `New Organizer Application: ${tempUserData.organizationName} is waiting for approval.`
+                    message: message
                 });
             }
-        })
+        } catch (err) {
+            console.error("Real-time notification failed:", err);
+        }
         await sendOrganizerCredentials(tempUserData.email, tempUserData.password, tempUserData.organizationName)
         return await newUser.save()
     }
@@ -210,13 +227,10 @@ export const verifyAndReregister = async (email, otp, userData) => {
     const admins = await User.find({role: 'admin'});
 
     admins.forEach(admin =>{
-        const adminSocketId = activeUsers.get(admin._id.toString());
-        if (adminSocketId) {
-            io.to(adminSocketId).emit('statusUpdate', {
-                status: 'info',
-                message: `Organizer Resubmission: ${userData.organizationName} is waiting for approval.`
-            });
-        }
+        io.to(admin._id.toString()).emit('statusUpdate', {
+            status: 'info',
+            message: `Organizer Resubmission: ${userData.organizationName} is waiting for approval.`
+        });
     });
 
     return getUser;

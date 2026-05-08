@@ -19,4 +19,10 @@ adminRoutes.get('/organizers', adminController.getAdminOrganizers)
 
 adminRoutes.post('/organizers/update-status', adminController.updateOrganizerStatus)
 
+adminRoutes.get('/notifications', adminController.getNotifications);
+
+adminRoutes.post('/notifications/mark-read', adminController.markNotificationsRead);
+
+adminRoutes.delete('/notifications/:notificationId', adminController.deleteNotification);
+
 export default adminRoutes

@@ -1569,12 +1569,15 @@ p {
     transition: color 0.2s ease;
 }
 
-.nav-bell-btn img {
-    filter: invert(1) brightness(2); /* Makes black icons white */
+.custom-nav-bell {
+    width: 24px;
+    height: 24px;
+    color: rgba(255, 255, 255, 0.85); /* Clean sleek white */
     transition: all 0.2s ease;
 }
 
-.nav-bell-btn:hover img {
+.nav-bell-btn:hover .custom-nav-bell {
+    color: white;
     animation: ringBell 0.6s ease-in-out both;
     transform-origin: top center; 
 }
@@ -1592,133 +1595,163 @@ p {
     position: relative !important; 
 }
 /* 2. Dropdown Container & Toggle */
+/* =========================================
+   PREMIUM "ICE" GLASSMORPHISM MODAL
+   ========================================= */
+
+/* 1. Main Glass Container */
 #notificationDropdown .dropdown-menu {
-    position: absolute !important;
-    top: calc(100% + 25px) !important; 
-    right: -105px !important; 
+    /* Keep the positioning fix so it doesn't cut off! */
+    top: 60px !important; 
+    right: -105px !important;
     left: auto !important;
-    margin-top: 0 !important; 
-    
-    display: none;
-    opacity: 0;
-    transform: translateY(15px); 
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    
-    width: 360px !important; 
-    max-width: 90vw !important; 
-    padding: 8px 0 !important; 
-    
-    /* === MEDIUM GLASSMORPHISM === */
-    background: rgba(22, 22, 22, 0.75) !important; /* More solid dark base for readability */
-    backdrop-filter: blur(12px) !important; /* Standard, subtle blur */
+    max-width: calc(100vw - 20px) !important; 
+
+    /* The Premium Frost Base (Lighter, more crystalline) */
+    background: rgba(12, 12, 16, 0.95) !important;
+    backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important; /* Very soft border */
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4) !important; /* Softer drop shadow */
     
-    border-radius: 16px !important; 
-    overflow: hidden; 
-}
-#notificationDropdown .dropdown-menu.show {
-    display: block !important;
-    opacity: 1;
-    transform: translateY(0); /* Snaps beautifully into place */
-}
-
-.notif-header {
-    padding: 0.75rem 1.25rem 0.5rem;
-    border-bottom: none !important; /* Removed dividing line */
-    background: transparent !important;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-/* 3. Individual Notification Row */
-.notification-item {
-    padding: 12px 16px;
-    margin: 0 8px 6px 8px; /* Creates spacing from the edges */
-    border-radius: 12px; /* Makes the hover state look like a rounded pill */
-    display: flex;
-    align-items: flex-start !important; 
-    gap: 14px;
-    border-bottom: none !important; /* Removed dividing lines */
-    transition: background 0.2s ease, transform 0.2s ease;
-    text-decoration: none;
-}
-
-.notification-item:hover {
-    background: rgba(255, 255, 255, 0.04);
-    transform: translateX(4px); /* Slight slide animation on hover */
-}
-
-.notification-item.unread {
-    background: rgba(230, 57, 70, 0.04); 
-}
-
-/* 4. THE UNBREAKABLE CIRCLE ICON */
-.notif-icon-wrapper {
-    /* Absolute dimensional locks */
-    width: 38px !important;
-    min-width: 38px !important;
-    max-width: 38px !important;
-    height: 38px !important;
-    min-height: 38px !important;
-    max-height: 38px !important;
+    /* The "Apple-Style" glowing edge (Sharper and brighter) */
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.35) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.25) !important;
     
-    border-radius: 50% !important; /* Perfect circle */
+    /* Soft but deep elevated shadow */
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4) !important;
+    
+    /* Structural Styling */
+    border-radius: 16px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    width: 350px !important; 
+    margin-top: 15px !important; 
+}
+
+/* 2. Header Separator (Matched to the new ice theme) */
+#notificationDropdown .notif-header {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 15px 20px !important;
     display: flex !important;
+    justify-content: space-between !important;
     align-items: center !important;
-    justify-content: center !important;
-    flex-shrink: 0 !important; /* NEVER allow squishing */
 }
 
-.notif-icon-wrapper.danger {
-    background: rgba(230, 57, 70, 0.15) !important;
-    color: #E63946 !important;
-    box-shadow: 0 0 15px rgba(230, 57, 70, 0.1);
+/* 3. Notification List Items (Default / Read State) */
+#notificationDropdown .notification-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    transition: all 0.2s ease !important;
+    padding: 15px 20px !important;
+    display: flex !important;
+    gap: 15px !important;
+    align-items: flex-start !important;
+    opacity: 0.65 !important; /* Dimmed for read items */
+    border-left: 3px solid transparent !important;
 }
 
-.notif-icon-wrapper.success {
-    background: rgba(46, 204, 113, 0.15) !important;
-    color: #2ecc71 !important;
-    box-shadow: 0 0 15px rgba(46, 204, 113, 0.1);
+/* 4. Highlight Unread Items */
+#notificationDropdown .notification-item.unread {
+    background: rgba(230, 57, 70, 0.05) !important; /* Subtle EventHub Red tint */
+    opacity: 1 !important; /* Full brightness */
+    border-left: 3px solid #E63946 !important; /* EventHub Red indicator line */
 }
 
-/* 5. Text Container */
-.notif-text-content p {
-    font-size: 0.9rem;
-    line-height: 1.4;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.9);
-    word-wrap: break-word; /* Forces long unbroken words to wrap */
-    white-space: normal;
+/* 5. Sleek Hover Effect */
+#notificationDropdown .notification-item:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    cursor: pointer !important;
+    opacity: 1 !important; /* Restore brightness on hover */
 }
 
-.notif-text-content p {
-    font-size: 0.9rem;
-    line-height: 1.4;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.notif-text-content span {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.4);
-}
-
+/* 6. Custom Sleek Scrollbar */
 #notificationList::-webkit-scrollbar {
-    width: 5px; 
+    width: 5px !important;
 }
-
-#notificationList::-webkit-scrollbar-track {
-    background: transparent; 
-}
-
 #notificationList::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15); 
-    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.25) !important;
+    border-radius: 10px !important;
+}
+#notificationList::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+#notificationList::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4) !important;
 }
 
-#notificationList::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3); 
+#notificationList {
+    max-height: 380px;
+    overflow-y: auto;
+}
+
+/* 7. New Notification Item Layout */
+#notificationDropdown .notif-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+/* Icon Variations */
+#notificationDropdown .notif-icon-wrapper.success {
+    background: rgba(46, 204, 113, 0.15);
+    color: #2ecc71;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.2);
+}
+#notificationDropdown .notif-icon-wrapper.danger {
+    background: rgba(230, 57, 70, 0.15);
+    color: #E63946;
+    box-shadow: 0 0 15px rgba(230, 57, 70, 0.2);
+}
+#notificationDropdown .notif-icon-wrapper.info {
+    background: rgba(255, 255, 255, 0.08); /* Clean White/Grey */
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+}
+#notificationDropdown .notif-icon-wrapper.read {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.4);
+    box-shadow: none;
+}
+
+#notificationDropdown .notif-icon-wrapper i {
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+}
+
+#notificationDropdown .notif-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#notificationDropdown .notif-message {
+    color: white;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin: 0 0 4px 0;
+}
+
+#notificationDropdown .notif-time {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Pulse Animation for Unread dot */
+#notificationDot {
+    animation: pulseDot 2s infinite;
+}
+@keyframes pulseDot {
+    0% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(230, 57, 70, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); }
 }
