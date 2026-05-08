@@ -33,6 +33,37 @@ export const getAdminUser = async (req,res,next)=>{
         next(error)
     }
 }
+export const getAdminOrganizer = async (req,res, next)=>{
+    try {
+        const {search, status, sort, page = 1} = req.query
+
+        const limit = 10
+
+        const organizerQuery = {
+            role: 'organizer',
+            search: search || '',
+            status: status || 'all',
+            sort: sort || 'newest',
+            page: parseInt(page),
+            limit: limit,
+        }
+
+        const { dbOrganizers, totalOrganizers, pendingApprovals, totalPages, currentPage } = 
+            await adminServices.fetchAllOrganizers(organizerQuery);
+
+        res.render('admin/organizers/index', {
+            organizers: dbOrganizers,
+            totalOrganizers,
+            pendingApprovals,
+            totalPages,
+            currentPage,
+            filters: { search, status, sort }
+        });
+
+    } catch (error) {
+        next(error)
+    }
+}
 
 export const toggleUserBlock = async (req, res, next) => {
     try {
