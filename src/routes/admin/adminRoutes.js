@@ -1,6 +1,6 @@
 import { Router } from "express";
 import * as adminController from '../../controllers/admin/adminController.js'
-import { isAdminAuthenticated, isBlocked} from '../../middlewares/authMiddleware.js';
+import { isAdminAuthenticated, isBlocked, isGuest} from '../../middlewares/authMiddleware.js';
 import noCacheMiddleware from "../../middlewares/nocache.js";
 import { validateAdminLogin } from "../../middlewares/validate.js";
 

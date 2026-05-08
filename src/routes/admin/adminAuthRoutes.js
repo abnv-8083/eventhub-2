@@ -1,6 +1,6 @@
 import { Router } from "express";
 import * as adminAuthController from '../../controllers/admin/adminAuthController.js'
-import { isAdminAuthenticated} from '../../middlewares/authMiddleware.js';
+import { isAdminAuthenticated, isGuest} from '../../middlewares/authMiddleware.js';
 import noCacheMiddleware from "../../middlewares/nocache.js";
 import { validateAdminLogin } from "../../middlewares/validate.js";
 
@@ -13,7 +13,7 @@ adminAuthRoutes.get('/', (req,res)=>{
 })
 
 adminAuthRoutes.route('/login')
-    .get(adminAuthController.getAdminLogin)
+    .get(isGuest, adminAuthController.getAdminLogin)
     .post(validateAdminLogin, adminAuthController.postAdminLogin)
 
 adminAuthRoutes.use(isAdminAuthenticated)

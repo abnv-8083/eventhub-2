@@ -7,15 +7,22 @@ import User from "../models/users/user.js";
  * Use this for routes like Login, Signup, Forgot Password.
  */
 export const isGuest = (req, res, next) => {
-    // If the session exists AND it has a user object attached...
+    // 1. Check if an Admin is already logged in
+    if (req.session && req.session.admin) {
+        return res.redirect('/admin/dashboard'); 
+    }
+    
+    // 2. Check if an Organizer is already logged in
+    if (req.session && req.session.organizer) {
+        return res.redirect('/organizer/dashboard'); 
+    }
+
+    // 3. Check if a Regular User is already logged in
     if (req.session && req.session.user) {
-        // They are already logged in! Send them away.
-        // (You can change '/' to '/dashboard' if you prefer)
-        console.log('in auth guest middleware')
         return res.redirect('/'); 
     }
     
-    // If they are not logged in, allow them to proceed to the login page.
+    // 4. If no one is logged in, allow them to proceed to the login page.
     next();
 };
 
