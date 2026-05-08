@@ -6,6 +6,30 @@
             <button class="profile-avatar-btn" id="userMenuBtn">
                 <span><%= admin.fullName.charAt(0).toUpperCase() %></span>
             </button>
+            <div class="dropdown" id="notificationDropdown">
+                <button class="nav-bell-btn position-relative" type="button" id="notificationBell" style="width: 45px; height: 45px;">
+    
+                    <img src="/images/notification.png" alt="Notifications" style="width: 24px; height: 24px; object-fit: contain;">
+                    
+                    <span id="notificationDot" class="position-absolute border border-2 border-dark rounded-circle bg-danger" 
+                        style="display: none; width: 10px; height: 10px; top: 8px; right: 8px;">
+                    </span>
+                </button>
+                
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg mt-3" id="notifMenuUI">
+                    <div class="notif-header">
+                        <h6 class="m-0 text-white fw-bold" style="font-size: 0.95rem;">Notifications</h6>
+                        <button class="btn btn-link btn-sm text-dim p-0 text-decoration-none x-small" id="clearAllNotifications">Mark all read</button>
+                    </div>
+                    
+                    <div id="notificationList" style="max-height: 380px; overflow-y: auto;">
+                        <div class="p-5 text-center text-dim" id="emptyNotificationMsg">
+                            <i class="fi fi-rr-envelope-open d-block mb-2 opacity-50" style="font-size: 2rem;"></i>
+                            <p class="small m-0">All caught up!</p>
+                        </div>
+                    </div>
+                </ul>
+            </div>
         </nav>
     </div>
 </header>

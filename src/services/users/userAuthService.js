@@ -6,25 +6,42 @@ import OTP from "../../models/users/otp.js";
 import {sendOtpEmail, sendOrganizerCredentials} from "../../utils/sendEmail.js";
 import generateOTP from "../../utils/generateOtp.js";
 import passport from "passport";
+import { getIO, getActiveUsers } from "../../utils/socket.js";
 
 export const findUser = async (userdata)=>{
-    const existingUser = await User.findOne({email: userdata.email, role: 'user'})
-    if(existingUser){
-        throw new AppError('User Already Registred', HTTP_STATUS.BAD_REQUEST)
+    if(userdata.role == 'organizer'){
+        const resubmitExistingUser = await User.findOne({email: userdata.email, role: 'organizer', status: 'rejected'})
+        const existingUser = await User.findOne({email: userdata.email, role: 'organizer',status: {$in: ['pending','approved']}})
+        
+        if(resubmitExistingUser){
+            const otp = generateOTP()
+            await OTP.create({ email: userdata.email, code: otp })
+            await sendOtpEmail(userdata.email, otp, 'Verify Email OTP')
+            // FIX: Tell the controller this is a re-registration
+            return { success: true, action: 'organizerReregister' }; 
+        }else if(existingUser){
+            throw new AppError('Organizer Already Registered', HTTP_STATUS.BAD_REQUEST)
+        } else {
+            const otp = generateOTP()
+            await OTP.create({ email: userdata.email, code: otp })
+            await sendOtpEmail(userdata.email, otp, 'Verify Email OTP')
+            // FIX: Tell the controller this is a brand new creation
+            return { success: true, action: 'userSignup' }; 
+        }
+    }else{
+        const existingUser = await User.findOne({email: userdata.email, role: 'user'})
+        if(existingUser){
+            throw new AppError('User Already Registered', HTTP_STATUS.BAD_REQUEST)
+        }
+
+        const otp = generateOTP()
+        await OTP.create({ email: userdata.email, code: otp })
+        await sendOtpEmail(userdata.email, otp, 'Verify Email OTP')
+        
+        // FIX: Tell the controller this is a brand new creation
+        return { success: true, action: 'userSignup' }; 
     }
-
-    const otp = generateOTP()
-    await OTP.create({
-        email: userdata.email,
-        code: otp,
-    })
-    
-    await sendOtpEmail(userdata.email, otp, 'Verify Email OTP')
-    
-
-    return true
 }
-
 export const verifyAndCreateUser = async (email, otp, tempUserData)=>{
 
     const otpRecord = await OTP.findOne({email, code: otp})
@@ -35,21 +52,48 @@ export const verifyAndCreateUser = async (email, otp, tempUserData)=>{
 
 
     const hashPassword = await argon2.hash(tempUserData.password)
-    const newUser = new User({
-        fullName: tempUserData.fullName,
-        email: tempUserData.email,
-        password: hashPassword,
-        role: tempUserData.role,
-        organizationName: tempUserData.organizationName,
-        city: tempUserData.city,
-        phone:tempUserData.phone
-    })
-    
-    return await newUser.save()
-    if(tempUserData.role == 'organizer'){
+
+    if(tempUserData.role == 'user'){
+        const newUser = new User({
+            fullName: tempUserData.fullName,
+            email: tempUserData.email,
+            password: hashPassword,
+            role: tempUserData.role,    
+        })
+        return await newUser.save()
+    }else{
+        
+        const newUser = new User({
+            fullName: tempUserData.fullName,
+            email: tempUserData.email,
+            password: hashPassword,
+            role: tempUserData.role,
+            organizationName: tempUserData.organizationName,
+            city: tempUserData.city,
+            phone:tempUserData.phone,
+            status: 'pending',
+        })
+
+        const io = getIO();
+        const activeUsers = getActiveUsers();
+
+        const admins = await User.find({role: 'admin'})
+
+        admins.forEach(admin =>{
+            const adminSocketId = activeUsers.get(admin._id.toString());
+            if (adminSocketId) {
+                io.to(adminSocketId).emit('statusUpdate', {
+                    status: 'info',
+                    message: `New Organizer Application: ${tempUserData.organizationName} is waiting for approval.`
+                });
+            }
+        })
         await sendOrganizerCredentials(tempUserData.email, tempUserData.password, tempUserData.organizationName)
+        return await newUser.save()
     }
 }
+
+
 
 export const verifyLogin = async (email, password) =>{
     const existingUser = await User.findOne({email:email}).select('+password')
@@ -128,3 +172,50 @@ export const resetUserPassword = async (newPassword,confirmPassword, email)=>{
 }
 
 
+export const verifyAndReregister = async (email, otp, userData) => {
+    // 1. Verify the OTP
+    const otpRecord = await OTP.findOne({email, code: otp});
+    if(!otpRecord){
+        throw new AppError('Invalid or Expired OTP', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // 2. Hash Password
+    const hashPassword = await argon2.hash(userData.password);
+
+    // 3. Update the existing rejected user
+    const getUser = await User.findOneAndUpdate(
+        { email: userData.email, role: 'organizer', status: 'rejected' },
+        {
+            $set: {
+                fullName: userData.fullName, // fixed typo from userData.name
+                password: hashPassword, 
+                organizationName: userData.organizationName, 
+                city: userData.city,         // fixed typo from userDta.city
+                phone: userData.phone,
+                status: 'pending'            // reset status so admins can review again
+            }
+        },
+        { new: true }
+    );
+
+    if(!getUser){
+        throw new AppError('Invalid Organizer to Resubmit the Application', HTTP_STATUS.NOT_FOUND);
+    }
+
+    // 4. Notify Admins again
+    const io = getIO();
+    const activeUsers = getActiveUsers();
+    const admins = await User.find({role: 'admin'});
+
+    admins.forEach(admin =>{
+        const adminSocketId = activeUsers.get(admin._id.toString());
+        if (adminSocketId) {
+            io.to(adminSocketId).emit('statusUpdate', {
+                status: 'info',
+                message: `Organizer Resubmission: ${userData.organizationName} is waiting for approval.`
+            });
+        }
+    });
+
+    return getUser;
+}

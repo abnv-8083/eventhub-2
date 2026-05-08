@@ -1505,37 +1505,220 @@ p {
 }
 
 
-#statusFilter, #userSort {
-    color: #ffffff !important;
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    padding: 0 40px 0 15px !important; /* Extra padding on right for our custom icon */
-    font-size: 0.9rem !important;
-    height: 45px !important;
-    border-radius: 8px !important;
-    cursor: pointer !important;
-    outline: none !important;
-
-    /* THIS HIDES THE DEFAULT ARROW */
+/* Update for wider, cleaner select boxes */
+#statusFilter, #userSort, #orgSort {
+    /* 1. Increase width to prevent text cutting off */
+    min-width: 180px !important; 
+    
+    /* 2. Increase right padding to create a 'safe zone' for the arrow */
+    padding: 0 45px 0 15px !important; 
+    
+    /* 3. Ensure browser defaults are hidden */
     appearance: none !important;
     -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-
-    /* THIS ADDS OUR CUSTOM CLEAN ARROW */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 15.5l-6-6h12z'/%3E%3C/svg%3E") !important;
+    
+    /* 4. Custom arrow styling */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 15l-5-5h10z'/%3E%3C/svg%3E") !important;
     background-repeat: no-repeat !important;
-    background-position: right 12px center !important;
+    background-position: right 15px center !important;
     background-size: 14px !important;
+
+    /* General styling to match your dashboard */
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    height: 45px !important;
+    border-radius: 8px !important;
+    font-size: 0.9rem !important;
+    cursor: pointer !important;
 }
 
-/* Fix for the dropdown list background */
+/* Optional: Make the Search Bar take up more space to balance the layout */
+.search-wrapper {
+    flex-grow: 1;
+    max-width: 500px !important; /* Increased from 400px */
+}
+
+/* Ensure the dropdown list itself is readable in dark mode */
 #statusFilter option, #userSort option {
-    background-color: #1a1a1a !important; /* Solid dark background */
+    background-color: #1a1a1a !important;
     color: white !important;
-    padding: 10px !important;
+    padding: 12px !important;
 }
 
 #statusFilter:hover, #userSort:hover {
     background-color: rgba(255, 255, 255, 0.08) !important;
     border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* ==========================================
+   FLAWLESS NOTIFICATION DROPDOWN UI & ANIMATIONS
+========================================== */
+
+/* 1. Navbar Bell Animation */
+.nav-bell-btn {
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    outline: none;
+    transition: color 0.2s ease;
+}
+
+.nav-bell-btn img {
+    filter: invert(1) brightness(2); /* Makes black icons white */
+    transition: all 0.2s ease;
+}
+
+.nav-bell-btn:hover img {
+    animation: ringBell 0.6s ease-in-out both;
+    transform-origin: top center; 
+}
+@keyframes ringBell {
+    0% { transform: rotate(0); }
+    15% { transform: rotate(25deg); }
+    30% { transform: rotate(-20deg); }
+    45% { transform: rotate(15deg); }
+    60% { transform: rotate(-5deg); }
+    100% { transform: rotate(0); }
+}
+
+
+#notificationDropdown {
+    position: relative !important; 
+}
+/* 2. Dropdown Container & Toggle */
+#notificationDropdown .dropdown-menu {
+    position: absolute !important;
+    top: calc(100% + 25px) !important; 
+    right: -105px !important; 
+    left: auto !important;
+    margin-top: 0 !important; 
+    
+    display: none;
+    opacity: 0;
+    transform: translateY(15px); 
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    
+    width: 360px !important; 
+    max-width: 90vw !important; 
+    padding: 8px 0 !important; 
+    
+    /* === MEDIUM GLASSMORPHISM === */
+    background: rgba(22, 22, 22, 0.75) !important; /* More solid dark base for readability */
+    backdrop-filter: blur(12px) !important; /* Standard, subtle blur */
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important; /* Very soft border */
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4) !important; /* Softer drop shadow */
+    
+    border-radius: 16px !important; 
+    overflow: hidden; 
+}
+#notificationDropdown .dropdown-menu.show {
+    display: block !important;
+    opacity: 1;
+    transform: translateY(0); /* Snaps beautifully into place */
+}
+
+.notif-header {
+    padding: 0.75rem 1.25rem 0.5rem;
+    border-bottom: none !important; /* Removed dividing line */
+    background: transparent !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* 3. Individual Notification Row */
+.notification-item {
+    padding: 12px 16px;
+    margin: 0 8px 6px 8px; /* Creates spacing from the edges */
+    border-radius: 12px; /* Makes the hover state look like a rounded pill */
+    display: flex;
+    align-items: flex-start !important; 
+    gap: 14px;
+    border-bottom: none !important; /* Removed dividing lines */
+    transition: background 0.2s ease, transform 0.2s ease;
+    text-decoration: none;
+}
+
+.notification-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+    transform: translateX(4px); /* Slight slide animation on hover */
+}
+
+.notification-item.unread {
+    background: rgba(230, 57, 70, 0.04); 
+}
+
+/* 4. THE UNBREAKABLE CIRCLE ICON */
+.notif-icon-wrapper {
+    /* Absolute dimensional locks */
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    
+    border-radius: 50% !important; /* Perfect circle */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important; /* NEVER allow squishing */
+}
+
+.notif-icon-wrapper.danger {
+    background: rgba(230, 57, 70, 0.15) !important;
+    color: #E63946 !important;
+    box-shadow: 0 0 15px rgba(230, 57, 70, 0.1);
+}
+
+.notif-icon-wrapper.success {
+    background: rgba(46, 204, 113, 0.15) !important;
+    color: #2ecc71 !important;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.1);
+}
+
+/* 5. Text Container */
+.notif-text-content p {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.9);
+    word-wrap: break-word; /* Forces long unbroken words to wrap */
+    white-space: normal;
+}
+
+.notif-text-content p {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.notif-text-content span {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+#notificationList::-webkit-scrollbar {
+    width: 5px; 
+}
+
+#notificationList::-webkit-scrollbar-track {
+    background: transparent; 
+}
+
+#notificationList::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15); 
+    border-radius: 10px;
+}
+
+#notificationList::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3); 
 }

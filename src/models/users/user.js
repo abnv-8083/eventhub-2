@@ -55,6 +55,18 @@ const userSchema = new mongoose.Schema({
     isBlocked: {
         type: Boolean,
         default: false,
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: function() {
+            // Only apply a status if the user is registering as an organizer
+            if (this.role === 'organizer') {
+                return 'pending';
+            }
+            // Return undefined so regular users do not get a status field at all
+            return undefined; 
+        }
     }
 }, {
     timestamps: true // Automatically adds 'createdAt' and 'updatedAt' fields

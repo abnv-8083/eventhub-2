@@ -9,6 +9,8 @@ import morgan from 'morgan';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import session from 'express-session';
+import http from 'http';
+import { initSocket } from './src/utils/socket.js';
 import MongoStore from 'connect-mongo';
 import passport from 'passport';
 const {authenticate} = passport
@@ -35,6 +37,9 @@ const __dirname = path.dirname(__filename);
 
 // Initialize Express app
 const app = express();
+const server = http.createServer(app);
+
+initSocket(server)
 
 // ==========================================
 // 1. Database Connection
@@ -99,9 +104,10 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 
+
 app.get('/', userController.getHomepage);
-app.use('/user', userRouter)
 app.use('/user', userAuthRouter)
+app.use('/user', userRouter)
 app.use('/organizer', organizerRouter)
 app.use('/admin', adminAuthRoutes)
 app.use('/admin', adminRoutes)
@@ -119,7 +125,7 @@ app.use(errorHandler);
 // ==========================================
 const PORT = process.env.PORT || 8083;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`🚀 EventHub Server is running on http://localhost:${PORT} or https://justly-mocha-preorder.ngrok-free.dev`);
     console.log(`⏱️  Environment: ${process.env.NODE_ENV || 'development'}`);
 });

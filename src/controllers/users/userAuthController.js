@@ -57,16 +57,18 @@ export const getOtpPage = (req,res,next)=>{
 }
 
 
-export const postSignupPage = async (req, res, next)=>{
+export const postSignupPage = async (req, res, next) => {
     try {
-        req.session.tempData = req.body
-        const result = await userAuthService.findUser(req.body)
-        if(!result){
+        const result = await userAuthService.findUser(req.body);
+        
+        if (!result || !result.success) {
             return res.status(HTTP_STATUS.NOT_FOUND).json({
                 success: false,
-                message:'Registration Faild',
-            })
+                message: 'Registration Failed',
+            });
         }
+
+        req.session.tempData = req.body;
         
         req.session.save((err) => {
             if (err) {
@@ -76,13 +78,17 @@ export const postSignupPage = async (req, res, next)=>{
                     message: 'Internal Server Error'
                 });
             }
+            
+            // Sends either 'userSignup' or 'organizerReregister' directly from the service
             return res.status(HTTP_STATUS.OK).json({
                 success: true,
-                message:'OTP Sent To email Id',
-            })
+                message: 'OTP Sent To Email',
+                action: result.action 
+            });
         });
+        
     } catch (error) {
-        next(error)
+        next(error);
     }
 }
 
@@ -90,7 +96,7 @@ export const postOtpPage = async (req, res, next)=>{
     try {
         const {email, otp, action} = req.body
 
-        if(action == 'signup'){
+        if(action == 'userSignup'){
             const tempUser = req.session.tempData
             const result = await userAuthService.verifyAndCreateUser(email, otp, tempUser)
             
@@ -149,6 +155,27 @@ export const postOtpPage = async (req, res, next)=>{
                 redirect: '/user/profile',
             });
         });
+        } else if (action == 'organizerReregister') {
+            const tempUser = req.session.tempData;
+
+            // FIX: Added email and otp arguments
+            const result = await userAuthService.verifyAndReregister(email, otp, tempUser);
+
+            if (!result) {
+                return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+                    success: false,
+                    message: 'Internal Server Error'
+                });
+            }
+            
+            delete req.session.tempData;
+        
+            res.status(HTTP_STATUS.OK).json({
+                success: true,
+                message: 'Request has been sent to Admin',
+                redirect: '/user/login'
+            });
+            
         }else{
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
@@ -205,6 +232,21 @@ export const postLoginPage = async (req,res,next)=>{
                 success: false,
                 message: 'Internal Server Error'
             });
+        }
+        if(result.role == 'organizer'){
+            if(result.status == 'pending'){
+                return res.status(HTTP_STATUS.FORBIDDEN).json({ 
+                    success: false, 
+                    status: 'pending', 
+                    message: 'Your account is currently under review by our team. You will be notified once approved.' 
+                });
+            }else if(result.status == 'rejected'){
+                return res.status(HTTP_STATUS.FORBIDDEN).json({ 
+                    success: false, 
+                    status: 'rejected', 
+                    message: 'Unfortunately, your application to become an organizer has been rejected.' 
+                });
+            }
         }
         if(remember === "on" || remember === true){
             req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000
