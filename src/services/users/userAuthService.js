@@ -102,6 +102,8 @@ export const verifyLogin = async (email, password) =>{
         if(checkPassword){
             if(existingUser.role == 'admin'){
                 throw new AppError('Invalid Access', HTTP_STATUS.NOT_FOUND)
+            }else if(existingUser.isBlocked){
+                throw new AppError('Access Denied: Your account has been Blocked.', HTTP_STATUS.FORBIDDEN)
             }else{
                 return existingUser
             }

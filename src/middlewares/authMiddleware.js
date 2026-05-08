@@ -36,7 +36,7 @@ export const isUserAuthenticated = (req, res, next) => {
 export const isOrganizerAuthenticated = (req, res, next) => {
     if (!req.session || !req.session.organizer) {
         // They are not logged in, redirect them to the login page
-        return res.redirect('/?message=Session Expired. Please log in.');
+        return res.redirect('/?message=Please log in.');
     }
     // They are logged in, allow them to proceed
     next();
