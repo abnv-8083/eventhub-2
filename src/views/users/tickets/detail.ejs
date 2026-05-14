@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+</head>
+<body class="bg-mesh">
+    <%- include('../../partials/navbars/user-nav') %>
+
+    <div class="container py-5" style="margin-top: 60px;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="/user/tickets" class="btn btn-outline btn-sm"><i class="fi fi-rr-arrow-left me-2"></i>Back to Tickets</a>
+            
+            <% if(booking.status === 'active') { %>
+                <span class="badge bg-success px-3 py-2" style="font-size: 0.9rem;">● Active Booking</span>
+            <% } else if(booking.status === 'on_hold') { %>
+                <span class="badge bg-warning text-dark px-3 py-2" style="font-size: 0.9rem;">⏸ On Hold</span>
+            <% } else { %>
+                <span class="badge bg-danger px-3 py-2" style="font-size: 0.9rem;">✗ Cancelled</span>
+            <% } %>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="glass-dark p-4 rounded-4 text-center">
+                    <img src="<%= booking.event.banners[0] %>" class="img-fluid rounded-3 mb-3" alt="Event Banner" style="object-fit: cover; height: 180px; width: 100%;">
+                    <h5 class="fw-bold text-white mb-1"><%= booking.event.title %></h5>
+                    <p class="text-primary small mb-4"><%= new Date(booking.event.startDate).toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short', year:'numeric'}) %></p>
+                    
+                    <% if(booking.status === 'active') { %>
+                        <div class="bg-white p-3 rounded-3 d-inline-block mb-3">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=<%= booking._id %>" alt="QR Code">
+                        </div>
+                        <p class="text-dim small mb-0">Booking ID: <span class="text-white" style="font-family: monospace;">#<%= booking._id.toString().slice(-8).toUpperCase() %></span></p>
+                    <% } else { %>
+                        <div class="alert alert-danger" style="background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.2); color: #E63946;">
+                            Ticket void due to cancellation.
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="booking-details-card p-4 glass-dark rounded-4 h-100">
+                    <h5 class="fw-bold text-white mb-4"><i class="fi fi-rr-receipt me-2"></i>Purchase Details</h5>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-dark table-borderless align-middle mb-0">
+                            <thead style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th class="text-dim pb-2" style="background: transparent;">Ticket Type</th>
+                                    <th class="text-dim pb-2 text-center" style="background: transparent;">Qty</th>
+                                    <th class="text-dim pb-2 text-end" style="background: transparent;">Price</th>
+                                    <th class="text-dim pb-2 text-end" style="background: transparent;">Subtotal</th>
+                                    <th class="text-dim pb-2 text-end" style="background: transparent;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% booking.tickets.forEach(t => { %>
+                                    <% const isCancelled = t.status === 'cancelled'; %>
+                                    <tr>
+                                        <td class="text-white py-3" style="background: transparent;">
+                                            <span class="<%= isCancelled ? 'text-decoration-line-through text-dim' : 'fw-bold' %>"><%= t.ticketName %></span>
+                                            <% if(isCancelled) { %>
+                                                <span class="badge bg-danger ms-2" style="font-size: 0.65rem;">Refunded</span>
+                                            <% } %>
+                                        </td>
+                                        <td class="text-center text-white py-3" style="background: transparent;"><%= t.quantity %></td>
+                                        <td class="text-end py-3 <%= isCancelled ? 'text-dim text-decoration-line-through' : 'text-white' %>" style="background: transparent;">₹<%= t.ticketPrice.toLocaleString('en-IN') %></td>
+                                        <td class="text-end py-3 <%= isCancelled ? 'text-dim text-decoration-line-through' : 'text-white' %>" style="background: transparent;">₹<%= (t.ticketPrice * t.quantity).toLocaleString('en-IN') %></td>
+                                        <td class="text-end py-3" style="background: transparent;">
+                                            <% if(!isCancelled && booking.status === 'active') { %>
+                                                <button class="btn btn-outline-danger btn-sm px-2 py-1" style="font-size: 0.75rem;" onclick="cancelSingleTicket('<%= booking._id %>', '<%= t._id %>', <%= t.quantity %>)">Cancel Ticket</button>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                            <tfoot style="border-top: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <td colspan="4" class="text-end text-dim pt-3 pb-0" style="background: transparent;"><strong>Active Total:</strong></td>
+                                    <td class="text-end pt-3 pb-0" style="background: transparent;"><strong style="color: #2ecc71; font-size: 1.2rem;">₹<%= booking.totalAmount.toLocaleString('en-IN') %></strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 pt-3" style="border-top: 1px dashed rgba(255,255,255,0.1);">
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <p class="text-dim small mb-1">Payment Method</p>
+                                <p class="text-white fw-bold"><%= booking.paymentMethod === 'wallet' ? 'Wallet' : 'Razorpay' %></p>
+                            </div>
+                            <div class="col-sm-6 text-sm-end">
+                                <p class="text-dim small mb-1">Transaction ID</p>
+                                <p class="text-white" style="font-family: monospace; font-size: 0.9rem;"><%= booking.paymentId %></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <% if(booking.status !== 'cancelled') { %>
+                        <div class="mt-5 pt-3 d-flex gap-2 justify-content-end" style="border-top: 1px solid rgba(255,255,255,0.05);">
+                            <button onclick="cancelBooking('<%= booking._id %>')" class="btn btn-outline-danger">Cancel Booking</button>
+                        </div>
+                    <% } %>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="quantityConfirmModal" style="z-index: 9999;">
+        <div class="modal-container" style="max-width: 400px; padding: 0;">
+            <div class="modal-body text-center p-5">
+                <div style="width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1.5rem; background: rgba(230, 57, 70, 0.1); color: #E63946;">
+                    <i class="fi fi-rr-ticket"></i>
+                </div>
+                <h3 class="fw-bold mb-2 text-white">Cancel Tickets</h3>
+                <p class="text-dim mb-4" style="font-size: 0.95rem;">How many tickets would you like to cancel?</p>
+                
+                <div class="mb-4">
+                    <input type="number" id="cancelQtyInput" class="input text-center" min="1" value="1" style="font-size: 1.5rem; width: 120px; margin: 0 auto;">
+                </div>
+
+                <div class="d-flex gap-3 mt-2">
+                    <button class="btn btn-outline flex-grow-1" onclick="closeQtyModal()" style="border-color: rgba(255,255,255,0.2) !important; color: white !important;">Go Back</button>
+                    <button class="btn btn-primary flex-grow-1" id="confirmQtyBtn">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        async function cancelBooking(bookingId) {
+            if(!confirm("Are you sure you want to cancel this booking? This action cannot be undone.")) return;
+            
+            try {
+                const res = await axios.post(`/user/tickets/${bookingId}/cancel`);
+                if(res.data.success) {
+                    alert(res.data.message);
+                    location.reload();
+                }
+            } catch (err) {
+                alert(err.response?.data?.message || 'Failed to cancel booking');
+            }
+        }
+
+        // ── Partial Ticket Cancellation (User Side) ──
+        let qtyResolve = null;
+
+        function openQtyModal(maxQty) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('quantityConfirmModal');
+                const input = document.getElementById('cancelQtyInput');
+                const confirmBtn = document.getElementById('confirmQtyBtn');
+
+                input.max = maxQty;
+                input.value = 1; // Default to 1
+                modal.classList.add('active');
+
+                confirmBtn.onclick = () => {
+                    const qty = parseInt(input.value);
+                    if (qty > 0 && qty <= maxQty) {
+                        modal.classList.remove('active');
+                        resolve(qty);
+                    } else {
+                        Toast.error(`Please enter a valid quantity between 1 and ${maxQty}`);
+                    }
+                };
+                
+                qtyResolve = resolve;
+            });
+        }
+
+        function closeQtyModal() {
+            document.getElementById('quantityConfirmModal').classList.remove('active');
+            if (qtyResolve) qtyResolve(null);
+        }
+
+        // Updated Cancel Function
+        async function cancelSingleTicket(bookingId, ticketId, maxQty) {
+            let cancelQty = 1;
+
+            // Show quantity modal if they bought more than 1 ticket of this type
+            if (maxQty > 1) {
+                cancelQty = await openQtyModal(maxQty);
+                if (!cancelQty) return; // User closed the modal
+            } else {
+                // Fallback to standard Yes/No confirmation if quantity is only 1
+                const ok = await CustomConfirm.show({
+                    title: 'Cancel this Ticket?',
+                    message: 'Are you sure you want to cancel this specific ticket? Wallet payments will be refunded immediately.',
+                    confirmText: 'Yes, Cancel',
+                    actionType: 'danger',
+                    icon: 'fi-rr-ban'
+                });
+                if (!ok) return;
+            }
+
+            Loader.show('CANCELLING TICKET...');
+            try {
+                // We now send the quantity in the payload
+                const res = await axios.post(`/user/tickets/${bookingId}/tickets/${ticketId}/cancel`, {
+                    quantity: cancelQty
+                });
+
+                if(res.data.success) {
+                    Toast.success(res.data.message);
+                    setTimeout(() => location.reload(), 1500);
+                }
+            } catch (err) {
+                Toast.error(err.response?.data?.message || 'Failed to cancel ticket');
+            } finally {
+                Loader.hide();
+            }
+        }
+    </script>
+</body>
+</html>

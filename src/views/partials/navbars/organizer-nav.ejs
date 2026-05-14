@@ -10,6 +10,33 @@
                     <span>O</span>
                 <% } %>
             </button>
+
+            <div class="dropdown me-3" id="notificationDropdown">
+                <button class="nav-bell-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                    <div class="position-relative">
+                        <i class="fi fi-rr-bell custom-nav-bell"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" id="notificationDot" style="display: none; border-color: #0A0A0A !important;"></span>
+                    </div>
+                </button>
+                
+                <div class="dropdown-menu dropdown-menu-end shadow">
+                    <div class="notif-header">
+                        <h6 class="m-0 text-white fw-bold"><i class="fi fi-rr-bell-ring me-2 text-primary"></i>Notifications</h6>
+                        <button class="btn btn-link p-0 text-decoration-none text-dim small" style="font-size: 0.75rem;" id="clearAllNotifications">Mark all read</button>
+                    </div>
+                    
+                    <div id="notificationList">
+                        <div class="p-5 text-center text-dim" id="emptyNotificationMsg">
+                            <i class="fi fi-rr-envelope-open d-block mb-2 opacity-50" style="font-size: 2rem;"></i>
+                            <p class="small m-0">All caught up!</p>
+                        </div>
+                    </div>
+                    
+                    <div class="p-2 border-top text-center" style="border-color: rgba(255,255,255,0.05) !important;">
+                        <a href="#" class="text-decoration-none text-dim small">View all settings</a>
+                    </div>
+                </div>
+            </div>
         </nav>
     </div>
 </header>
@@ -23,3 +50,4 @@
     <hr style="border-color: var(--border); margin: 4px 0;">
     <a id="organizerLogoutButton" class="dropdown-item text-danger" style="cursor: pointer;">Logout</a>
 </div>
+

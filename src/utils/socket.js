@@ -7,7 +7,7 @@ const activeUsers = new Map();
 export const initSocket = (httpServer) => {
     io = new Server(httpServer, {
         cors: {
-            origin: "*", // Adjust this based on your security needs
+            origin: "*", 
             methods: ["GET", "POST"]
         }
     });
@@ -17,15 +17,19 @@ export const initSocket = (httpServer) => {
 
         // Listen for the client registering their Database User ID
         socket.on('register', (userId) => {
-            // Join a Socket.IO room named after the userId. 
-            // This natively supports multiple tabs for the same user!
-            socket.join(userId);
-            // We still set it here to not break legacy code if it exists
-            activeUsers.set(userId, socket.id);
-            console.log(`✅ User Registered on Socket Room: ${userId}`)
+            // 1. Force to string and clean whitespace
+            const cleanId = String(userId).trim(); 
+            
+            socket.join(cleanId);
+            activeUsers.set(cleanId, socket.id);
+            console.log(`✅ Backend placed user in Socket Room: [${cleanId}]`);
         });
 
-        // Handle Disconnections
+        socket.on('joinEvent', (eventId) => {
+            socket.join(String(eventId).trim());
+            console.log(`🎟️ Socket ${socket.id} joined event room: ${eventId}`);
+        });
+
         socket.on('disconnect', () => {
             for (let [userId, socketId] of activeUsers.entries()) {
                 if (socketId === socket.id) {
@@ -38,15 +42,11 @@ export const initSocket = (httpServer) => {
     return io;
 };
 
-// Getter function to use IO anywhere in the app
 export const getIO = () => {
-    if (!io) {
-        throw new Error("Socket.io has not been initialized!");
-    }
+    if (!io) throw new Error("Socket.io has not been initialized!");
     return io;
 };
 
-// Getter function for the active users map
 export const getActiveUsers = () => {
     return activeUsers;
 };

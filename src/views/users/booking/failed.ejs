@@ -1,0 +1,34 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+</head>
+<body class="bg-mesh">
+    <%- include('../../partials/navbars/user-nav') %>
+
+    <div style="min-height: calc(100vh - 70px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;">
+            <div class="failed-wrap animate stagger-1">
+                <div class="failed-top">
+                    <div class="failed-icon-ring">
+                        <i class="fi fi-rr-cross-circle"></i>
+                    </div>
+                    <h3 class="fw-bold text-white mb-1">Booking Failed</h3>
+                    <p class="text-dim mb-0" style="font-size:0.9rem;">We couldn't complete your booking.</p>
+                </div>
+
+                <div class="reason-box">
+                    <i class="fi fi-rr-info me-2"></i><%= reason %>
+                </div>
+
+                <div class="action-row">
+                    <button onclick="history.back()" class="btn btn-primary px-4">
+                        <i class="fi fi-rr-redo me-2"></i> Try Again
+                    </button>
+                    <a href="/user/wallet" class="btn btn-outline px-4">
+                        <i class="fi fi-rr-wallet me-2"></i> Top Up Wallet
+                    </a>
+                    <a href="/user/events" class="btn btn-outline px-3">Browse Events</a>
+                </div>
+    </div>
+</body>
+</html>

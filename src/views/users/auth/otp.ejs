@@ -1,4 +1,4 @@
-<%- include('../../partials/head') %>
+﻿<%- include('../../partials/head') %>
 
 <body class="bg-mesh">
 
@@ -54,31 +54,7 @@
             </div>
         </div>
     </div>
-
-    <style>
-        .otp-input {
-            width: 60px;
-            height: 70px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            color: white;
-            font-size: 2rem;
-            font-weight: 700;
-            text-align: center;
-            transition: var(--transition);
-        }
-        .otp-input:focus {
-            border-color: var(--primary);
-            background: rgba(230, 57, 70, 0.1);
-            box-shadow: 0 0 15px rgba(230, 57, 70, 0.2);
-        }
-        .otp-input.filled {
-            border-color: var(--primary-hover);
-        }
-    </style>
-
-    <script>
+<script>
         const inputs = document.querySelectorAll('.otp-input');
         const form = document.getElementById('otpForm');
 
@@ -204,7 +180,7 @@
             // Stop them if the button is currently disabled
             if (resendBtn.disabled) return;
             
-            // 🔥 THE FIX: Start the 60-second block IMMEDIATELY upon clicking
+            // ðŸ”¥ THE FIX: Start the 60-second block IMMEDIATELY upon clicking
             startResendTimer(); 
             
             const emailspan = document.getElementById('userEmail');

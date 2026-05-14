@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+</head>
+<body class="bg-mesh">
+    <%- include('../../partials/navbars/organizer-nav') %>
+    <div class="dashboard-layout">
+        <%- include('../../partials/organizer-sidebar', { title: 'My Events' }) %>
+        <main class="dashboard-main">
+
+            <%# ── Top Nav Bar ─────────────────────────────── %>
+            <div class="d-flex align-items-center justify-content-between mb-4 animate stagger-1">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="/organizer/events" class="btn btn-outline btn-sm px-3" style="border-radius: 10px;">
+                        <i class="fi fi-rr-arrow-left me-1"></i> Back
+                    </a>
+                    <div>
+                        <h2 class="fw-bold m-0" style="letter-spacing:-0.5px;"><%= event.title %></h2>
+                        <p class="text-dim m-0 small"><%= event.category ? event.category.name : 'Uncategorized' %></p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <% if(event.status === 'approved') { %>
+                    <a href="/organizer/events/<%= event._id %>/bookings" class="btn btn-outline btn-sm px-3" style="border-radius:10px;">
+                        <i class="fi fi-rr-money me-1"></i> Booking
+                    </a>
+                    <% } %>
+                    <% if(event.status === 'pending' || event.status === 'approved') { %>
+                    <a href="/organizer/events/<%= event._id %>/edit" class="btn btn-primary btn-sm px-3" style="border-radius:10px;">
+                        <i class="fi fi-rr-edit me-1"></i> Edit Event
+                    </a>
+                    <% } %>
+                </div>
+            </div>
+
+            <%# ── Hero Banner ─────────────────────────────── %>
+            <div class="hero-banner mb-4 animate stagger-1">
+                <% if(event.banners && event.banners.length > 0) { %>
+                    <img src="<%= event.banners[0] %>" alt="<%= event.title %>">
+                <% } %>
+                <div class="hero-overlay">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <% if(event.isBlocked) { %>
+                            <span class="status-badge status-rejected"><i class="fi fi-rr-ban me-1"></i>Blocked</span>
+                        <% } else if(event.status === 'pending') { %>
+                            <span class="status-badge status-pending"><i class="fi fi-rr-clock me-1"></i>Pending Approval</span>
+                        <% } else if(event.status === 'approved') { %>
+                            <span class="status-badge status-approved"><i class="fi fi-rr-check me-1"></i>Live</span>
+                        <% } else { %>
+                            <span class="status-badge status-rejected"><i class="fi fi-rr-cross me-1"></i>Rejected</span>
+                        <% } %>
+                        <% if(event.isFeatured) { %>
+                            <span class="status-badge" style="background:rgba(255,193,7,0.15);border:1px solid rgba(255,193,7,0.3);color:#ffc107;">
+                                <i class="fi fi-rr-star me-1"></i>Featured
+                            </span>
+                        <% } %>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <span style="color:rgba(255,255,255,0.7);font-size:0.9rem;">
+                            <i class="fi fi-rr-calendar me-1"></i>
+                            <%= new Date(event.startDate).toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'}) %>
+                            at <%= event.startTime %>
+                        </span>
+                        <span style="color:rgba(255,255,255,0.5);">—</span>
+                        <span style="color:rgba(255,255,255,0.7);font-size:0.9rem;">
+                            <i class="fi fi-rr-marker me-1"></i>
+                            <%= event.location ? event.location.address.substring(0, 60) + (event.location.address.length > 60 ? '...' : '') : 'N/A' %>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <%# ── Stats Row ───────────────────────────────── %>
+            <div class="row g-3 mb-4 animate stagger-2">
+                <div class="col-sm-6 col-lg-3">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:rgba(46,204,113,0.12);">
+                            <i class="fi fi-rr-coins" style="color:#2ecc71;"></i>
+                        </div>
+                        <p class="text-dim small text-uppercase fw-bold mb-1">Total Revenue</p>
+                        <h3 class="fw-bold m-0" style="color:#2ecc71;">₹<%= totalRevenue.toFixed(2) %></h3>
+                        <p class="text-dim m-0" style="font-size:0.75rem;">Net: ₹<%= (totalRevenue * 0.95).toFixed(2) %></p>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:rgba(230,57,70,0.12);">
+                            <i class="fi fi-rr-ticket" style="color:#E63946;"></i>
+                        </div>
+                        <p class="text-dim small text-uppercase fw-bold mb-1">Tickets Sold</p>
+                        <h3 class="fw-bold m-0"><%= totalTicketsSold %> <span class="text-dim" style="font-size:1rem;">/ <%= totalCapacity %></span></h3>
+                        <% const fillPct = totalCapacity > 0 ? Math.round((totalTicketsSold/totalCapacity)*100) : 0; %>
+                        <div style="height:4px;background:rgba(255,255,255,0.07);border-radius:2px;margin-top:8px;">
+                            <div style="width:<%= fillPct %>%;height:100%;background:var(--primary);border-radius:2px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:rgba(52,152,219,0.12);">
+                            <i class="fi fi-rr-users" style="color:#3498db;"></i>
+                        </div>
+                        <p class="text-dim small text-uppercase fw-bold mb-1">Attendees</p>
+                        <h3 class="fw-bold m-0"><%= bookings.length %></h3>
+                        <p class="text-dim m-0" style="font-size:0.75rem;">Recent bookings shown</p>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:rgba(155,89,182,0.12);">
+                            <i class="fi fi-rr-layers" style="color:#9b59b6;"></i>
+                        </div>
+                        <p class="text-dim small text-uppercase fw-bold mb-1">Ticket Tiers</p>
+                        <h3 class="fw-bold m-0"><%= tickets.length %></h3>
+                        <p class="text-dim m-0" style="font-size:0.75rem;"><%= totalCapacity %> total capacity</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 animate stagger-3">
+                <%# ── Left Column ─────────────────────────── %>
+                <div class="col-lg-7">
+
+                    <%# Ticket Tiers %>
+                    <div class="glass-dark p-4 rounded-3 mb-4">
+                        <h5 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                            <i class="fi fi-rr-ticket text-primary"></i> Ticket Tiers
+                        </h5>
+                        <% if(tickets && tickets.length > 0) { %>
+                            <div class="d-flex flex-column gap-3">
+                            <% tickets.forEach((tier, i) => {
+                                const colors = ['#E63946','#2ecc71','#3498db','#f39c12','#9b59b6'];
+                                const col = colors[i % colors.length];
+                                const soldPct = tier.capacity > 0 ? Math.min(100, Math.round((tier.sold / tier.capacity) * 100)) : 0;
+                            %>
+                                <div class="ticket-tier-row" id="tier-row-<%= tier._id %>" data-total="<%= tier.capacity %>">
+                                    <div style="width:10px;height:50px;border-radius:6px;background:<%= col %>;flex-shrink:0;opacity:0.8;"></div>
+                                    <div style="flex:1;min-width:0;">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <strong style="color:white;font-size:0.95rem;"><%= tier.name %></strong>
+                                            <span style="color:<%= col %>;font-weight:700;">₹<%= tier.price %></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="text-dim" style="font-size:0.8rem;" id="tier-sold-text-<%= tier._id %>">
+                                                <%= tier.sold %> sold of <%= tier.capacity %>
+                                            </span>
+                                            <span class="text-dim" style="font-size:0.8rem;" id="tier-pct-text-<%= tier._id %>"><%= soldPct %>% full</span>
+                                        </div>
+                                        <div class="tier-progress-bar">
+                                            <div class="tier-progress-fill" id="tier-bar-<%= tier._id %>" style="width:<%= soldPct %>%;background:<%= col %>;"></div>
+                                        </div>
+                                    </div>
+                                    <div style="text-align:right;flex-shrink:0;">
+                                        <p class="text-dim m-0" style="font-size:0.75rem;">Max/user</p>
+                                        <strong style="color:white;"><%= tier.maxPerUser %></strong>
+                                    </div>
+                                </div>
+                            <% }) %>
+                            </div>
+                        <% } else { %>
+                            <div class="text-center py-4 text-dim">
+                                <i class="fi fi-rr-ticket" style="font-size:2rem;opacity:0.3;display:block;margin-bottom:0.75rem;"></i>
+                                No ticket tiers configured.
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <%# Recent Attendees %>
+                    <div class="glass-dark p-4 rounded-3">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="fw-bold m-0 d-flex align-items-center gap-2">
+                                <i class="fi fi-rr-users text-primary"></i> Recent Attendees
+                            </h5>
+                            <% if(event.status === 'approved') { %>
+                            <a href="/organizer/events/<%= event._id %>/payments" class="btn btn-outline btn-sm px-3" style="border-radius:8px;font-size:0.8rem;">
+                                View All <i class="fi fi-rr-arrow-right ms-1"></i>
+                            </a>
+                            <% } %>
+                        </div>
+                        <% if(bookings && bookings.length > 0) { %>
+                            <% bookings.forEach(bk => { %>
+                            <div class="attendee-row">
+                                <div class="avatar">
+                                    <% if(bk.user && bk.user.profilePic) { %>
+                                        <img src="<%= bk.user.profilePic %>" alt="">
+                                    <% } else { %>
+                                        <%= bk.user ? bk.user.fullName.charAt(0).toUpperCase() : '?' %>
+                                    <% } %>
+                                </div>
+                                <div style="flex:1;min-width:0;">
+                                    <strong style="color:white;font-size:0.9rem;"><%= bk.user ? bk.user.fullName : 'Unknown' %></strong>
+                                    <p class="text-dim m-0" style="font-size:0.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                        <%= bk.user ? bk.user.email : '' %>
+                                    </p>
+                                </div>
+                                <div style="text-align:right;flex-shrink:0;">
+                                    <span style="color:#2ecc71;font-weight:700;font-size:0.9rem;">₹<%= bk.totalAmount %></span>
+                                    <p class="text-dim m-0" style="font-size:0.75rem;"><%= bk.quantity %> ticket<%= bk.quantity > 1 ? 's' : '' %></p>
+                                </div>
+                                <span class="status-badge status-approved ms-2" style="font-size:0.7rem;padding:4px 8px;">Paid</span>
+                            </div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="text-center py-4 text-dim">
+                                <i class="fi fi-rr-users" style="font-size:2rem;opacity:0.3;display:block;margin-bottom:0.75rem;"></i>
+                                No bookings yet.
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <%# ── Right Column ────────────────────────── %>
+                <div class="col-lg-5 d-flex flex-column gap-4">
+
+                    <%# Event Info %>
+                    <div class="glass-dark p-4 rounded-3">
+                        <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                            <i class="fi fi-rr-info text-primary"></i> Event Info
+                        </h5>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">Start</p>
+                                <strong style="color:white;font-size:0.9rem;">
+                                    <%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'short'}) %>
+                                </strong>
+                                <span class="text-dim" style="font-size:0.82rem;"> at <%= event.startTime %></span>
+                            </div>
+                            <div class="info-item">
+                                <p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">End</p>
+                                <strong style="color:white;font-size:0.9rem;">
+                                    <%= new Date(event.endDate).toLocaleDateString('en-IN',{day:'numeric',month:'short'}) %>
+                                </strong>
+                                <span class="text-dim" style="font-size:0.82rem;"> at <%= event.endTime %></span>
+                            </div>
+                        </div>
+
+                        <div class="info-item mt-3">
+                            <p class="text-dim m-0 mb-1" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">
+                                <i class="fi fi-rr-marker me-1"></i>Venue
+                            </p>
+                            <p class="m-0" style="color:white;font-size:0.88rem;line-height:1.5;">
+                                <%= event.location ? event.location.address : 'N/A' %>
+                            </p>
+                        </div>
+
+                        <div class="info-item mt-3">
+                            <p class="text-dim m-0 mb-1" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">Description</p>
+                            <p class="m-0" style="color:rgba(255,255,255,0.75);font-size:0.88rem;line-height:1.6;">
+                                <%= event.description ? event.description.substring(0, 200) + (event.description.length > 200 ? '...' : '') : 'No description' %>
+                            </p>
+                        </div>
+                    </div>
+
+                    <%# Banners %>
+                    <div class="glass-dark p-4 rounded-3">
+                        <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                            <i class="fi fi-rr-picture text-primary"></i> Event Banners
+                        </h5>
+                        <% if(event.banners && event.banners.length > 0) { %>
+                            <div class="thumbnail-strip">
+                                <% event.banners.forEach(b => { %>
+                                    <img src="<%= b %>" alt="Banner" onclick="openLightbox('<%= b %>')" title="Click to expand">
+                                <% }) %>
+                            </div>
+                        <% } else { %>
+                            <div class="text-center py-3 text-dim">
+                                <i class="fi fi-rr-picture" style="font-size:2rem;opacity:0.3;display:block;"></i>
+                                No banners uploaded.
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <%# Quick Actions %>
+                    <div class="glass-dark p-4 rounded-3">
+                        <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                            <i class="fi fi-rr-settings text-primary"></i> Quick Actions
+                        </h5>
+                        <div class="d-flex flex-column gap-2">
+                            <% if(event.status === 'pending' || event.status === 'approved') { %>
+                            <a href="/organizer/events/<%= event._id %>/edit" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;">
+                                <i class="fi fi-rr-edit me-2"></i> Edit Event Details
+                            </a>
+                            <% } %>
+                            <% if(event.status === 'approved') { %>
+                            <button onclick="toggleBlockEvent('<%= event._id %>', <%= event.isBlocked %>)" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;<%= event.isBlocked ? 'color:#2ecc71;border-color:rgba(46,204,113,0.4);' : 'color:#f39c12;border-color:rgba(243,156,18,0.4);' %>">
+                                <i class="fi <%= event.isBlocked ? 'fi-rr-check' : 'fi-rr-ban' %> me-2"></i>
+                                <%= event.isBlocked ? 'Unblock Event' : 'Block Event' %>
+                            </button>
+                            <% } %>
+                            <% if(event.status === 'rejected') { %>
+                            <button onclick="handleResubmit('<%= event._id %>')" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;color:#2ecc71;border-color:rgba(46,204,113,0.4);">
+                                <i class="fi fi-rr-redo me-2"></i> Resubmit for Review
+                            </button>
+                            <% } %>
+                            <button onclick="deleteEvent('<%= event._id %>')" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;color:#E63946;border-color:rgba(230,57,70,0.4);">
+                                <i class="fi fi-rr-trash me-2"></i> Delete Event
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <%# Lightbox %>
+    <div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;align-items:center;justify-content:center;backdrop-filter:blur(10px);" onclick="closeLightbox()">
+        <img id="lightboxImg" src="" style="max-width:90vw;max-height:85vh;border-radius:12px;box-shadow:0 30px 60px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
+        <button onclick="closeLightbox()" style="position:fixed;top:20px;right:20px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:50%;width:40px;height:40px;color:white;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;">
+            <i class="fi fi-rr-cross-small"></i>
+        </button>
+    </div>
+
+    <script>
+        function openLightbox(src) {
+            const lb = document.getElementById('lightbox');
+            document.getElementById('lightboxImg').src = src;
+            lb.style.display = 'flex';
+        }
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+        }
+
+        async function toggleBlockEvent(id, isBlocked) {
+            const confirmed = await CustomConfirm.show({
+                title: `${isBlocked ? 'Unblock' : 'Block'} Event?`,
+                message: `Are you sure you want to ${isBlocked ? 'unblock' : 'block'} this event?`,
+                confirmText: 'Yes, proceed', actionType: isBlocked ? 'primary' : 'danger',
+                icon: isBlocked ? 'fi-rr-check' : 'fi-rr-ban'
+            });
+            if (!confirmed) return;
+            Loader.show('PROCESSING...');
+            try {
+                const res = await axios.post(`/organizer/events/${id}/toggle-block`);
+                if (res.data.success) { Toast.success(res.data.message); setTimeout(() => location.reload(), 1000); }
+            } catch (err) { Toast.error(err.response?.data?.message || 'Failed to update event'); }
+            finally { Loader.hide(); }
+        }
+
+        async function deleteEvent(id) {
+            const confirmed = await CustomConfirm.show({
+                title: 'Delete Event?',
+                message: 'Permanently delete this event? This cannot be undone.',
+                confirmText: 'Yes, Delete', actionType: 'danger', icon: 'fi-rr-trash'
+            });
+            if (!confirmed) return;
+            Loader.show('DELETING...');
+            try {
+                const res = await axios.delete(`/organizer/events/${id}`);
+                if (res.data.success) { Toast.success(res.data.message); setTimeout(() => window.location.href = '/organizer/events', 1200); }
+            } catch (err) { Toast.error(err.response?.data?.message || 'Failed to delete event'); }
+            finally { Loader.hide(); }
+        }
+
+        async function handleResubmit(id) {
+            const wantsEdit = await CustomConfirm.show({
+                title: 'Resubmit Event', message: 'Would you like to edit before resubmitting?',
+                confirmText: 'Edit First', cancelText: 'Resubmit Now', actionType: 'primary', icon: 'fi-rr-edit'
+            });
+            if (wantsEdit) { window.location.href = `/organizer/events/${id}/edit`; return; }
+            const confirmed = await CustomConfirm.show({
+                title: 'Confirm Resubmit?', message: 'Your event will be sent for admin review.',
+                confirmText: 'Yes, Resubmit', actionType: 'primary', icon: 'fi-rr-redo'
+            });
+            if (!confirmed) return;
+            Loader.show('RESUBMITTING...');
+            try {
+                const res = await axios.post(`/organizer/events/${id}/resubmit`);
+                if (res.data.success) { Toast.success(res.data.message); setTimeout(() => location.reload(), 1200); }
+            } catch (err) { Toast.error(err.response?.data?.message || 'Failed to resubmit'); }
+            finally { Loader.hide(); }
+        }
+    </script>
+
+    <script>
+        // --- REAL-TIME TICKET STOCK UPDATES (Organizer Side) ---
+        const eventId = '<%= event._id %>';
+        
+        function joinEventRoom() {
+            window.socket.emit('joinEvent', eventId);
+            console.log('🎟️ Organizer joined event room for live updates:', eventId);
+        }
+
+        // Join immediately if connected, else wait for the connect event
+        if (window.socket.connected) {
+            joinEventRoom();
+        } else {
+            window.socket.once('connect', joinEventRoom);
+        }
+
+        function handleStockUpdate(data) {
+            console.log('📦 Live stock update received:', data);
+            
+            data.tickets.forEach(updatedTicket => {
+                // Find the elements for this specific ticket tier
+                const row = document.getElementById(`tier-row-${updatedTicket.ticketId}`);
+                if (!row) return;
+
+                const soldText = document.getElementById(`tier-sold-text-${updatedTicket.ticketId}`);
+                const pctText = document.getElementById(`tier-pct-text-${updatedTicket.ticketId}`);
+                const progressBar = document.getElementById(`tier-bar-${updatedTicket.ticketId}`);
+
+                // Calculate the new sold amount and percentage
+                const totalCapacity = parseInt(row.dataset.total);
+                const newSold = totalCapacity - updatedTicket.newCapacity;
+                const newPct = totalCapacity > 0 ? Math.min(100, Math.round((newSold / totalCapacity) * 100)) : 0;
+
+                // Update the DOM
+                if (soldText) soldText.innerText = `${newSold} sold of ${totalCapacity}`;
+                if (pctText) pctText.innerText = `${newPct}% full`;
+                if (progressBar) progressBar.style.width = `${newPct}%`;
+            });
+        }
+
+        // Remove stale listeners and attach the new one
+        window.socket.off('ticketStockUpdate', handleStockUpdate);
+        window.socket.on('ticketStockUpdate', handleStockUpdate);
+    </script>
+</body>
+</html>

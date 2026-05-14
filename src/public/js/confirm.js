@@ -1,4 +1,3 @@
-// public/js/confirm.js
 const CustomConfirm = {
     show({ title, message, confirmText = 'Confirm', actionType = 'danger', icon = 'fi-rr-triangle-warning' }) {
         return new Promise((resolve) => {
@@ -24,10 +23,12 @@ const CustomConfirm = {
             // Reset classes and set theme
             confirmBtn.className = 'btn flex-grow-1'; 
             if (actionType === 'danger') {
+                modal.style.zIndex = '999999'
                 confirmBtn.classList.add('btn-primary'); // Red
                 iconBg.style.background = 'rgba(230, 57, 70, 0.1)';
                 iconBg.style.color = '#E63946';
             } else {
+                modal.style.zIndex = '999999'
                 confirmBtn.style.backgroundColor = '#f1c40f'; // Warning Yellow
                 iconBg.style.background = 'rgba(241, 196, 15, 0.1)';
                 iconBg.style.color = '#f1c40f';

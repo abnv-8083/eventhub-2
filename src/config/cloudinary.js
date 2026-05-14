@@ -46,3 +46,22 @@ export const upload = multer({
         fileSize: 2 * 1024 * 1024 // 2MB limit (enforced by Multer before uploading)
     }
 });
+
+// --- EVENT BANNER CONFIGURATION ---
+const eventStorage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'eventhub_events',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+        // Standard 16:9 ratio for banners
+        transformation: [{ width: 1920, height: 1080, crop: 'limit' }] 
+    }
+});
+
+export const eventUpload = multer({ 
+    storage: eventStorage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit for larger event banners
+    }
+});

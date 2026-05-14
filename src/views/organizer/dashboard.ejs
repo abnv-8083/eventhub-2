@@ -1,73 +1,88 @@
 <%- include('../partials/head') %>
 <body class="bg-mesh">
-    
     <%- include('../partials/navbars/organizer-nav') %>
-
     <div class="dashboard-layout">
         <%- include('../partials/organizer-sidebar') %>
-
         <main class="dashboard-main">
-            <!-- Header Section -->
-            <div class="d-flex justify-between align-center mb-5 animate stagger-1">
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-5 animate stagger-1">
                 <div>
-                    <h2 style="font-size: 2rem;">Overview</h2>
-                    <p class="text-muted">Welcome to your organizer headquarters, <%= organizer.organizationName %>.</p>
+                    <h2 class="fw-bold">Overview</h2>
+                    <p class="text-dim m-0">Welcome back, <strong style="color:rgba(255,255,255,0.8)"><%= organizer.organizationName || organizer.fullName %></strong></p>
                 </div>
                 <a href="/organizer/events/new" class="btn btn-primary">
-                    <i class="fi fi-rr-plus" style="margin-right: 8px;"></i> Create Event
+                    <i class="fi fi-rr-plus me-2"></i>Create Event
                 </a>
             </div>
 
             <!-- Stats Grid -->
-            <div class="footer-grid animate stagger-2" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
-                
-                <div class="card card-content">
-                    <div class="d-flex justify-between align-center mb-2">
-                        <h3 class="text-dim" style="font-size: 0.95rem; margin: 0;">Total Revenue</h3>
+            <div class="row g-4 mb-5 animate stagger-2">
+                <div class="col-sm-6 col-lg-3">
+                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07);">
+                        <p class="text-dim small text-uppercase fw-bold mb-2" style="letter-spacing:0.07em;">Total Revenue</p>
+                        <h3 class="fw-bold text-white m-0" style="font-size:2rem;">₹<%= totalRevenue.toLocaleString('en-IN') %></h3>
                     </div>
-                    <div style="font-size: 2.2rem; font-weight: 700;">₹0.00</div>
                 </div>
-
-                <div class="card card-content">
-                    <div class="d-flex justify-between align-center mb-2">
-                        <h3 class="text-dim" style="font-size: 0.95rem; margin: 0;">Tickets Sold</h3>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07);">
+                        <p class="text-dim small text-uppercase fw-bold mb-2" style="letter-spacing:0.07em;">Tickets Sold</p>
+                        <h3 class="fw-bold text-white m-0" style="font-size:2rem;"><%= totalTicketsSold %></h3>
                     </div>
-                    <div style="font-size: 2.2rem; font-weight: 700;">0</div>
                 </div>
-
-                <div class="card card-content">
-                    <div class="d-flex justify-between align-center mb-2">
-                        <h3 class="text-dim" style="font-size: 0.95rem; margin: 0;">Active Events</h3>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07); border-left: 3px solid #2ecc71;">
+                        <p class="text-dim small text-uppercase fw-bold mb-2" style="letter-spacing:0.07em;">Active Events</p>
+                        <h3 class="fw-bold text-white m-0" style="font-size:2rem;"><%= activeEvents %></h3>
                     </div>
-                    <div style="font-size: 2.2rem; font-weight: 700;">0</div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07);">
+                        <p class="text-dim small text-uppercase fw-bold mb-2" style="letter-spacing:0.07em;">Total Events</p>
+                        <h3 class="fw-bold text-white m-0" style="font-size:2rem;"><%= totalEvents %></h3>
+                    </div>
                 </div>
             </div>
 
-            <!-- Empty State Table -->
-            <div class="glass-dark p-4 animate stagger-3" style="border-radius: var(--radius-md);">
-                <div class="d-flex justify-between align-center mb-4">
-                    <h3 style="margin: 0; font-size: 1.25rem;">Recent Events</h3>
+            <!-- Recent Events Table -->
+            <div class="glass-dark p-4 rounded-3 animate stagger-3" style="border:1px solid rgba(255,255,255,0.07);">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold m-0">Recent Events</h5>
+                    <a href="/organizer/events" class="text-dim small" style="text-decoration:none;">View all →</a>
                 </div>
-                <div style="overflow-x: auto;">
+                <div style="overflow-x:auto;">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Event Details</th>
-                                <th>Date & Time</th>
+                                <th>Event</th>
+                                <th>Date</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td colspan="3" class="text-center p-5">
-                                    <p class="text-muted">No events found.</p>
-                                    <p class="text-dim">Ready to host? Click 'Create Event' to get started.</p>
-                                </td>
-                            </tr>
+                            <% if(recentEvents && recentEvents.length > 0) { %>
+                                <% recentEvents.forEach(event => { %>
+                                <tr style="cursor:pointer;" onclick="window.location.href='/organizer/events'">
+                                    <td>
+                                        <p class="fw-bold text-white mb-0" style="font-size:0.9rem;"><%= event.title %></p>
+                                        <p class="text-dim mb-0" style="font-size:0.77rem;"><%= event.category?.name %></p>
+                                    </td>
+                                    <td class="text-dim" style="font-size:0.85rem;">
+                                        <%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-<%= event.status %>"><%= event.status %></span>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr><td colspan="3" class="text-center p-5 text-dim">No events yet. <a href="/organizer/events/new" style="color:var(--primary);">Create your first event →</a></td></tr>
+                            <% } %>
                         </tbody>
                     </table>
                 </div>
             </div>
+
         </main>
     </div>
 </body>

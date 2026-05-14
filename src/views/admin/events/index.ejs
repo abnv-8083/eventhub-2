@@ -2,98 +2,221 @@
 <html lang="en">
 <head>
     <%- include('../../partials/head') %>
+    <style>
+        /* Prevents the entire page from sliding horizontally */
+        body, html { 
+            max-width: 100vw; 
+            overflow-x: hidden; 
+        }
+        
+        .dashboard-main {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        /* Responsive wrapper for the glass-dark table panel */
+        .glass-dark {
+            max-width: 100%;
+            overflow: hidden; 
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto; 
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Fix for input text visibility */
+        .input {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            line-height: 42px;
+        }
+    </style>
 </head>
 <body class="bg-mesh">
-    
-    <%- include('../partials/navbars/admin-nav') %>
-
+    <%- include('../../partials/navbars/admin-nav') %>
     <div class="dashboard-layout">
-        <%- include('../../partials/admin-sidebar', { title: 'All Events' }) %>
-        
+        <%- include('../../partials/admin-sidebar', { title: 'Manage Events' }) %>
         <main class="dashboard-main">
-            <div class="d-flex justify-between align-center mb-5 animate stagger-1">
-                <div>
-                    <h2 class="fw-bold">Platform Events</h2>
-                    <p class="text-dim m-0">Monitor, approve, and moderate events created by organizers.</p>
-                </div>
-                
-                <!-- Admin Search/Filter -->
-                <div class="d-flex gap-2">
-                    <input type="text" class="input" placeholder="Search events..." style="width: 250px; height: 42px;">
-                    <select class="input" style="width: 150px; height: 42px;">
-                        <option value="all">All Statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
-                    </select>
-                </div>
+            
+            <div class="mb-4 animate stagger-1 text-start w-100">
+                <h2 class="fw-bold m-0" style="letter-spacing: -0.5px;">Manage Events</h2>
+                <p class="text-dim m-0 small">Approve or reject events published by organizers.</p>
             </div>
 
-            <!-- Admin Event Table -->
-            <div class="glass-dark p-4 rounded-3 animate stagger-2">
-                <div style="overflow-x: auto;">
-                    <table class="data-table">
+            <div class="row g-3 mb-4 animate stagger-2 w-100 mx-0 align-items-center">
+                <div class="col-12 col-md-5 col-lg-4 px-0">
+                    <div class="search-wrapper w-100" style="position: relative;">
+                        <i class="fi fi-rr-search text-dim" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                        <input type="text" id="evtSearch" class="input ps-5 w-100" placeholder="Search by event title..." 
+                            value="<%= locals.filters?.search || '' %>" style="height: 42px; border-radius: 12px; padding-top: 0; padding-bottom: 0;">
+                    </div>
+                </div>
+                
+                <div class="col-12 col-md-7 col-lg-8 px-0">
+                    <div class="d-flex flex-wrap align-items-center gap-2 w-100 justify-content-md-end">
+                        <select id="evtStatus" class="input px-3" style="height: 42px; border-radius: 12px; min-width: 140px; flex: 1; max-width: 200px;">
+                            <option value="all" <%= filters?.status === 'all' || !filters?.status ? 'selected' : '' %>>All Status</option>
+                            <option value="pending" <%= filters?.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                            <option value="approved" <%= filters?.status === 'approved' ? 'selected' : '' %>>Approved</option>
+                            <option value="rejected" <%= filters?.status === 'rejected' ? 'selected' : '' %>>Rejected</option>
+                        </select>
+                        
+                        <select id="evtSort" class="input px-3" style="height: 42px; border-radius: 12px; min-width: 150px; flex: 1; max-width: 200px;">
+                            <option value="newest" <%= filters?.sort === 'newest' || !filters?.sort ? 'selected' : '' %>>Newest First</option>
+                            <option value="oldest" <%= filters?.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+                            <option value="title-asc" <%= filters?.sort === 'title-asc' ? 'selected' : '' %>>Title (A-Z)</option>
+                        </select>
+                        
+                        <div class="d-flex gap-2 flex-shrink-0">
+                            <button type="button" id="evtApply" class="btn btn-primary" style="height: 42px; padding: 0 20px; border-radius: 12px; font-weight: 600;">Apply</button>
+                            <button type="button" id="evtClear" class="action-btn" title="Clear Filters" 
+                                style="height: 42px; width: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; padding: 0;">
+                                <i class="fi fi-rr-refresh m-0"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-dark p-3 p-md-4 rounded-3 animate stagger-3">
+                <div class="table-responsive">
+                    <table class="data-table w-100">
                         <thead>
                             <tr>
                                 <th>Event Details</th>
                                 <th>Organizer</th>
-                                <th>Date Created</th>
-                                <th>System Status</th>
-                                <th class="text-end">Moderation</th>
+                                <th>Date & Location</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- EJS Loop placeholder -->
-                            <tr>
-                                <td>
-                                    <strong style="color: white;">Kozhikode Football League</strong>
-                                    <p class="text-dim m-0" style="font-size: 0.8rem;">Sports • 1000 Capacity</p>
-                                </td>
-                                <td>
-                                    <span style="color: white;">Prime Heaven Sports</span>
-                                    <p class="text-dim m-0" style="font-size: 0.8rem;">org_29384</p>
-                                </td>
-                                <td class="text-dim">Oct 20, 2025</td>
-                                <td>
-                                    <!-- Status Badge -->
-                                    <span class="status-badge status-pending">
-                                        <i class="fi fi-rr-time-fast"></i> Requires Review
-                                    </span>
-                                </td>
-                                <td class="text-end">
-                                    <button class="btn btn-outline btn-sm px-3 me-1 text-success border-success" title="Approve">
-                                        <i class="fi fi-rr-check"></i>
-                                    </button>
-                                    <button class="btn btn-outline btn-sm px-3 text-danger border-danger" title="Reject/Ban">
-                                        <i class="fi fi-rr-cross"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            
-                            <tr>
-                                <td>
-                                    <strong style="color: white;">React.js Masterclass</strong>
-                                    <p class="text-dim m-0" style="font-size: 0.8rem;">Workshop • 50 Capacity</p>
-                                </td>
-                                <td>
-                                    <span style="color: white;">CodeAssist Inc.</span>
-                                </td>
-                                <td class="text-dim">Oct 18, 2025</td>
-                                <td>
-                                    <span class="status-badge status-approved">
-                                        <i class="fi fi-rr-check-circle"></i> Approved
-                                    </span>
-                                </td>
-                                <td class="text-end">
-                                    <button class="btn btn-outline btn-sm px-3 text-danger border-danger" title="Take Down">
-                                        <i class="fi fi-rr-trash"></i> Take Down
-                                    </button>
-                                </td>
-                            </tr>
+                            <% if(events && events.length > 0) { %>
+                                <% events.forEach(event => { %>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div style="width: 45px; height: 45px; border-radius: 8px; background: rgba(255,255,255,0.1); overflow: hidden; flex-shrink: 0;">
+                                                <% if(event.banners && event.banners.length > 0) { %>
+                                                    <img src="<%= event.banners[0] %>" style="width: 100%; height: 100%; object-fit: cover;">
+                                                <% } else { %>
+                                                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+                                                        <i class="fi fi-rr-picture text-dim"></i>
+                                                    </div>
+                                                <% } %>
+                                            </div>
+                                            <div style="max-width: 200px; min-width: 120px;">
+                                                <strong class="d-block text-truncate" style="color: white; font-size: 0.95rem;" title="<%= event.title %>"><%= event.title %></strong>
+                                                <p class="text-dim m-0 text-truncate" style="font-size: 0.8rem;"><%= event.category ? event.category.name : 'N/A' %></p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="max-width: 150px;">
+                                            <strong class="d-block text-truncate" style="color: white;"><%= event.organizer.fullName %></strong>
+                                            <p class="text-dim m-0 text-truncate" style="font-size: 0.8rem;" title="<%= event.organizer.email %>"><%= event.organizer.email %></p>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="min-width: 150px;">
+                                            <span style="color: white; font-size: 0.9rem;"><%= new Date(event.startDate).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) %> &bull; <%= event.startTime %></span>
+                                            <p class="text-dim m-0 text-truncate" style="font-size: 0.8rem; max-width: 200px;" title="<%= event.location.address %>"><%= event.location.address %></p>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <% if(event.status === 'pending') { %>
+                                            <span class="status-badge status-pending"><i class="fi fi-rr-clock me-1"></i>Pending</span>
+                                        <% } else if(event.status === 'approved') { %>
+                                            <span class="status-badge status-approved"><i class="fi fi-rr-check me-1"></i>Approved</span>
+                                        <% } else { %>
+                                            <span class="status-badge status-rejected"><i class="fi fi-rr-cross me-1"></i>Rejected</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="text-end">
+                                        <% if(event.status === 'pending') { %>
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <button onclick="updateEventStatus('<%= event._id %>', 'approved')" class="btn btn-outline btn-sm px-3 text-success flex-shrink-0" style="border-radius: 8px;">
+                                                <i class="fi fi-rr-check me-1"></i> Approve
+                                            </button>
+                                            <button onclick="updateEventStatus('<%= event._id %>', 'rejected')" class="action-icon-btn danger flex-shrink-0" title="Reject">
+                                                <i class="fi fi-rr-cross"></i>
+                                            </button>
+                                        </div>
+                                        <% } else { %>
+                                            <span class="text-dim" style="font-size: 0.8rem;">Processed</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="text-center text-dim py-5">
+                                        <i class="fi fi-rr-calendar-lines" style="font-size: 2.5rem; display:block; margin-bottom:1rem; opacity:0.3;"></i>
+                                        No events found matching your filters.
+                                    </td>
+                                </tr>
+                            <% } %>
                         </tbody>
                     </table>
                 </div>
             </div>
+            
+            <% if(totalPages > 1) { %>
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mt-4 px-1 gap-3">
+                <p class="text-dim mb-0 small">Page <%= currentPage %> of <%= totalPages %> (<%= total %> events)</p>
+                <nav>
+                    <ul class="pagination d-flex gap-2 list-unstyled mb-0">
+                        <% if(currentPage > 1) { %><li><button class="action-btn" onclick="changePage(<%= currentPage - 1 %>)"><i class="fi fi-rr-angle-left"></i></button></li><% } %>
+                        <% for(let i = 1; i <= totalPages; i++) { %><li><button class="action-btn <%= i == currentPage ? 'active-page' : '' %>" onclick="changePage(<%= i %>)"><%= i %></button></li><% } %>
+                        <% if(currentPage < totalPages) { %><li><button class="action-btn" onclick="changePage(<%= currentPage + 1 %>)"><i class="fi fi-rr-angle-right"></i></button></li><% } %>
+                    </ul>
+                </nav>
+            </div>
+            <% } %>
+
         </main>
     </div>
+
+    <script>
+        function changePage(p) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('page', p);
+            window.location.href = url.toString();
+        }
+        function applyFilters() {
+            const search = document.getElementById('evtSearch').value.trim();
+            const status = document.getElementById('evtStatus').value;
+            const sort = document.getElementById('evtSort').value;
+            const url = new URL(window.location.origin + window.location.pathname);
+            if (search) url.searchParams.set('search', search);
+            if (status !== 'all') url.searchParams.set('status', status);
+            if (sort !== 'newest') url.searchParams.set('sort', sort);
+            url.searchParams.set('page', 1);
+            window.location.href = url.toString();
+        }
+        async function updateEventStatus(eventId, status) {
+            const confirmed = await CustomConfirm.show({
+                title: `${status === 'approved' ? 'Approve' : 'Reject'} Event?`,
+                message: `Are you sure you want to ${status} this event?`,
+                confirmText: 'Yes, proceed',
+                actionType: status === 'approved' ? 'primary' : 'danger',
+                icon: status === 'approved' ? 'fi-rr-check' : 'fi-rr-cross'
+            });
+            if (!confirmed) return;
+            Loader.show('PROCESSING...');
+            try {
+                const res = await axios.post('/admin/events/update-status', { eventId, status });
+                if (res.data.success) { Toast.success(res.data.message); setTimeout(() => location.reload(), 1000); }
+            } catch (err) {
+                Toast.error(err.response?.data?.message || 'Failed to update event status');
+            } finally { Loader.hide(); }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('evtApply')?.addEventListener('click', applyFilters);
+            document.getElementById('evtClear')?.addEventListener('click', () => window.location.href = window.location.pathname);
+            document.getElementById('evtSearch')?.addEventListener('keypress', e => { if (e.key === 'Enter') applyFilters(); });
+        });
+    </script>
 </body>
 </html>

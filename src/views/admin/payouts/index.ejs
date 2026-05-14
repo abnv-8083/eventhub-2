@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+</head>
+<body class="bg-mesh">
+    <%- include('../../partials/navbars/admin-nav') %>
+    <div class="dashboard-layout">
+        <%- include('../../partials/admin-sidebar', { title: 'Manage Payouts' }) %>
+        <main class="dashboard-main">
+            <div class="d-flex justify-content-between align-items-center mb-4 animate stagger-1">
+                <div>
+                    <h2 class="fw-bold">Manage Payouts</h2>
+                    <p class="text-dim m-0">Review and approve organizer payout requests.</p>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="d-flex justify-content-between align-items-center mb-4 gap-3 animate stagger-2">
+                <div class="search-wrapper flex-grow-1" style="position: relative; max-width: 400px;">
+                    <i class="fi fi-rr-search text-dim" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%);"></i>
+                    <input type="text" id="paySearch" class="input ps-5" placeholder="Search by organizer or event..." value="<%= locals.filters?.search || '' %>" style="height: 45px;">
+                </div>
+                <div class="d-flex gap-2">
+                    <select id="payStatus" class="input px-3">
+                        <option value="all" <%= filters?.status === 'all' || !filters?.status ? 'selected' : '' %>>All Status</option>
+                        <option value="pending" <%= filters?.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                        <option value="paid" <%= filters?.status === 'paid' ? 'selected' : '' %>>Paid</option>
+                    </select>
+                    <select id="paySort" class="input px-3">
+                        <option value="newest" <%= filters?.sort === 'newest' || !filters?.sort ? 'selected' : '' %>>Newest First</option>
+                        <option value="oldest" <%= filters?.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+                        <option value="amount-high" <%= filters?.sort === 'amount-high' ? 'selected' : '' %>>Amount (High→Low)</option>
+                        <option value="amount-low" <%= filters?.sort === 'amount-low' ? 'selected' : '' %>>Amount (Low→High)</option>
+                    </select>
+                    <button type="button" id="payClear" class="action-btn" title="Clear Filters" style="height: 45px; width: 45px;">
+                        <i class="fi fi-rr-refresh"></i>
+                    </button>
+                    <button type="button" id="payApply" class="btn btn-primary" style="height: 45px; padding: 0 20px;">Apply</button>
+                </div>
+            </div>
+
+            <div class="glass-dark p-4 rounded-3 animate stagger-3">
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Organizer</th>
+                                <th>Event</th>
+                                <th>Revenue Details</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if(payouts && payouts.length > 0) { %>
+                                <% payouts.forEach(payout => { %>
+                                <tr>
+                                    <td>
+                                        <strong style="color: white;"><%= payout.organizer.fullName %></strong>
+                                        <p class="text-dim m-0" style="font-size: 0.8rem;"><%= payout.organizer.email %></p>
+                                    </td>
+                                    <td>
+                                        <span style="color: white;"><%= payout.event.title %></span>
+                                        <p class="text-dim m-0" style="font-size: 0.8rem;">ID: #<%= payout._id.toString().slice(-6).toUpperCase() %></p>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column gap-1" style="font-size: 0.85rem;">
+                                            <span><span class="text-dim">Revenue:</span> ₹<%= payout.totalRevenue %></span>
+                                            <span><span class="text-dim">Fee (5%):</span> <span style="color:#E63946;">₹<%= payout.platformFee %></span></span>
+                                            <span><span class="text-dim">Net:</span> <span style="color:#2ecc71; font-weight:700;">₹<%= payout.payoutAmount %></span></span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <% if(payout.status === 'pending') { %>
+                                            <span class="status-badge status-pending"><i class="fi fi-rr-clock me-1"></i>Pending</span>
+                                        <% } else if(payout.status === 'paid') { %>
+                                            <span class="status-badge status-approved"><i class="fi fi-rr-check me-1"></i>Paid</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="text-end">
+                                        <% if(payout.status === 'pending') { %>
+                                        <button onclick="approvePayout('<%= payout._id %>')" class="btn btn-outline btn-sm px-3 text-success" title="Approve & Pay">
+                                            <i class="fi fi-rr-check me-1"></i> Approve & Pay
+                                        </button>
+                                        <% } else { %>
+                                            <span class="text-dim" style="font-size: 0.8rem;">Processed</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="text-center text-dim py-5">
+                                        <i class="fi fi-rr-money" style="font-size: 2.5rem; display:block; margin-bottom:1rem; opacity:0.3;"></i>
+                                        No payout requests found.
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <% if(totalPages > 1) { %>
+            <div class="d-flex justify-content-between align-items-center mt-4 px-1">
+                <p class="text-dim mb-0">Page <%= currentPage %> of <%= totalPages %> (<%= total %> payouts)</p>
+                <nav>
+                    <ul class="pagination d-flex gap-2 list-unstyled mb-0">
+                        <% if(currentPage > 1) { %><li><button class="action-btn" onclick="changePage(<%= currentPage - 1 %>)"><i class="fi fi-rr-angle-left"></i></button></li><% } %>
+                        <% for(let i = 1; i <= totalPages; i++) { %><li><button class="action-btn <%= i == currentPage ? 'active-page' : '' %>" onclick="changePage(<%= i %>)"><%= i %></button></li><% } %>
+                        <% if(currentPage < totalPages) { %><li><button class="action-btn" onclick="changePage(<%= currentPage + 1 %>)"><i class="fi fi-rr-angle-right"></i></button></li><% } %>
+                    </ul>
+                </nav>
+            </div>
+            <% } %>
+        </main>
+    </div>
+
+    <script>
+        function changePage(p) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('page', p);
+            window.location.href = url.toString();
+        }
+        function applyFilters() {
+            const search = document.getElementById('paySearch').value.trim();
+            const status = document.getElementById('payStatus').value;
+            const sort = document.getElementById('paySort').value;
+            const url = new URL(window.location.origin + window.location.pathname);
+            if (search) url.searchParams.set('search', search);
+            if (status !== 'all') url.searchParams.set('status', status);
+            if (sort !== 'newest') url.searchParams.set('sort', sort);
+            url.searchParams.set('page', 1);
+            window.location.href = url.toString();
+        }
+        async function approvePayout(payoutId) {
+            const confirmed = await CustomConfirm.show({
+                title: 'Approve Payout?',
+                message: 'Are you sure you want to mark this payout as paid? The organizer will be notified.',
+                confirmText: 'Yes, Mark Paid',
+                actionType: 'primary',
+                icon: 'fi-rr-money'
+            });
+            if (!confirmed) return;
+            Loader.show('PROCESSING...');
+            try {
+                const res = await axios.post('/admin/payouts/approve', { payoutId });
+                if (res.data.success) { Toast.success(res.data.message); setTimeout(() => location.reload(), 1000); }
+            } catch (err) {
+                Toast.error(err.response?.data?.message || 'Failed to approve payout');
+            } finally { Loader.hide(); }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('payApply')?.addEventListener('click', applyFilters);
+            document.getElementById('payClear')?.addEventListener('click', () => window.location.href = window.location.pathname);
+            document.getElementById('paySearch')?.addEventListener('keypress', e => { if (e.key === 'Enter') applyFilters(); });
+        });
+    </script>
+</body>
+</html>

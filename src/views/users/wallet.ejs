@@ -1,0 +1,196 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head') %>
+</head>
+<body class="bg-mesh">
+    <%- include('../partials/navbars/user-nav') %>
+    <div class="dashboard-layout">
+        <%- include('../partials/user-sidebar', { title: 'My Wallet' }) %>
+        <main class="dashboard-main">
+
+            <div class="mb-4 animate stagger-1">
+                <h2 class="fw-bold">My Wallet</h2>
+                <p class="text-dim m-0">Add money and pay for event tickets securely.</p>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <!-- Balance -->
+                <div class="col-lg-4 animate stagger-2">
+                    <div class="balance-card h-100">
+                        <p class="text-dim small text-uppercase fw-bold mb-3" style="letter-spacing:0.08em; color:rgba(230,57,70,0.7);">Available Balance</p>
+                        <p class="balance-amount mb-1">₹<span id="liveBalance"><%= balance.toLocaleString('en-IN', {minimumFractionDigits:2}) %></span></p>
+                        <p class="text-dim small mt-2 mb-0"><%= transactions.length %> transaction<%= transactions.length !== 1 ? 's' : '' %></p>
+                    </div>
+                </div>
+
+                <!-- Add Money -->
+                <div class="col-lg-8 animate stagger-3">
+                    <div class="info-panel h-100">
+                        <h6 class="fw-bold text-white mb-1">Add Money to Wallet</h6>
+                        <p class="text-dim small mb-4">Choose a quick amount or enter custom. Max ₹50,000 per transaction.</p>
+
+                        <!-- Quick amounts -->
+                        <div class="quick-amounts" id="quickAmounts">
+                            <% [100, 200, 500, 1000, 2000, 5000].forEach(amt => { %>
+                                <button class="amt-chip" onclick="setAmount(<%= amt %>, this)">₹<%= amt %></button>
+                            <% }) %>
+                        </div>
+
+                        <!-- Amount input + pay button -->
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="amount-wrap">
+                                <span class="amount-prefix">₹</span>
+                                <input type="number" id="amountInput" class="input w-100" placeholder="Enter amount" min="1" max="50000">
+                            </div>
+                        </div>
+
+                        <!-- Error message -->
+                        <p id="amtError" class="text-danger small mb-3" style="display:none;"></p>
+
+                        <!-- Payment Method -->
+                        <p class="text-dim small text-uppercase fw-bold mb-2" style="letter-spacing:0.07em;">Pay via</p>
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="pay-opt selected" id="rzpOpt" onclick="selectPayOpt('razorpay')">
+                                <p class="text-white fw-bold mb-1" style="font-size:0.88rem;">ðŸ’³ Razorpay</p>
+                                <p class="text-dim mb-0" style="font-size:0.75rem;">UPI Â&middot; Card Â&middot; Net Banking</p>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary w-100" style="height:3rem; border-radius:12px; font-size:0.97rem; font-weight:600;" onclick="handleTopUp()">
+                            <i class="fi fi-rr-add me-2"></i>Add Money
+                        </button>
+                        <p class="text-dim mt-2 mb-0" style="font-size:0.76rem; text-align:center;">
+                            <i class="fi fi-rr-shield-check me-1"></i> Secured by Razorpay Â&middot; 256-bit SSL
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions -->
+            <div class="info-panel animate stagger-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h6 class="fw-bold text-white mb-0">Transaction History</h6>
+                    <span class="text-dim small"><%= transactions.length %> transaction<%= transactions.length !== 1 ? 's' : '' %></span>
+                </div>
+                <% if(transactions && transactions.length > 0) { %>
+                <div class="txn-list">
+                    <% transactions.forEach(txn => { %>
+                    <div class="txn-item">
+                        <div class="txn-icon <%= txn.type === 'credit' ? 'txn-credit' : 'txn-debit' %>">
+                            <i class="fi fi-rr-<%= txn.type === 'credit' ? 'arrow-small-down' : 'arrow-small-up' %>"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="text-white fw-bold mb-0" style="font-size:0.87rem;"><%= txn.description %></p>
+                            <p class="text-dim mb-0" style="font-size:0.75rem;">
+                                <%= new Date(txn.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %> Â&middot;
+                                <%= new Date(txn.date).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) %>
+                            </p>
+                        </div>
+                        <span class="txn-amount <%= txn.type %>">
+                            <%= txn.type === 'credit' ? '+' : 'âˆ’' %>₹<%= txn.amount.toLocaleString('en-IN') %>
+                        </span>
+                    </div>
+                    <% }) %>
+                </div>
+                <% } else { %>
+                <div class="text-center py-4">
+                    <i class="fi fi-rr-receipt" style="font-size:2.5rem; color:rgba(255,255,255,0.12); display:block; margin-bottom:1rem;"></i>
+                    <p class="text-dim mb-0">No transactions yet. Add money to get started!</p>
+                </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        const RZP_KEY = '<%= razorpayKeyId %>';
+        const USER_NAME = '<%= userName %>';
+        const USER_EMAIL = '<%= userEmail %>';
+
+        function setAmount(amount, btn) {
+            document.getElementById('amountInput').value = amount;
+            document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('selected'));
+            btn.classList.add('selected');
+            clearError();
+        }
+
+        document.getElementById('amountInput')?.addEventListener('input', () => {
+            document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('selected'));
+            clearError();
+        });
+
+        function showError(msg) {
+            const el = document.getElementById('amtError');
+            el.textContent = msg; el.style.display = 'block';
+        }
+        function clearError() { document.getElementById('amtError').style.display = 'none'; }
+
+        async function handleTopUp() {
+            const amount = parseFloat(document.getElementById('amountInput').value);
+            if (!amount || amount <= 0) return showError('Please enter a valid amount');
+            if (amount > 50000) return showError('Maximum ₹50,000 per transaction');
+
+            Loader.show('INITIALIZING PAYMENT...');
+            try {
+                const res = await axios.post('/user/wallet/razorpay-order', { amount });
+                if (!res.data.success) throw new Error(res.data.message);
+                Loader.hide();
+
+                const options = {
+                    key: RZP_KEY,
+                    amount: res.data.order.amount,
+                    currency: 'INR',
+                    name: 'EventHub Wallet',
+                    description: `Add ₹${amount} to wallet`,
+                    order_id: res.data.order.id,
+                    prefill: { name: USER_NAME, email: USER_EMAIL },
+                    theme: { color: '#E63946' },
+                    handler: async function(response) {
+                        Loader.show('VERIFYING PAYMENT...');
+                        try {
+                            const verify = await axios.post('/user/wallet/verify-topup', {
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                                amount
+                            });
+                            if (verify.data.success) {
+                                // Redirect to success page with details
+                                const params = new URLSearchParams({
+                                    amount,
+                                    balance: verify.data.newBalance,
+                                    paymentId: response.razorpay_payment_id
+                                });
+                                window.location.href = `/user/wallet/topup/success?${params}`;
+                            } else {
+                                window.location.href = `/user/wallet/topup/failed?reason=${encodeURIComponent(verify.data.message || 'Verification failed')}`;
+                            }
+                        } catch(err) {
+                            Loader.hide();
+                            const reason = err.response?.data?.message || 'Payment verification failed. Please contact support.';
+                            window.location.href = `/user/wallet/topup/failed?reason=${encodeURIComponent(reason)}`;
+                        }
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.on('payment.failed', function(resp) {
+                    Loader.hide();
+                    const reason = resp.error?.description || 'Payment was declined by your bank.';
+                    window.location.href = `/user/wallet/topup/failed?reason=${encodeURIComponent(reason)}`;
+                });
+                rzp.open();
+            } catch(err) {
+                Loader.hide();
+                Toast.error(err.response?.data?.message || 'Failed to initialize payment');
+            }
+        }
+
+        document.getElementById('amountInput')?.addEventListener('keypress', e => {
+            if (e.key === 'Enter') handleTopUp();
+        });
+    </script>
+</body>
+</html>
