@@ -1,0 +1,255 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body class="bg-mesh">
+    <%- include('../../partials/navbars/organizer-nav') %>
+    <div class="dashboard-layout">
+        <%- include('../../partials/organizer-sidebar', { title: 'Manage Events' }) %>
+        <main class="dashboard-main">
+
+            <div class="d-flex align-items-center mb-4 animate stagger-1">
+                <a href="/organizer/events/<%= event._id %>" class="btn btn-outline btn-sm me-3 px-3" style="border-radius:10px;">
+                    <i class="fi fi-rr-arrow-left me-1"></i> Back
+                </a>
+                <div>
+                    <h2 class="fw-bold m-0" style="letter-spacing:-0.5px;">Edit Event</h2>
+                    <p class="text-dim m-0 small"><%= event.title %></p>
+                </div>
+            </div>
+
+            <form id="editEventForm" novalidate>
+                <div class="row g-4 animate stagger-2">
+
+                    <!-- LEFT: Main Details -->
+                    <div class="col-lg-8">
+                        <div class="glass-panel mb-4">
+                            <p class="section-title"><i class="fi fi-rr-info"></i> Basic Information</p>
+
+                            <div class="form-floating mb-4">
+                                <input type="text" id="title" name="title" class="form-control input" placeholder=" " value="<%= event.title %>" minlength="5" required>
+                                <label>Event Title</label>
+                            </div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-7">
+                                    <select id="category" name="category" class="form-control input" style="height:3.6rem;">
+                                        <% categories.forEach(cat => { %>
+                                            <option value="<%= cat._id %>" <%= event.category.toString()===cat._id.toString()?'selected':'' %>><%= cat.name %></option>
+                                        <% }) %>
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <div class="d-flex justify-content-between align-items-center px-4 rounded-3"
+                                        style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.08);height:3.6rem;border-radius:12px!important;">
+                                        <span style="font-weight:500;color:white;">Feature Event?</span>
+                                        <label class="modern-switch m-0">
+                                            <input type="checkbox" id="isFeatured" name="isFeatured" value="true" <%= event.isFeatured?'checked':'' %>>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="section-title"><i class="fi fi-rr-calendar"></i> Date & Time</p>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="date" id="startDate" name="startDate" class="form-control input" placeholder=" " value="<%= event.startDate.toISOString().split('T')[0] %>" required>
+                                        <label>Start Date</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="time" id="startTime" name="startTime" class="form-control input" placeholder=" " value="<%= event.startTime %>" required>
+                                        <label>Start Time</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="date" id="endDate" name="endDate" class="form-control input" placeholder=" " value="<%= event.endDate.toISOString().split('T')[0] %>" required>
+                                        <label>End Date</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="time" id="endTime" name="endTime" class="form-control input" placeholder=" " value="<%= event.endTime %>" required>
+                                        <label>End Time</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-floating mb-4">
+                                <textarea id="description" name="description" class="form-control input" placeholder=" " style="height:130px;resize:none;padding-top:1.5rem;border-radius:12px;" required><%= event.description %></textarea>
+                                <label>Event Description</label>
+                            </div>
+
+                            <p class="section-title"><i class="fi fi-rr-marker"></i> Venue</p>
+                            <p class="text-dim small mb-2">Click on the map to change the venue location.</p>
+                            <div id="eventMap" style="height:280px;width:100%;border-radius:14px;border:1px solid rgba(255,255,255,0.08);margin-bottom:1rem;"></div>
+                            <div class="form-floating">
+                                <input type="text" id="address" name="address" class="form-control input" placeholder=" " value="<%= event.location.address %>" readonly>
+                                <label>Detected Address</label>
+                            </div>
+                            <input type="hidden" id="lat" name="lat" value="<%= event.location.lat %>">
+                            <input type="hidden" id="lng" name="lng" value="<%= event.location.lng %>">
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Tickets + Banners -->
+                    <div class="col-lg-4 d-flex flex-column gap-4">
+
+                        <!-- Tickets Panel -->
+                        <div class="glass-panel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <p class="section-title m-0"><i class="fi fi-rr-ticket"></i> Ticket Tiers</p>
+                                <button type="button" class="btn btn-outline btn-sm" style="border-radius:8px;font-size:0.8rem;" onclick="addTicketVariant()">
+                                    <i class="fi fi-rr-plus me-1"></i> Add
+                                </button>
+                            </div>
+                            <div id="ticketsContainer" class="d-flex flex-column gap-3"></div>
+                        </div>
+
+                        <!-- Banners Panel -->
+                        <div class="glass-panel">
+                            <p class="section-title mb-3"><i class="fi fi-rr-picture"></i> Banners</p>
+                            <% if(event.banners && event.banners.length > 0) { %>
+                            <div class="banner-preview-grid mb-3">
+                                <% event.banners.forEach(b => { %>
+                                    <img class="banner-thumb" src="<%= b %>" alt="Banner">
+                                <% }) %>
+                            </div>
+                            <% } %>
+                            <div class="drop-zone" id="dropZone" onclick="document.getElementById('banners').click()"
+                                ondragover="this.classList.add('dragover');event.preventDefault()"
+                                ondragleave="this.classList.remove('dragover')"
+                                ondrop="handleDrop(event)">
+                                <i class="fi fi-rr-cloud-upload-alt mb-2" style="font-size:1.8rem;color:rgba(255,255,255,0.3);display:block;"></i>
+                                <p id="uploadText" class="text-dim m-0 small">Click or drag to upload new banners<br><span style="font-size:0.72rem;">Replaces existing. Max 2 Ã— 16:9</span></p>
+                                <input type="file" id="banners" name="banners" accept="image/*" multiple style="display:none;" onchange="handleFileSelect(this)">
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <button type="submit" class="btn btn-primary w-100" style="height:3.2rem;border-radius:14px;font-weight:700;letter-spacing:0.5px;box-shadow:0 8px 25px rgba(230,57,70,0.3);">
+                            <i class="fi fi-rr-check me-2"></i> Save Changes
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // â”€â”€â”€ MAP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        const initLatLng = [< %= event.location.lat %>, <%= event.location.lng %>];
+        const map = L.map('eventMap').setView(initLatLng, 14);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(map);
+        let marker = L.marker(initLatLng, { draggable: true }).addTo(map);
+
+        async function updateAddress(lat, lng) {
+            document.getElementById('lat').value = lat;
+            document.getElementById('lng').value = lng;
+            try {
+                const r = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                document.getElementById('address').value = r.data.display_name || 'Custom Location';
+            } catch { document.getElementById('address').value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`; }
+        }
+        map.on('click', e => { marker.setLatLng(e.latlng); updateAddress(e.latlng.lat, e.latlng.lng); });
+        marker.on('dragend', () => { const p = marker.getLatLng(); updateAddress(p.lat, p.lng); });
+        setTimeout(() => map.invalidateSize(), 300);
+
+        // â”€â”€â”€ FILE UPLOAD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        function handleFileSelect(input) {
+            if (input.files.length > 2) { Toast.error('Max 2 banners allowed'); input.value = ''; return; }
+            document.getElementById('uploadText').innerHTML = `<strong style="color:white;">${input.files.length} file(s) selected</strong>`;
+        }
+        function handleDrop(e) {
+            e.preventDefault(); document.getElementById('dropZone').classList.remove('dragover');
+            const dt = e.dataTransfer; const input = document.getElementById('banners');
+            const files = Array.from(dt.files).filter(f => f.type.startsWith('image/')).slice(0, 2);
+            if (!files.length) return;
+            const dT = new DataTransfer(); files.forEach(f => dT.items.add(f));
+            input.files = dT.files; handleFileSelect(input);
+        }
+
+        // â”€â”€â”€ TICKETS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        const existingTickets = <%- JSON.stringify(tickets) %>;
+        let ticketCount = 0;
+        const ticketsContainer = document.getElementById('ticketsContainer');
+
+        function addTicketVariant(t = { name:'', price:'', capacity:'', maxPerUser: 5 }) {
+            ticketCount++;
+            const div = document.createElement('div');
+            div.className = 'ticket-variant';
+            div.innerHTML = `
+                <div class="ticket-variant-header">
+                    <span class="badge" style="background:rgba(230,57,70,0.15);color:var(--primary);padding:5px 10px;font-weight:700;letter-spacing:1px;font-size:0.7rem;">TIER ${ticketCount}</span>
+                    <button type="button" class="remove-ticket-btn" onclick="this.closest('.ticket-variant').remove()"><i class="fi fi-rr-trash"></i></button>
+                </div>
+                <div class="ticket-variant-body">
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control input ticket-name" placeholder=" " value="${t.name}" required>
+                        <label>Ticket Name</label>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6"><div class="form-floating">
+                            <input type="number" class="form-control input ticket-price" placeholder=" " value="${t.price}" min="0" required>
+                            <label>Price (₹)</label>
+                        </div></div>
+                        <div class="col-6"><div class="form-floating">
+                            <input type="number" class="form-control input ticket-capacity" placeholder=" " value="${t.capacity}" min="1" required>
+                            <label>Capacity</label>
+                        </div></div>
+                    </div>
+                    <div class="form-floating">
+                        <input type="number" class="form-control input ticket-max" placeholder=" " value="${t.maxPerUser}" min="1" required>
+                        <label>Max Per User</label>
+                    </div>
+                </div>`;
+            ticketsContainer.appendChild(div);
+        }
+
+        existingTickets.length > 0 ? existingTickets.forEach(t => addTicketVariant(t)) : addTicketVariant();
+
+        // â”€â”€â”€ SUBMIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        document.getElementById('editEventForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const ticketEls = ticketsContainer.querySelectorAll('.ticket-variant');
+            if (!ticketEls.length) return Toast.error('Add at least one ticket tier.');
+
+            const tickets = [];
+            for (const el of ticketEls) {
+                const name = el.querySelector('.ticket-name').value.trim();
+                const price = parseFloat(el.querySelector('.ticket-price').value);
+                const capacity = parseInt(el.querySelector('.ticket-capacity').value);
+                const maxPerUser = parseInt(el.querySelector('.ticket-max').value);
+                if (!name || isNaN(price) || price < 0 || !capacity || capacity < 1)
+                    return Toast.error('Please fill all ticket fields correctly.');
+                tickets.push({ name, price, capacity, maxPerUser });
+            }
+
+            const formData = new FormData(document.getElementById('editEventForm'));
+            formData.append('tickets', JSON.stringify(tickets));
+
+            Loader.show('SAVING CHANGES...');
+            try {
+                const res = await axios.post('/organizer/events/<%= event._id %>/update', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                if (res.data.success) {
+                    Toast.success(res.data.message);
+                    setTimeout(() => window.location.href = '/organizer/events/<%= event._id %>', 1500);
+                }
+            } catch (err) {
+                Toast.error(err.response?.data?.message || 'Failed to update event.');
+            } finally { Loader.hide(); }
+        });
+    </script>
+</body>
+</html>

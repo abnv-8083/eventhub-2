@@ -5,7 +5,7 @@
             <h3 class="m-0" style="font-size: 1.6rem; font-weight: 800;">Event<span>Hub</span></h3>
         </a>
     </div>
-    
+
     <nav class="sidebar-nav px-2">
         <a href="/user/dashboard" class="<%= locals.title === 'User Dashboard' ? 'active' : '' %>">
             <i class="fi fi-rr-apps"></i> <span>Overview</span>
@@ -15,8 +15,12 @@
             <i class="fi fi-rr-ticket"></i> <span>My Tickets</span>
         </a>
 
-        <a href="/events" class="<%= locals.title === 'Browse Events' ? 'active' : '' %>">
-            <i class="fi fi-rr-search"></i> <span>Browse Events</span>
+        <a href="/user/wishlist" class="<%= locals.title === 'My Wishlist' ? 'active' : '' %>">
+            <i class="fi fi-rr-heart"></i> <span>Wishlist</span>
+        </a>
+
+        <a href="/user/wallet" class="<%= locals.title === 'My Wallet' ? 'active' : '' %>">
+            <i class="fi fi-rr-wallet"></i> <span>Wallet</span>
         </a>
 
         <a href="/user/profile" class="<%= locals.title === 'My Profile' ? 'active' : '' %>">
@@ -36,7 +40,7 @@
         e.preventDefault();
         try {
             const response = await axios.post('/user/logout');
-            if(response.data.success){
+            if (response.data.success) {
                 window.location.href = '/user/login?message=Logged out successfully';
             }
         } catch (error) {

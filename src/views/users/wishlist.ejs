@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head') %>
+</head>
+<body class="bg-mesh">
+    <%- include('../partials/navbars/user-nav') %>
+
+    <div style="max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem;">
+
+        <div class="d-flex justify-content-between align-items-center mb-4 animate stagger-1">
+                <div>
+                    <h2 class="fw-bold">My Wishlist</h2>
+                    <p class="text-dim m-0"><%= events.length %> saved event<%= events.length !== 1 ? 's' : '' %></p>
+                </div>
+                <a href="/user/events" class="btn btn-outline btn-sm px-4">
+                    <i class="fi fi-rr-search me-1"></i> Discover Events
+                </a>
+            </div>
+
+            <% if(events && events.length > 0) { %>
+            <div class="row g-4 animate stagger-2" id="wishlistGrid">
+                <% events.forEach(event => { %>
+                <div class="col-md-6 col-lg-4" id="wcard-<%= event._id %>">
+                    <div class="wishlist-card" onclick="window.location.href='/user/events/<%= event._id %>'">
+                        <% if(event.banners && event.banners.length > 0) { %>
+                            <img src="<%= event.banners[0] %>" class="wishlist-img" alt="<%= event.title %>">
+                        <% } else { %>
+                            <div class="wishlist-img-ph">
+                                <i class="fi fi-rr-picture" style="font-size:2rem;color:rgba(255,255,255,0.15);"></i>
+                            </div>
+                        <% } %>
+
+                        <div class="wishlist-body">
+                            <span class="cat-tag mb-2 d-inline-block"><%= event.category?.name %></span>
+                            <h6 class="fw-bold text-white mb-2" style="font-size:0.95rem; line-height:1.3; flex:1;">
+                                <%= event.title %>
+                            </h6>
+                            <p class="text-dim mb-3" style="font-size:0.8rem;">
+                                <i class="fi fi-rr-calendar me-1"></i>
+                                <%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %>
+                                <span style="margin:0 6px; opacity:0.4;">Â&middot;</span>
+                                <i class="fi fi-rr-marker me-1"></i>
+                                <%= event.location?.address?.split(',')[0] %>
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center mt-auto pt-2" style="border-top:1px solid rgba(255,255,255,0.06);">
+                                <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.75);padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:600;">
+                                    <%= event.minPrice === 0 ? 'Free' : 'From ₹' + event.minPrice.toLocaleString('en-IN') %>
+                                </span>
+                                <button class="rm-btn" title="Remove from Wishlist"
+                                    onclick="event.stopPropagation(); removeFromWishlist('<%= event._id %>', this)">
+                                    <i class="fi fi-rr-heart-crack"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <% }) %>
+            </div>
+
+            <% } else { %>
+            <div class="empty-box animate stagger-2">
+                <div class="empty-icon"><i class="fi fi-rr-heart"></i></div>
+                <h5 class="text-white mb-2">Your Wishlist is Empty</h5>
+                <p class="text-dim mb-4">Browse events and tap the heart icon to save them here.</p>
+                <a href="/user/events" class="btn btn-primary px-4">Discover Events</a>
+            </div>
+            <% } %>
+    </div>
+
+    <script>
+        async function removeFromWishlist(eventId, btn) {
+            try {
+                const res = await axios.post(`/user/events/${eventId}/wishlist`);
+                if (res.data.success) {
+                    Toast.success('Removed from wishlist');
+                    const card = document.getElementById(`wcard-${eventId}`);
+                    card.style.transition = 'opacity 0.3s, transform 0.3s';
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.95)';
+                    setTimeout(() => card.remove(), 300);
+                }
+            } catch (err) {
+                Toast.error('Failed to update wishlist');
+            }
+        }
+    </script>
+</body>
+</html>

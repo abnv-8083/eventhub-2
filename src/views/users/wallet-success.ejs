@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head') %>
+</head>
+<body class="bg-mesh">
+    <%- include('../partials/navbars/user-nav') %>
+
+    <div class="result-wrap">
+        <div class="result-card animate stagger-1">
+            <!-- Icon -->
+            <div class="success-icon-ring">
+                <i class="fi fi-rr-check"></i>
+            </div>
+
+            <!-- Heading -->
+            <h4 class="fw-bold text-white mb-1">Top-up Successful!</h4>
+            <p class="text-dim mb-0" style="font-size:0.9rem;">Your wallet has been credited.</p>
+
+            <!-- Amount -->
+            <div class="amount-badge">+₹<%= amount.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></div>
+
+            <!-- Details -->
+            <div class="mb-2 p-3 rounded-3" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);">
+                <div class="detail-row">
+                    <span class="detail-label">New Balance</span>
+                    <span class="detail-value" style="color:#2ecc71;">₹<%= balance.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
+                </div>
+                <% if(paymentId) { %>
+                <div class="detail-row">
+                    <span class="detail-label">Payment ID</span>
+                    <span class="detail-value" style="font-size:0.78rem; font-family:monospace;"><%= paymentId %></span>
+                </div>
+                <% } %>
+                <div class="detail-row">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value" style="color:#2ecc71;"><i class="fi fi-rr-check-circle me-1"></i>Credited</span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions">
+                <a href="/user/wallet" class="btn btn-primary px-4" style="border-radius:10px;">
+                    <i class="fi fi-rr-wallet me-2"></i>My Wallet
+                </a>
+                <a href="/user/events" class="btn btn-outline px-4" style="border-radius:10px;">
+                    <i class="fi fi-rr-search me-2"></i>Browse Events
+                </a>
+            </div>
+
+            <p class="text-dim mt-3 mb-0" style="font-size:0.75rem;">
+                <i class="fi fi-rr-shield-check me-1"></i>Secured by Razorpay
+            </p>
+        </div>
+    </div>
+</body>
+</html>

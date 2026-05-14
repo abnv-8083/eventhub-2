@@ -60,13 +60,24 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['pending', 'approved', 'rejected'],
         default: function() {
-            // Only apply a status if the user is registering as an organizer
-            if (this.role === 'organizer') {
-                return 'pending';
-            }
-            // Return undefined so regular users do not get a status field at all
+            if (this.role === 'organizer') return 'pending';
             return undefined; 
         }
+    },
+
+    // ==========================================
+    // Wishlist & Wallet
+    // ==========================================
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
+
+    wallet: {
+        balance: { type: Number, default: 0 },
+        transactions: [{
+            type: { type: String, enum: ['credit', 'debit'] },
+            amount: { type: Number },
+            description: { type: String },
+            date: { type: Date, default: Date.now }
+        }]
     }
 }, {
     timestamps: true // Automatically adds 'createdAt' and 'updatedAt' fields

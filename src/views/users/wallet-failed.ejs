@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head') %>
+</head>
+<body class="bg-mesh">
+    <%- include('../partials/navbars/user-nav') %>
+
+    <div class="result-wrap">
+        <div class="result-card animate stagger-1">
+            <!-- Icon -->
+            <div class="failed-icon-ring">
+                <i class="fi fi-rr-cross-circle"></i>
+            </div>
+
+            <!-- Heading -->
+            <h4 class="fw-bold text-white mb-1">Top-up Failed</h4>
+            <p class="text-dim mb-0" style="font-size:0.9rem;">Your wallet could not be credited.</p>
+
+            <!-- Reason -->
+            <div class="reason-box">
+                <i class="fi fi-rr-exclamation me-2" style="color:var(--primary);"></i>
+                <%= reason %>
+            </div>
+
+            <!-- Tips -->
+            <div class="tip-box">
+                <p class="text-dim mb-2" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.07em; font-weight:700;">Common reasons</p>
+                <div class="tip-item"><i class="fi fi-rr-dot-circle"></i><span>Insufficient funds in your bank account or card</span></div>
+                <div class="tip-item"><i class="fi fi-rr-dot-circle"></i><span>Payment timed out â€” try again quickly</span></div>
+                <div class="tip-item"><i class="fi fi-rr-dot-circle"></i><span>Card declined by your bank (check limits)</span></div>
+                <div class="tip-item"><i class="fi fi-rr-dot-circle"></i><span>Network issue during payment</span></div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions">
+                <a href="/user/wallet" class="btn btn-primary px-4" style="border-radius:10px;">
+                    <i class="fi fi-rr-refresh me-2"></i>Try Again
+                </a>
+                <a href="/user/dashboard" class="btn btn-outline px-4" style="border-radius:10px;">
+                    <i class="fi fi-rr-home me-2"></i>Dashboard
+                </a>
+            </div>
+
+            <p class="text-dim mt-3 mb-0" style="font-size:0.75rem;">
+                No amount was deducted from your account.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

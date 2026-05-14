@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head', { title: 'Booking Confirmed' }) %>
+</head>
+<body class="bg-mesh">
+    <%- include('../../partials/navbars/user-nav') %>
+
+    <div class="container py-5" style="margin-top: 80px;">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="glass-dark p-5 rounded-4 text-center animate stagger-1">
+                    
+                    <div class="success-icon mb-4 mx-auto d-flex align-items-center justify-content-center" 
+                         style="width: 80px; height: 80px; background: rgba(46, 204, 113, 0.1); border-radius: 50%; color: #2ecc71;">
+                        <i class="fi fi-rr-check-circle" style="font-size: 2.5rem; line-height: 0;"></i>
+                    </div>
+
+                    <h3 class="fw-bold text-white mb-2">Booking Confirmed!</h3>
+                    <p class="text-dim mb-4">Your tickets for <strong><%= event.title %></strong> have been booked successfully.</p>
+
+                    <div class="order-summary text-start glass-dark p-4 rounded-3 mb-4" style="background: rgba(0,0,0,0.2);">
+                        <h6 class="fw-bold mb-3 text-uppercase" style="letter-spacing: 1px; font-size: 0.8rem; color: #aaa;">Order Summary</h6>
+                        
+                        <% if (booking && booking.tickets && booking.tickets.length > 0) { %>
+                            <% booking.tickets.forEach(item => { %>
+                                <div class="d-flex justify-content-between align-items-center mb-3 pb-3" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <div>
+                                        <h6 class="m-0 text-white"><%= item.ticketName %></h6>
+                                        <small class="text-dim">Qty: <%= item.quantity %> × ₹<%= item.ticketPrice.toLocaleString('en-IN') %></small>
+                                    </div>
+                                    <div class="text-end">
+                                        <strong style="color: #2ecc71;">₹<%= (item.quantity * item.ticketPrice).toLocaleString('en-IN') %></strong>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } %>
+
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <h6 class="m-0 text-white">Grand Total</h6>
+                            <h5 class="m-0" style="color: #2ecc71; font-weight: 700;">₹<%= totalAmount.toLocaleString('en-IN') %></h5>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="/user/tickets" class="btn btn-primary py-2 fw-bold">View My Tickets</a>
+                        <a href="/events" class="btn btn-outline py-2">Browse More Events</a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

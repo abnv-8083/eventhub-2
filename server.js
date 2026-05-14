@@ -83,9 +83,10 @@ app.use(session({
         collectionName: 'sessions'
     }),
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // true if using https in production
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        httpOnly: true
+        secure: true,       // always true -- ngrok/prod both serve HTTPS
+        sameSite: 'none',   // required for cross-origin POST cookies (ngrok)
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 24
     }
 }));
 
@@ -112,10 +113,14 @@ app.use('/organizer', organizerRouter)
 app.use('/admin', adminAuthRoutes)
 app.use('/admin', adminRoutes)
 
+// Public shortcut: /events → /user/events (for direct navigation)
+app.get('/events', (req, res) => res.redirect('/user/events' + (req.search || '')));
+app.get('/events/:id', (req, res) => res.redirect(`/user/events/${req.params.id}`));
 
-// 404 Error Handler
-app.use((req, res, next) => {
-    next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+
+// 404 — Unknown routes
+app.use((req, res) => {
+    res.status(404).render('errors/404');
 });
 
 app.use(errorHandler);
@@ -127,5 +132,5 @@ const PORT = process.env.PORT || 8083;
 
 server.listen(PORT, () => {
     console.log(`🚀 EventHub Server is running on http://localhost:${PORT} or https://justly-mocha-preorder.ngrok-free.dev`);
-    console.log(`⏱️  Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`⏳  Environment: ${process.env.NODE_ENV || 'development'}`);
 });

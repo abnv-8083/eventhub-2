@@ -5,27 +5,115 @@
     <title>Admin Dashboard | EventHub</title>
 </head>
 <body class="bg-mesh">
-    
-    <!-- 1. Include the global top navbar -->
     <%- include('../partials/navbars/admin-nav') %>
-
     <div class="dashboard-layout">
-        <!-- Integrated Sidebar Partial -->
         <%- include('../partials/admin-sidebar') %>
-        
+
         <main class="dashboard-main">
-            <!-- 2. Changed <header> to <div> so it doesn't pick up nav CSS -->
-            <div class="d-flex justify-between align-center mb-5 animate stagger-1">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-5 animate stagger-1">
                 <div>
                     <h2 class="fw-bold">Command Center</h2>
                     <p class="text-dim m-0">System administration and oversight</p>
                 </div>
-                <!-- Note: The hardcoded Avatar "A" was removed from here 
-                     because the top navbar now handles your profile menu perfectly! -->
             </div>
 
-            <!-- Rest of your dashboard content (Stats, Tables, etc.) goes here -->
-            
+            <!-- Stats Grid -->
+            <div class="row g-4 mb-5 animate stagger-2">
+                <div class="col-sm-6 col-lg-3">
+                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07); cursor:pointer;" onclick="window.location.href='/admin/users'">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <p class="text-dim small text-uppercase fw-bold m-0" style="letter-spacing:0.07em;">Total Users</p>
+                            <i class="fi fi-rr-user" style="color:var(--primary);"></i>
+                        </div>
+                        <h3 class="fw-bold text-white m-0" style="font-size:2rem;"><%= totalUsers %></h3>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07); cursor:pointer;" onclick="window.location.href='/admin/organizers'">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <p class="text-dim small text-uppercase fw-bold m-0" style="letter-spacing:0.07em;">Organizers</p>
+                            <i class="fi fi-rr-building" style="color:#3498db;"></i>
+                        </div>
+                        <h3 class="fw-bold text-white m-0" style="font-size:2rem;"><%= totalOrganizers %></h3>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07); border-left:3px solid #f39c12; cursor:pointer;" onclick="window.location.href='/admin/events'">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <p class="text-dim small text-uppercase fw-bold m-0" style="letter-spacing:0.07em;">Pending Events</p>
+                            <i class="fi fi-rr-clock" style="color:#f39c12;"></i>
+                        </div>
+                        <h3 class="fw-bold text-white m-0" style="font-size:2rem;"><%= pendingEvents %></h3>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07); border-left:3px solid #2ecc71;">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <p class="text-dim small text-uppercase fw-bold m-0" style="letter-spacing:0.07em;">Total Revenue</p>
+                            <i class="fi fi-rr-money" style="color:#2ecc71;"></i>
+                        </div>
+                        <h3 class="fw-bold text-white m-0" style="font-size:2rem;">₹<%= totalRevenue.toLocaleString('en-IN') %></h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Secondary stats -->
+            <div class="row g-4 mb-5 animate stagger-3">
+                <div class="col-sm-6">
+                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07);">
+                        <p class="text-dim small text-uppercase fw-bold mb-2">Total Events</p>
+                        <h4 class="text-white m-0"><%= totalEvents %></h4>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07);">
+                        <p class="text-dim small text-uppercase fw-bold mb-2">Total Bookings</p>
+                        <h4 class="text-white m-0"><%= totalBookings %></h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Events -->
+            <div class="glass-dark p-4 rounded-3 animate stagger-4" style="border:1px solid rgba(255,255,255,0.07);">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold m-0">Recent Events</h5>
+                    <a href="/admin/events" class="text-dim small" style="text-decoration:none;">View all →</a>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Organizer</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if(recentEvents && recentEvents.length > 0) { %>
+                                <% recentEvents.forEach(event => { %>
+                                <tr>
+                                    <td>
+                                        <p class="fw-bold text-white mb-0" style="font-size:0.9rem;"><%= event.title %></p>
+                                        <p class="text-dim mb-0" style="font-size:0.76rem;"><%= event.category?.name %></p>
+                                    </td>
+                                    <td class="text-dim" style="font-size:0.85rem;">
+                                        <%= event.organizer?.organizationName || event.organizer?.fullName || '—' %>
+                                    </td>
+                                    <td class="text-dim" style="font-size:0.85rem;">
+                                        <%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %>
+                                    </td>
+                                    <td><span class="status-badge status-<%= event.status %>"><%= event.status %></span></td>
+                                </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr><td colspan="4" class="text-center p-5 text-dim">No events found.</td></tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </main>
     </div>
 </body>

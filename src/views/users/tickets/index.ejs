@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+</head>
+<body class="bg-mesh">
+    <%- include('../../partials/navbars/user-nav') %>
+
+    <div class="dashboard-layout">
+        <%- include('../../partials/user-sidebar', { active: 'tickets' }) %>
+        
+        <main class="dashboard-main">
+            <h2 class="fw-bold mb-1">My Tickets</h2>
+            <p class="text-dim mb-4">Manage your upcoming and past event bookings.</p>
+
+            <div class="filter-tabs mb-4">
+                <a href="?filter=all" class="filter-tab <%= filter === 'all' ? 'active' : '' %>">All</a>
+                <a href="?filter=upcoming" class="filter-tab <%= filter === 'upcoming' ? 'active' : '' %>">Upcoming</a>
+                <a href="?filter=past" class="filter-tab <%= filter === 'past' ? 'active' : '' %>">Past</a>
+                <a href="?filter=cancelled" class="filter-tab <%= filter === 'cancelled' ? 'active' : '' %>">Cancelled</a>
+            </div>
+
+            <div class="row g-4">
+                <% if(bookings && bookings.length > 0) { %>
+                    <% bookings.forEach(booking => { %>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="glass-dark rounded-4 overflow-hidden h-100 d-flex flex-column position-relative">
+                                
+                                <div class="position-absolute top-0 end-0 m-3 z-1">
+                                    <% if(booking.status === 'active') { %>
+                                        <span class="badge bg-success">Active</span>
+                                    <% } else if(booking.status === 'on_hold') { %>
+                                        <span class="badge bg-warning text-dark">On Hold</span>
+                                    <% } else { %>
+                                        <span class="badge bg-danger">Cancelled</span>
+                                    <% } %>
+                                </div>
+
+                                <div class="p-4 d-flex flex-column flex-grow-1">
+                                    <p class="text-primary small fw-bold mb-1"><%= new Date(booking.event.startDate).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) %></p>
+                                    <h5 class="fw-bold text-white mb-3 text-truncate"><%= booking.event.title %></h5>
+                                    
+                                    <div class="mb-3">
+                                        <% if(booking.tickets && booking.tickets.length > 0) { %>
+                                            <% booking.tickets.forEach(t => { %>
+                                                <span class="badge bg-dark border border-secondary text-light me-1 mb-1 px-2 py-1" style="font-weight: 500;">
+                                                    <%= t.quantity %>&times; <%= t.ticketName %>
+                                                </span>
+                                            <% }) %>
+                                        <% } %>
+                                    </div>
+
+                                    <div class="mt-auto pt-3 d-flex justify-content-between align-items-center" style="border-top: 1px solid rgba(255,255,255,0.1);">
+                                        <div>
+                                            <p class="text-dim small mb-0">Total Paid</p>
+                                            <h6 class="text-white m-0 fw-bold">&#8377;<%= booking.totalAmount.toLocaleString('en-IN') %></h6>
+                                        </div>
+                                        <a href="/user/tickets/<%= booking._id %>" class="btn btn-outline btn-sm px-3">Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="col-12 text-center py-5">
+                        <i class="fi fi-rr-ticket text-dim mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="text-white">No tickets found</h5>
+                        <p class="text-dim">You haven't booked any events matching this filter.</p>
+                        <a href="/events" class="btn btn-primary mt-2">Browse Events</a>
+                    </div>
+                <% } %>
+            </div>
+
+            <% if(totalPages > 1) { %>
+                <div class="d-flex justify-content-center mt-5">
+                    <ul class="pagination d-flex gap-2 list-unstyled">
+                        <% for(let i = 1; i <= totalPages; i++) { %>
+                            <li>
+                                <a href="?filter=<%= filter %>&page=<%= i %>" class="action-btn <%= i == currentPage ? 'active-page' : '' %>">
+                                    <%= i %>
+                                </a>
+                            </li>
+                        <% } %>
+                    </ul>
+                </div>
+            <% } %>
+
+        </main>
+    </div>
+</body>
+</html>

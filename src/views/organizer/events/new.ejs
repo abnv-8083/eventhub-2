@@ -1,163 +1,804 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <%- include('../../partials/head') %>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
+    <style>
+        /* Enhanced Wizard Tracker & Styles */
+        .wizard-tracker { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            position: relative; 
+            margin-bottom: 5rem; 
+            padding: 0 1rem; 
+            z-index: 10;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .wizard-line-container {
+            position: absolute; 
+            top: 50%; 
+            left: 50px; 
+            right: 50px; 
+            transform: translateY(-50%);
+            height: 6px; 
+            background: rgba(255,255,255,0.06); 
+            border-radius: 10px; 
+            z-index: 1; 
+            overflow: hidden;
+        }
+        .wizard-line-progress { 
+            height: 100%; 
+            background: linear-gradient(90deg, #E63946, #ff6b6b); 
+            box-shadow: 0 0 15px rgba(230,57,70,0.6);
+            width: 0%; 
+            transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); 
+            border-radius: 10px; 
+        }
+        .wizard-step { 
+            position: relative; 
+            z-index: 2; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 12px; 
+            width: 90px; 
+        }
+        .step-circle { 
+            width: 64px; 
+            height: 64px; 
+            border-radius: 50%; 
+            background: var(--bg-dark, #0a0a0a); 
+            border: 2px solid rgba(255,255,255,0.15); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: 700; 
+            font-size: 1.6rem; 
+            color: rgba(255,255,255,0.4); 
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); 
+        }
+        .step-label { 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            color: rgba(255,255,255,0.4); 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            text-align: center; 
+            transition: all 0.3s; 
+            position: absolute;
+            top: 75px;
+            white-space: nowrap;
+        }
+        .wizard-step.active .step-circle { 
+            border-color: var(--primary); 
+            background: rgba(230,57,70,0.1); 
+            color: white; 
+            box-shadow: 0 0 0 8px rgba(230,57,70,0.15); 
+            transform: scale(1.1);
+        }
+        .wizard-step.active .step-label { color: white; }
+        .wizard-step.completed .step-circle { 
+            background: #2ecc71; 
+            border-color: #2ecc71; 
+            color: #000; 
+            transform: scale(1);
+        }
+        .wizard-step.completed .step-label { color: #2ecc71; }
+
+        .step-container { display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .step-container.active { display: block; opacity: 1; }
+    </style>
 </head>
+
 <body class="bg-mesh">
-    
-    <%- include('../partials/navbars/organizer-nav') %>
+    <%- include('../../partials/navbars/organizer-nav') %>
 
     <div class="dashboard-layout">
         <%- include('../../partials/organizer-sidebar', { title: 'Create Event' }) %>
-        
+
         <main class="dashboard-main">
-            <div class="d-flex align-center mb-4 animate stagger-1">
-                <a href="/organizer/events" class="btn btn-outline btn-sm me-3 px-3">&larr; Back</a>
+            <div class="d-flex align-items-center gap-3 mb-4 animate stagger-1 text-start">
+                <a href="/organizer/events" class="btn btn-outline btn-sm px-3 flex-shrink-0" style="border-radius: 10px; width: fit-content; height: 38px;">
+                    <i class="fi fi-rr-arrow-left me-1"></i> Back
+                </a>
                 <div>
-                    <h2 class="fw-bold m-0">Create New Event</h2>
-                    <p class="text-dim m-0">Fill in the details to publish your event to the platform.</p>
+                    <h2 class="fw-bold m-0" style="letter-spacing: -0.5px; font-size: clamp(1.2rem, 4vw, 1.8rem);">Create New Event</h2>
+                    <p class="text-dim m-0 small">Setup your event details, ticketing, and branding.</p>
                 </div>
             </div>
 
-            <form id="createEventForm" class="row g-4 animate stagger-2" novalidate>
-                <!-- Left Column: Details -->
-                <div class="col-lg-8">
-                    <div class="glass-dark p-4 rounded-3 h-100">
-                        <h4 class="mb-4 fw-bold">Event Details</h4>
-                        
-                        <div class="form-floating mb-4">
-                            <input type="text" id="title" name="title" class="form-control input" placeholder=" " required minlength="5">
-                            <label for="title">Event Title</label>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group mb-4">
-                                    <select id="category" name="category" class="input" style="height: 3.5rem;" required>
-                                        <option value="" disabled selected>Select Category</option>
-                                        <option value="technology">Technology</option>
-                                        <option value="sports">Sports</option>
-                                        <option value="music">Music & Concerts</option>
-                                        <option value="workshop">Workshops</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating mb-4">
-                                    <input type="number" id="capacity" name="capacity" class="form-control input" placeholder=" " required min="1">
-                                    <label for="capacity">Total Capacity</label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-floating mb-4">
-                                    <input type="date" id="eventDate" name="eventDate" class="form-control input" placeholder=" " required>
-                                    <label for="eventDate">Event Date</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating mb-4">
-                                    <input type="time" id="eventTime" name="eventTime" class="form-control input" placeholder=" " required>
-                                    <label for="eventTime">Start Time</label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-floating mb-4">
-                            <input type="text" id="location" name="location" class="form-control input" placeholder=" " required>
-                            <label for="location">Venue / Location Address</label>
-                        </div>
-
-                        <div class="form-floating mb-0">
-                            <textarea id="description" name="description" class="form-control input" placeholder=" " required style="height: 150px; resize: none; padding-top: 1.5rem;"></textarea>
-                            <label for="description">Event Description</label>
-                        </div>
+            <div class="animate stagger-2" style="max-width: 1100px; margin: 0 auto;">
+                
+                <div class="wizard-tracker mb-5">
+                    <div class="wizard-line-container">
+                        <div class="wizard-line-progress" id="wizardProgress"></div>
                     </div>
-                </div>
-
-                <!-- Right Column: Banner & Pricing -->
-                <div class="col-lg-4 d-flex flex-column gap-4">
                     
-                    <!-- Cover Image Upload -->
-                    <div class="glass-dark p-4 rounded-3 text-center">
-                        <h6 class="fw-bold mb-3">Event Banner</h6>
-                        <div class="p-4 rounded-3" style="border: 2px dashed rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); cursor: pointer; transition: 0.3s;" onclick="document.getElementById('eventBanner').click()">
-                            <i class="fi fi-rr-picture text-dim" style="font-size: 2.5rem;"></i>
-                            <p class="text-dim m-0 mt-2" style="font-size: 0.85rem;">Click to upload image<br>(1920x1080 recommended)</p>
-                            <input type="file" id="eventBanner" name="image" accept="image/*" style="display: none;" required>
-                        </div>
+                    <div class="wizard-step active" id="nav-step-1">
+                        <div class="step-circle"><i class="fi fi-rr-document-signed"></i></div>
+                        <div class="step-label d-none d-sm-block">Event Details</div>
                     </div>
-
-                    <!-- Ticketing / Pricing -->
-                    <div class="glass-dark p-4 rounded-3 flex-grow-1">
-                        <h6 class="fw-bold mb-3">Ticketing Setup</h6>
-                        
-                        <div class="d-flex justify-between align-center mb-4 p-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border);">
-                            <span class="text-dim" style="font-size: 0.9rem;">Is this a free event?</span>
-                            <label class="modern-switch m-0">
-                                <input type="checkbox" id="isFree" name="isFree" onchange="togglePrice(this)">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-
-                        <div class="form-floating mb-4" id="priceContainer">
-                            <input type="number" id="price" name="price" class="form-control input" placeholder=" " required min="1">
-                            <label for="price">Ticket Price (₹)</label>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100 mt-auto" style="height: 3.5rem;">Publish Event</button>
+                    <div class="wizard-step" id="nav-step-2">
+                        <div class="step-circle"><i class="fi fi-rr-ticket"></i></div>
+                        <div class="step-label d-none d-sm-block">Tickets</div>
+                    </div>
+                    <div class="wizard-step" id="nav-step-3">
+                        <div class="step-circle"><i class="fi fi-rr-picture"></i></div>
+                        <div class="step-label d-none d-sm-block">Banners & Publish</div>
                     </div>
                 </div>
-            </form>
+
+                <form id="createEventForm" novalidate>
+                    
+                    <%# ─── STEP 1: EVENT DETAILS ───────────────────────────────────── %>
+                    <div id="step-1" class="step-container active">
+                        
+                        <div class="row g-4 mb-4">
+                            <div class="col-lg-7">
+                                <div class="glass-dark p-4 rounded-3 h-100">
+                                    <h5 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                                        <i class="fi fi-rr-info text-primary"></i> Basic Information
+                                    </h5>
+
+                                    <div class="form-floating mb-4">
+                                        <input type="text" id="title" name="title" class="form-control input" placeholder=" " minlength="5">
+                                        <label for="title">Event Title</label>
+                                        <div class="field-error" id="err-title"></div>
+                                    </div>
+
+                                    <div class="row g-4 mb-4">
+                                        <div class="col-md-7">
+                                            <div class="form-floating">
+                                                <select id="category" name="category" class="form-control input" style="cursor: pointer;">
+                                                    <option value="" disabled selected>Choose Category...</option>
+                                                    <% categories.forEach(cat => { %>
+                                                        <option value="<%= cat._id %>"><%= cat.name %></option>
+                                                    <% }) %>
+                                                </select>
+                                                <label for="category">Event Category</label>
+                                                <div class="field-error" id="err-category"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <div class="d-flex justify-content-between align-items-center px-4 rounded-3 h-100 w-100"
+                                                style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); min-height: 3.5rem; border-radius: 12px;">
+                                                <span class="text-white" style="font-weight: 500;">Feature Event?</span>
+                                                <label class="modern-switch m-0">
+                                                    <input type="checkbox" id="isFeatured" name="isFeatured" value="true">
+                                                    <span class="slider"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-floating">
+                                        <textarea id="description" name="description" class="form-control input" placeholder=" "
+                                            style="height: 180px; resize: none; padding-top: 1.5rem; border-radius: 12px;"></textarea>
+                                        <label for="description">Detailed Event Description</label>
+                                        <div class="field-error" id="err-description"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-5">
+                                <div class="glass-dark p-4 rounded-3 h-100">
+                                    <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                        <i class="fi fi-rr-calendar text-primary"></i> Date & Time
+                                    </h5>
+                                    
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-sm-6">
+                                            <div class="form-floating">
+                                                <input type="date" id="startDate" name="startDate" class="form-control input" placeholder=" ">
+                                                <label>Start Date</label>
+                                                <div class="field-error" id="err-startDate"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="form-floating">
+                                                <input type="time" id="startTime" name="startTime" class="form-control input" placeholder=" ">
+                                                <label>Start Time</label>
+                                                <div class="field-error" id="err-startTime"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-3">
+                                        <div class="col-sm-6">
+                                            <div class="form-floating">
+                                                <input type="date" id="endDate" name="endDate" class="form-control input" placeholder=" ">
+                                                <label>End Date</label>
+                                                <div class="field-error" id="err-endDate"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="form-floating">
+                                                <input type="time" id="endTime" name="endTime" class="form-control input" placeholder=" ">
+                                                <label>End Time</label>
+                                                <div class="field-error" id="err-endTime"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-dark p-4 rounded-3 mb-4">
+                            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                <i class="fi fi-rr-marker text-primary"></i> Venue Location
+                            </h5>
+                            <p class="text-dim small mb-3">Click on the map to pin your event's exact location.</p>
+                            
+                            <div id="eventMap" style="height: 350px; width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 1rem; z-index: 1;"></div>
+                            
+                            <div class="form-floating">
+                                <input type="text" id="address" name="address" class="form-control input" placeholder=" " readonly style="background: rgba(255,255,255,0.02) !important;">
+                                <label for="address">Detected Address</label>
+                                <div class="field-error" id="err-address"></div>
+                            </div>
+                            <input type="hidden" id="lat" name="lat">
+                            <input type="hidden" id="lng" name="lng">
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="button" class="btn btn-primary px-5 py-3" style="border-radius: 14px; font-weight: 600; letter-spacing: 0.5px;" onclick="goToStep(2)">
+                                Continue to Tickets <i class="fi fi-rr-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+
+                    <%# ─── STEP 2: TICKETS ─────────────────────────────────────────── %>
+                    <div id="step-2" class="step-container">
+                        <div class="row justify-content-center">
+                            <div class="col-lg-10">
+                                <div class="glass-dark p-4 rounded-3 mb-4">
+                                    <div class="d-flex align-items-center justify-content-between gap-3 mb-4 pb-3 text-start w-100" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <div class="text-start">
+                                            <h5 class="fw-bold m-0 d-flex align-items-center justify-content-start gap-2 text-start" style="font-size: clamp(1.1rem, 3vw, 1.25rem);">
+                                                <i class="fi fi-rr-ticket text-primary flex-shrink-0"></i> Ticket Tiers
+                                            </h5>
+                                            <p class="text-dim mt-1 mb-0 small text-start">Create VIP, General, or Early Bird passes.</p>
+                                        </div>
+                                        <button type="button" class="btn btn-outline btn-sm px-3 flex-shrink-0" style="border-radius: 10px; height: 38px; display: flex; align-items: center;" onclick="addTicketVariant()">
+                                            <i class="fi fi-rr-plus me-1"></i> Add Tier
+                                        </button>
+                                    </div>
+
+                                    <div id="ticketsContainer" class="d-flex flex-column gap-4">
+                                        </div>
+                                </div>
+
+                                <div class="d-flex flex-column-reverse flex-sm-row justify-content-between gap-3 mt-4">
+                                    <button type="button" class="btn btn-outline px-4 py-3" style="border-radius: 14px; font-weight: 600;" onclick="goToStep(1)">
+                                        <i class="fi fi-rr-arrow-left me-2"></i> Back to Details
+                                    </button>
+                                    <button type="button" class="btn btn-primary px-5 py-3" style="border-radius: 14px; font-weight: 600; letter-spacing: 0.5px;" onclick="goToStep(3)">
+                                        Continue to Banners <i class="fi fi-rr-arrow-right ms-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <%# ─── STEP 3: BANNERS & PUBLISH ────────────────────────────────── %>
+                    <div id="step-3" class="step-container">
+                        <div class="row g-4">
+                            <div class="col-lg-7">
+                                <div class="glass-dark p-4 rounded-3 text-center h-100">
+                                    <h5 class="fw-bold mb-3 d-flex align-items-center gap-2 text-start">
+                                        <i class="fi fi-rr-picture text-primary"></i> Upload Event Banners
+                                    </h5>
+                                    <p class="text-dim mb-4 text-start small">Upload high-quality images. Recommended resolution is 1920×1080px.</p>
+                                    
+                                    <div class="d-flex flex-column flex-sm-row gap-3">
+                                        <div class="banner-slot w-100" id="banner1Slot" onclick="openCropper(1)" style="min-height: 180px;">
+                                            <div class="placeholder-content" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;">
+                                                <i class="fi fi-rr-cloud-upload-alt" style="font-size: 2rem;"></i>
+                                                <span style="font-weight: 600; color: white; font-size:0.9rem;">Primary Banner</span>
+                                            </div>
+                                            <div class="banner-slot-overlay">
+                                                <i class="fi fi-rr-edit" style="font-size: 1.5rem; color: white;"></i>
+                                            </div>
+                                        </div>
+
+                                        <div class="banner-slot w-100" id="banner2Slot" onclick="openCropper(2)" style="min-height: 180px;">
+                                            <div class="placeholder-content" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;">
+                                                <i class="fi fi-rr-cloud-upload-alt" style="font-size: 2rem;"></i>
+                                                <span style="font-weight: 600; color: white; font-size:0.9rem;">Secondary Banner</span>
+                                            </div>
+                                            <div class="banner-slot-overlay">
+                                                <i class="fi fi-rr-edit" style="font-size: 1.5rem; color: white;"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <input type="file" id="bannerInput1" accept="image/*" style="display:none;" onchange="onFileSelected(1)">
+                                    <input type="file" id="bannerInput2" accept="image/*" style="display:none;" onchange="onFileSelected(2)">
+                                    
+                                    <div class="mt-4 pt-3 text-start" style="border-top: 1px dashed rgba(255,255,255,0.1);">
+                                        <span class="badge rounded-pill" id="bannerHelp" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px 16px; font-weight: 500; font-size: 0.8rem; color: rgba(255,255,255,0.5);">
+                                            0 of 2 uploaded
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-5 d-flex flex-column gap-4">
+                                <div class="glass-dark p-4 rounded-3" id="previewCard">
+                                    <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                        <i class="fi fi-rr-eye text-primary"></i> Live Preview
+                                    </h5>
+                                    <div style="border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
+                                        <div id="previewBanner" style="height:180px;background:linear-gradient(135deg,rgba(230,57,70,0.15),rgba(0,0,0,0.5));position:relative;">
+                                            <img id="previewBannerImg" src="" style="width:100%;height:100%;object-fit:cover;display:none;">
+                                            <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);padding:1rem 1.25rem;display:flex;flex-direction:column;justify-content:flex-end;">
+                                                <span id="previewCategory" style="font-size:0.7rem;color:var(--primary);font-weight:700;text-transform:uppercase;letter-spacing:1px;"></span>
+                                                <h5 id="previewTitle" class="fw-bold m-0 text-truncate" style="color:white;max-width:100%;">Your Event Title</h5>
+                                            </div>
+                                        </div>
+                                        <div style="padding:1.25rem;background:rgba(0,0,0,0.2);display:flex;flex-direction:column;gap:0.75rem;">
+                                            <span class="text-dim" style="font-size:0.85rem;"><i class="fi fi-rr-calendar me-2"></i><span id="previewDate">Date TBD</span></span>
+                                            <span class="text-dim" style="font-size:0.85rem;"><i class="fi fi-rr-marker me-2"></i><span id="previewLocation">Location TBD</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="glass-dark p-4 rounded-3">
+                                    <button type="submit" class="btn btn-primary w-100 py-3" style="border-radius: 12px; font-weight: 700; letter-spacing: 1px; box-shadow: 0 8px 25px rgba(230,57,70,0.3);">
+                                        <i class="fi fi-rr-rocket-lunch me-2"></i> Publish Event
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-start mt-4">
+                            <button type="button" class="btn btn-outline px-4 py-3" style="border-radius: 14px; font-weight: 600;" onclick="goToStep(2)">
+                                <i class="fi fi-rr-arrow-left me-2"></i> Back to Tickets
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
         </main>
     </div>
 
+    <div id="cropperModal">
+        <div class="cropper-modal-box" style="max-height: 90vh; overflow-y: auto;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold m-0" id="cropperTitle">Crop Banner</h4>
+                <button type="button" onclick="closeCropper()" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius: 50%; width: 36px; height: 36px; color:white; cursor:pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                    <i class="fi fi-rr-cross-small"></i>
+                </button>
+            </div>
+            <div class="cropper-img-wrap mb-4" style="border: 2px dashed rgba(255,255,255,0.1); padding: 5px; border-radius: 12px; max-height: 50vh;">
+                <img id="cropperImg" src="" alt="Crop" style="max-width: 100%;">
+            </div>
+            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-end">
+                <button type="button" class="btn btn-outline px-4" style="border-radius: 10px;" onclick="closeCropper()">Cancel</button>
+                <button type="button" class="btn btn-primary px-5" style="border-radius: 10px; font-weight: 600;" onclick="applyCrop()">
+                    Apply Crop <i class="fi fi-rr-check ms-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+    
     <script>
-        function togglePrice(checkbox) {
-            const priceContainer = document.getElementById('priceContainer');
-            const priceInput = document.getElementById('price');
-            if (checkbox.checked) {
-                priceContainer.style.opacity = '0.3';
-                priceContainer.style.pointerEvents = 'none';
-                priceInput.removeAttribute('required');
-                priceInput.value = '0';
+        // ─── WIZARD NAVIGATION & VALIDATION ──────────────────────────────
+        let currentStep = 1;
+
+        function calculateProgress() {
+            const bar = document.getElementById('wizardProgress');
+            let progress = 0;
+
+            if (currentStep === 1) {
+                const requiredFields = ['title', 'category', 'startDate', 'startTime', 'endDate', 'endTime', 'description', 'address'];
+                let filled = 0;
+                requiredFields.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && el.value.trim() !== '') filled++;
+                });
+                progress = (filled / requiredFields.length) * 50; 
+            } 
+            else if (currentStep === 2) {
+                progress = 50; 
+                const tickets = document.querySelectorAll('.ticket-variant');
+                let ticketProgress = 0;
+                if (tickets.length > 0) {
+                    let filledInputs = 0;
+                    let totalInputs = tickets.length * 4; 
+                    tickets.forEach(t => {
+                        if (t.querySelector('.ticket-name').value.trim() !== '') filledInputs++;
+                        if (t.querySelector('.ticket-price').value.trim() !== '') filledInputs++;
+                        if (t.querySelector('.ticket-capacity').value.trim() !== '') filledInputs++;
+                        if (t.querySelector('.ticket-max').value.trim() !== '') filledInputs++;
+                    });
+                    ticketProgress = (filledInputs / totalInputs) * 50; 
+                }
+                progress += ticketProgress;
+            } 
+            else if (currentStep === 3) {
+                progress = 100; 
+            }
+
+            bar.style.width = `${progress}%`;
+        }
+
+        function goToStep(stepIndex) {
+            if (stepIndex > currentStep) {
+                if (currentStep === 1 && !validateStep1()) return;
+                if (currentStep === 2 && !validateStep2()) return;
+            }
+
+            document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active'));
+            document.getElementById(`step-${stepIndex}`).classList.add('active');
+
+            document.querySelectorAll('.wizard-step').forEach((el, index) => {
+                el.classList.remove('active', 'completed');
+                const icon = el.querySelector('i');
+                
+                if (index + 1 === stepIndex) {
+                    el.classList.add('active');
+                    if(index === 0) icon.className = 'fi fi-rr-document-signed';
+                    if(index === 1) icon.className = 'fi fi-rr-ticket';
+                    if(index === 2) icon.className = 'fi fi-rr-picture';
+                }
+                if (index + 1 < stepIndex) {
+                    el.classList.add('completed');
+                    icon.className = 'fi fi-rr-check';
+                }
+            });
+
+            currentStep = stepIndex;
+            calculateProgress();
+            
+            const mainEl = document.querySelector('.dashboard-main');
+            if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            if (currentStep === 1) {
+                setTimeout(() => map.invalidateSize(), 100);
+            }
+            if (currentStep === 3) updatePreview();
+        }
+
+        function updatePreview() {
+            const title = document.getElementById('title').value.trim();
+            const startDate = document.getElementById('startDate').value;
+            const address = document.getElementById('address').value;
+            const catEl = document.getElementById('category');
+            const selectedOpt = catEl.options[catEl.selectedIndex];
+            const catText = (selectedOpt && selectedOpt.value) ? selectedOpt.text : '';
+
+            document.getElementById('previewTitle').textContent = title || 'Your Event Title';
+            document.getElementById('previewCategory').textContent = catText;
+            document.getElementById('previewDate').textContent = startDate
+                ? new Date(startDate + 'T00:00:00').toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' })
+                : 'Date TBD';
+            document.getElementById('previewLocation').textContent =
+                address ? (address.length > 55 ? address.substring(0, 55) + '...' : address) : 'Location TBD';
+
+            const previewImg = document.getElementById('previewBannerImg');
+            const slot1Img = document.querySelector('#banner1Slot img');
+            const slot2Img = document.querySelector('#banner2Slot img');
+            const bannerSrc = slot1Img?.src || slot2Img?.src || null;
+            if (bannerSrc) {
+                previewImg.src = bannerSrc;
+                previewImg.style.display = 'block';
             } else {
-                priceContainer.style.opacity = '1';
-                priceContainer.style.pointerEvents = 'all';
-                priceInput.setAttribute('required', 'true');
-                priceInput.value = '';
+                previewImg.style.display = 'none';
             }
         }
 
-        const createForm = document.getElementById('createEventForm');
-        createForm.addEventListener('submit', async (e) => {
+        function validateStep1() {
+            clearAllErrors();
+            let valid = true;
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+
+            const title = document.getElementById('title').value.trim();
+            if (!title) { showFieldError('title', 'Event title is required'); valid = false; }
+            else if (title.length < 5) { showFieldError('title', 'Title must be at least 5 characters'); valid = false; }
+
+            if (!document.getElementById('category').value) { showFieldError('category', 'Please select a category'); valid = false; }
+
+            const description = document.getElementById('description').value.trim();
+            if (!description) { showFieldError('description', 'Event description is required'); valid = false; }
+            else if (description.length < 20) { showFieldError('description', 'Must be at least 20 characters'); valid = false; }
+
+            const startDate = document.getElementById('startDate').value;
+            if (!startDate) { showFieldError('startDate', 'Start date is required'); valid = false; }
+            else if (new Date(startDate) < today) { showFieldError('startDate', 'Cannot be in the past'); valid = false; }
+
+            if (!document.getElementById('startTime').value) { showFieldError('startTime', 'Start time is required'); valid = false; }
+
+            const endDate = document.getElementById('endDate').value;
+            if (!endDate) { showFieldError('endDate', 'End date is required'); valid = false; }
+            else if (startDate && endDate < startDate) { showFieldError('endDate', 'Must be same or after start date'); valid = false; }
+
+            if (!document.getElementById('endTime').value) { showFieldError('endTime', 'End time is required'); valid = false; }
+
+            if (!document.getElementById('address').value) { showFieldError('address', 'Please click the map to set a location'); valid = false; }
+
+            return valid;
+        }
+
+        function validateStep2() {
+            const ticketEls = document.querySelectorAll('.ticket-variant');
+            if (ticketEls.length === 0) {
+                Toast.error('Please add at least one ticket tier.');
+                return false;
+            }
+
+            let valid = true;
+            for (const el of ticketEls) {
+                const name = el.querySelector('.ticket-name').value.trim();
+                const price = parseFloat(el.querySelector('.ticket-price').value);
+                const capacity = parseInt(el.querySelector('.ticket-capacity').value);
+                const maxPerUser = parseInt(el.querySelector('.ticket-max').value);
+                if (!name) { Toast.error('Each ticket tier must have a name'); valid = false; break; }
+                if (isNaN(price) || price < 0) { Toast.error('Ticket price must be 0 or more'); valid = false; break; }
+                if (!capacity || capacity < 1) { Toast.error('Ticket capacity must be at least 1'); valid = false; break; }
+                if (!maxPerUser || maxPerUser < 1) { Toast.error('Max per user must be at least 1'); valid = false; break; }
+            }
+            return valid;
+        }
+
+        function showFieldError(field, msg) {
+            const el = document.getElementById('err-' + field);
+            if (el) { el.innerHTML = msg; el.style.display = 'flex'; }
+            const input = document.getElementById(field);
+            if (input) {
+                input.style.borderColor = 'rgba(230,57,70,0.6)';
+                input.style.background = 'rgba(230,57,70,0.02)';
+            }
+        }
+        
+        function clearFieldError(field) {
+            const el = document.getElementById('err-' + field);
+            if (el) { el.textContent = ''; el.style.display = 'none'; }
+            const input = document.getElementById(field);
+            if (input) { input.style.borderColor = ''; input.style.background = ''; }
+        }
+        
+        function clearAllErrors() {
+            document.querySelectorAll('.field-error').forEach(el => { el.textContent = ''; el.style.display = 'none'; });
+            document.querySelectorAll('.form-control, select').forEach(el => { el.style.borderColor = ''; el.style.background = ''; });
+        }
+
+        // Attach listeners to all static inputs for dynamic progression
+        document.addEventListener('DOMContentLoaded', () => {
+            const allInputs = document.querySelectorAll('#step-1 input, #step-1 select, #step-1 textarea');
+            allInputs.forEach(input => {
+                input.addEventListener('input', () => { clearFieldError(input.id); calculateProgress(); });
+                input.addEventListener('change', () => { clearFieldError(input.id); calculateProgress(); });
+            });
+        });
+
+        // ─── MAP ──────────────────────────────────────────────────────────
+        const defaultLatLng = [11.2588, 75.7804];
+        const map = L.map('eventMap').setView(defaultLatLng, 13);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abcd', maxZoom: 20
+        }).addTo(map);
+        let marker = L.marker(defaultLatLng, { draggable: true }).addTo(map);
+
+        async function updateAddress(lat, lng) {
+            document.getElementById('lat').value = lat;
+            document.getElementById('lng').value = lng;
+            try {
+                const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                document.getElementById('address').value = res.data.display_name || 'Custom Location';
+            } catch {
+                document.getElementById('address').value = `Coordinates: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            }
+            calculateProgress();
+        }
+
+        map.on('click', e => { marker.setLatLng(e.latlng); updateAddress(e.latlng.lat, e.latlng.lng); clearFieldError('address'); });
+        marker.on('dragend', e => { const p = marker.getLatLng(); updateAddress(p.lat, p.lng); clearFieldError('address'); });
+        updateAddress(defaultLatLng[0], defaultLatLng[1]);
+        setTimeout(() => map.invalidateSize(), 500);
+
+        // ─── BANNER CROPPER ───────────────────────────────────────────────
+        let cropperInstance = null;
+        let currentBannerSlot = 1;
+        const croppedBlobs = { 1: null, 2: null };
+
+        function openCropper(slot) {
+            currentBannerSlot = slot;
+            document.getElementById('bannerInput' + slot).click();
+        }
+
+        function onFileSelected(slot) {
+            const input = document.getElementById('bannerInput' + slot);
+            if (!input.files || !input.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                document.getElementById('cropperTitle').textContent = `Crop Banner ${slot}`;
+                const img = document.getElementById('cropperImg');
+                img.src = e.target.result;
+                document.getElementById('cropperModal').classList.add('active');
+
+                if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+                setTimeout(() => {
+                    cropperInstance = new Cropper(img, {
+                        aspectRatio: 16 / 9,
+                        viewMode: 1,
+                        dragMode: 'move',
+                        autoCropArea: 1,
+                        restore: false,
+                        guides: true,
+                        center: true,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: true,
+                        toggleDragModeOnDblclick: false,
+                    });
+                }, 100);
+            };
+            reader.readAsDataURL(input.files[0]);
+            input.value = ''; 
+        }
+
+        function closeCropper() {
+            document.getElementById('cropperModal').classList.remove('active');
+            if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+        }
+
+        function applyCrop() {
+            if (!cropperInstance) return;
+            cropperInstance.getCroppedCanvas({ width: 1920, height: 1080 }).toBlob(blob => {
+                croppedBlobs[currentBannerSlot] = blob;
+
+                const url = URL.createObjectURL(blob);
+                const slot = document.getElementById('banner' + currentBannerSlot + 'Slot');
+             
+                const oldImg = slot.querySelector('img');
+                if (oldImg) oldImg.remove();
+                const img = document.createElement('img');
+                img.src = url;
+                slot.appendChild(img);
+ 
+                slot.classList.add('has-image');
+                updateBannerHelp();
+                closeCropper();
+                if (currentStep === 3) updatePreview();
+            }, 'image/jpeg', 0.92);
+        }
+
+        function updateBannerHelp() {
+            const count = (croppedBlobs[1] ? 1 : 0) + (croppedBlobs[2] ? 1 : 0);
+            const helpEl = document.getElementById('bannerHelp');
+            helpEl.textContent = `${count} of 2 uploaded`;
+            if(count > 0) {
+                helpEl.style.background = 'rgba(46,204,113,0.1)';
+                helpEl.style.borderColor = 'rgba(46,204,113,0.3)';
+                helpEl.style.color = '#2ecc71';
+            } else {
+                helpEl.style.background = 'rgba(255,255,255,0.05)';
+                helpEl.style.borderColor = 'rgba(255,255,255,0.1)';
+                helpEl.style.color = 'rgba(255,255,255,0.5)';
+            }
+        }
+
+        // ─── TICKETING ────────────────────────────────────────────────────
+        let ticketCount = 0;
+        const ticketsContainer = document.getElementById('ticketsContainer');
+
+        function addTicketVariant() {
+            ticketCount++;
+            const div = document.createElement('div');
+            div.className = 'ticket-variant';
+            div.innerHTML = `
+                <div class="ticket-variant-header">
+                    <span class="badge" style="background: rgba(230,57,70,0.15); color: var(--primary); padding: 6px 12px; font-weight: 700; letter-spacing: 1px;">TIER ${ticketCount}</span>
+                    <button type="button" class="remove-ticket-btn" onclick="this.closest('.ticket-variant').remove(); calculateProgress();" title="Remove Tier">
+                        <i class="fi fi-rr-trash"></i>
+                    </button>
+                </div>
+                <div class="ticket-variant-body">
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control input ticket-name" placeholder=" " required>
+                        <label>Ticket Name (e.g. VIP, General)</label>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <div class="form-floating">
+                                <input type="number" class="form-control input ticket-price" placeholder=" " required min="0">
+                                <label>Price (₹)</label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-floating">
+                                <input type="number" class="form-control input ticket-capacity" placeholder=" " required min="1">
+                                <label>Total Capacity</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-floating">
+                        <input type="number" class="form-control input ticket-max" placeholder=" " required min="1" value="5">
+                        <label>Max Tickets Allowed Per User</label>
+                    </div>
+                </div>
+            `;
+            ticketsContainer.appendChild(div);
+
+            const newInputs = div.querySelectorAll('input');
+            newInputs.forEach(input => {
+                input.addEventListener('input', calculateProgress);
+                input.addEventListener('change', calculateProgress);
+            });
+            calculateProgress();
+        }
+
+        addTicketVariant(); // Start with 1 default tier
+
+        // ─── DATE SETUP ───────────────────────────────────────────────────
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('startDate').min = todayStr;
+        document.getElementById('endDate').min = todayStr;
+
+        document.getElementById('startDate').addEventListener('change', function() {
+            const endDateEl = document.getElementById('endDate');
+            endDateEl.min = this.value || todayStr;
+            if (endDateEl.value && endDateEl.value < this.value) {
+                endDateEl.value = '';
+                showFieldError('endDate', 'End date must be after start date');
+            }
+        });
+
+        // ─── FINAL SUBMISSION ─────────────────────────────────────────────
+        document.getElementById('createEventForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             e.stopImmediatePropagation();
 
-            if (!createForm.checkValidity()) {
-                createForm.reportValidity();
-                return;
+            if (!validateStep1() || !validateStep2()) return;
+
+            if (!croppedBlobs[1] && !croppedBlobs[2]) {
+                return Toast.error('Please upload at least one event banner.');
             }
 
-            Loader.show('CREATING EVENT...');
-            
-            // Note: Since there is a file upload, we MUST use FormData directly
-            const formData = new FormData(createForm);
+            const ticketEls = ticketsContainer.querySelectorAll('.ticket-variant');
+            const tickets = [];
+            for (const el of ticketEls) {
+                tickets.push({ 
+                    name: el.querySelector('.ticket-name').value.trim(), 
+                    price: parseFloat(el.querySelector('.ticket-price').value), 
+                    capacity: parseInt(el.querySelector('.ticket-capacity').value), 
+                    maxPerUser: parseInt(el.querySelector('.ticket-max').value) 
+                });
+            }
 
+            Loader.show('PUBLISHING EVENT...');
             try {
-                // Ensure your route supports multipart/form-data (Multer)
-                const response = await axios.post('/organizer/events', formData, {
+                const formData = new FormData(e.target);
+                formData.append('tickets', JSON.stringify(tickets));
+
+                if (croppedBlobs[1]) formData.append('banners', croppedBlobs[1], 'banner1.jpg');
+                if (croppedBlobs[2]) formData.append('banners', croppedBlobs[2], 'banner2.jpg');
+
+                const res = await axios.post('/organizer/events', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
 
-                if (response.data.success) {
-                    Toast.success('Event Published Successfully!');
+                if (res.data.success) {
+                    Toast.success(res.data.message);
                     setTimeout(() => window.location.href = '/organizer/events', 1500);
                 }
-            } catch (error) {
-                Toast.error(error.response?.data?.message || 'Failed to create event');
+            } catch (err) {
+                Loader.hide();
+                Toast.error(err.response?.data?.message || 'Failed to create event.');
             } finally {
                 Loader.hide();
             }

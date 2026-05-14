@@ -21,23 +21,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <% if (locals.user || locals.organizer || locals.admin) { %>
         <script src="/socket.io/socket.io.js"></script>
-        
         <script>
-            // 1. Extract the ID for whoever is logged in
-            const currentUserId = '<%= locals.user?._id || locals.organizer?._id || locals.admin?._id %>';
+            // Only keep the core Socket registration here!
+            const currentUserId = '<%= locals.user ? locals.user._id : (locals.organizer ? locals.organizer._id : (locals.admin ? locals.admin._id : "")) %>'.trim();
             
-            // 2. Connect to the Socket server
             window.socket = io();
 
-            // 3. BULLETPROOF FIX: Use 'connect' so it re-registers automatically 
-            // if the server restarts or the internet connection drops!
-            window.socket.on('connect', () => {
-                if (currentUserId && currentUserId !== '') {
+            function registerUserToSocket() {
+                if (currentUserId) {
                     window.socket.emit('register', currentUserId);
-                    console.log("✅ Socket reconnected and registered ID:", currentUserId);
                 }
-            });
+            }
+
+            if (window.socket.connected) {
+                registerUserToSocket();
+            } else {
+                window.socket.on('connect', registerUserToSocket);
+            }
         </script>
+        
+        <script src="/js/notification.js"></script>
     <% } %>
     <!-- GLOBAL TOAST NOTIFICATION HANDLER -->
     <script>
@@ -91,4 +94,64 @@
             </div>
         </div>
     </div>
+
+    <!-- ─── Global Animation Engine ──────────────────────────────── -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Scroll-reveal: elements with .reveal animate when they enter viewport
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+        // 2. Button ripple effect
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.btn, .action-btn, .action-icon-btn');
+            if (!btn) return;
+            const ripple = document.createElement('span');
+            ripple.className = 'ripple-effect';
+            const rect = btn.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
+            btn.style.position = 'relative';
+            btn.style.overflow = 'hidden';
+            btn.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 600);
+        });
+
+        // 3. Animated counters for elements with data-count attribute
+        document.querySelectorAll('[data-count]').forEach(el => {
+            const target = parseFloat(el.dataset.count);
+            const prefix = el.dataset.prefix || '';
+            const suffix = el.dataset.suffix || '';
+            const decimals = el.dataset.decimals ? parseInt(el.dataset.decimals) : 0;
+            const duration = 1400;
+            const start = performance.now();
+            const update = (now) => {
+                const progress = Math.min((now - start) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = prefix + (target * eased).toFixed(decimals) + suffix;
+                if (progress < 1) requestAnimationFrame(update);
+            };
+            // Start counting when element enters viewport
+            new IntersectionObserver(([entry]) => {
+                if (entry.isIntersecting) requestAnimationFrame(update);
+            }, { threshold: 0.5 }).observe(el);
+        });
+
+        // 4. Staggered children — auto-stagger direct children of .stagger-children
+        document.querySelectorAll('.stagger-children').forEach(parent => {
+            Array.from(parent.children).forEach((child, i) => {
+                child.style.animationDelay = `${i * 0.08}s`;
+                child.classList.add('animate');
+            });
+        });
+    });
+    </script>
 </head>

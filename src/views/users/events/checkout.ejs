@@ -1,0 +1,318 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+</head>
+<body class="bg-mesh">
+    <%- include('../../partials/navbars/user-nav') %>
+
+    <div class="checkout-wrap">
+
+        <!-- Back -->
+        <div class="mb-4">
+            <a href="/user/events/<%= event._id %>" style="color:rgba(255,255,255,0.38);font-size:0.84rem;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.38)'">
+                <i class="fi fi-rr-arrow-left"></i> Back to Event
+            </a>
+        </div>
+
+        <!-- Progress Steps -->
+        <div class="steps-bar animate stagger-1">
+            <div class="step">
+                <div class="step-circle done"><i class="fi fi-rr-check" style="font-size:0.7rem;"></i></div>
+                <span class="step-label done">Select</span>
+            </div>
+            <div class="step-line done"></div>
+            <div class="step">
+                <div class="step-circle active">2</div>
+                <span class="step-label active">Review & Pay</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step">
+                <div class="step-circle pending">3</div>
+                <span class="step-label pending">Confirmation</span>
+            </div>
+        </div>
+
+        <!-- Grid -->
+        <div class="checkout-grid animate stagger-2">
+
+            <!-- â”€â”€ LEFT: Order Summary + Payment â”€â”€ -->
+            <div>
+                <!-- Order Summary Card -->
+                <div class="co-card">
+                    <div class="co-card-header">Order Summary</div>
+                    <div class="co-card-body">
+                        <!-- Event snippet -->
+                        <div class="d-flex align-items-center gap-3 mb-4 pb-3" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                            <% if(event.banners && event.banners.length > 0) { %>
+                                <img src="<%= event.banners[0] %>" class="event-thumb">
+                            <% } %>
+                            <div>
+                                <h6 class="fw-bold text-white mb-1" style="font-size:0.95rem;"><%= event.title %></h6>
+                                <p class="text-dim mb-0" style="font-size:0.8rem;">
+                                    <i class="fi fi-rr-calendar me-1"></i>
+                                    <%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}) %> Â&middot; <%= event.startTime %>
+                                </p>
+                                <p class="text-dim mb-0" style="font-size:0.8rem;">
+                                    <i class="fi fi-rr-marker me-1"></i><%= event.location.address %>
+                                </p>
+                            </div>
+                        </div>
+                        <!-- Breakdown -->
+                        <div class="mb-3">
+                            <p class="text-dim small mb-2 text-uppercase" style="letter-spacing: 0.05em;">Tickets Included:</p>
+                            <% cartItems.forEach(item => { %>
+                                <div class="detail-row" style="padding: 0.4rem 0;">
+                                    <span class="detail-key"><%= item.ticket.name %> <span class="text-white">(x<%= item.quantity %>)</span></span>
+                                    <span class="detail-val"><%= item.ticket.price === 0 ? 'Free' : '₹' + (item.ticket.price * item.quantity).toLocaleString('en-IN') %></span>
+                                </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                    <div class="total-highlight">
+                        <span class="text-dim fw-bold">Total Amount</span>
+                        <span class="fw-bold text-white" style="font-size:1.4rem;"><%= totalAmount === 0 ? 'Free' : '₹' + totalAmount.toLocaleString('en-IN') %></span>
+                    </div>
+                </div>
+
+                <!-- Payment Method Card -->
+                <div class="co-card">
+                    <div class="co-card-header">Payment Method</div>
+                    <div class="co-card-body">
+
+                        <!-- Wallet Option -->
+                        <div class="pay-method-card <%= walletBalance >= totalAmount ? 'selected' : 'disabled' %>"
+                             id="walletMethod" onclick="selectMethod('wallet')">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="pay-icon wallet-icon"><i class="fi fi-rr-wallet"></i></div>
+                                <div class="flex-grow-1">
+                                    <p class="text-white fw-bold mb-0" style="font-size:0.92rem;">EventHub Wallet</p>
+                                    <p class="text-dim mb-0" style="font-size:0.78rem;">
+                                        Balance: <strong style="color: <%= walletBalance >= totalAmount ? '#2ecc71' : '#E63946' %>;">
+                                            ₹<%= walletBalance.toLocaleString('en-IN') %>
+                                        </strong>
+                                        <% if(walletBalance < totalAmount) { %>
+                                            Â&middot; Need ₹<%= (totalAmount - walletBalance).toLocaleString('en-IN') %> more
+                                        <% } %>
+                                    </p>
+                                </div>
+                                <div class="selected-dot" id="walletDot"></div>
+                            </div>
+                            <% if(walletBalance < totalAmount) { %>
+                            <div class="warn-box">
+                                <i class="fi fi-rr-exclamation me-1"></i> Insufficient balance.
+                                <a href="/user/wallet" class="fw-bold" style="color:var(--primary);">Top up wallet â†’</a>
+                            </div>
+                            <% } %>
+                        </div>
+
+                        <!-- Razorpay Option -->
+                        <div class="pay-method-card <%= walletBalance < totalAmount ? 'selected' : '' %>"
+                             id="razorpayMethod" onclick="selectMethod('razorpay')">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="pay-icon rzp-icon">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                                        <path d="M4 6L12 2L20 6V18L12 22L4 18V6Z" fill="rgba(90,120,255,0.3)" stroke="#5a78ff" stroke-width="1.5"/>
+                                        <path d="M9 12L11 14L15 10" stroke="#5a78ff" stroke-width="1.5" stroke-linecap="round"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="text-white fw-bold mb-1" style="font-size:0.92rem;">Online Payment</p>
+                                    <div class="rzp-methods">
+                                        <span class="rzp-chip">UPI</span>
+                                        <span class="rzp-chip">Debit Card</span>
+                                        <span class="rzp-chip">Credit Card</span>
+                                        <span class="rzp-chip">Net Banking</span>
+                                        <span class="rzp-chip">Wallets</span>
+                                    </div>
+                                </div>
+                                <div class="selected-dot" id="razorpayDot"></div>
+                            </div>
+                        </div>
+
+                        <!-- Powered by Razorpay -->
+                        <div class="d-flex align-items-center gap-2 mt-2">
+                            <i class="fi fi-rr-shield-check" style="color:rgba(255,255,255,0.2);"></i>
+                            <span style="font-size:0.73rem;color:rgba(255,255,255,0.2);">Secured by Razorpay Â&middot; 256-bit SSL encrypted</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- â”€â”€ RIGHT: Confirm Panel â”€â”€ -->
+            <div>
+                <div class="co-card confirm-panel">
+                    <div class="co-card-header">Payment Summary</div>
+                    <div class="co-card-body">
+                        <div class="detail-row"><span class="detail-key">Subtotal</span><span class="detail-val">₹<%= totalAmount.toLocaleString('en-IN') %></span></div>
+                        <div class="detail-row"><span class="detail-key">Platform Fee</span><span class="detail-val" style="color:#2ecc71;">Free</span></div>
+                        <div class="detail-row" style="border-bottom:none;"><span class="detail-key fw-bold text-white">Total</span><span class="detail-val" style="font-size:1.1rem;color:var(--primary);">₹<%= totalAmount.toLocaleString('en-IN') %></span></div>
+
+                        <hr style="border-color:rgba(255,255,255,0.06);margin:1rem 0;">
+
+                        <!-- Selected method indicator -->
+                        <div class="d-flex align-items-center gap-2 mb-4 p-3 rounded-3" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);" id="methodIndicator">
+                            <i class="fi fi-rr-wallet" id="methodIcon" style="color:var(--primary);"></i>
+                            <div>
+                                <p class="text-white fw-bold mb-0" style="font-size:0.85rem;" id="methodName">EventHub Wallet</p>
+                                <p class="text-dim mb-0" style="font-size:0.75rem;" id="methodSub">Instant deduction</p>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary confirm-btn" id="confirmBtn" onclick="handlePayment()">
+                            <i class="fi fi-rr-lock" id="confirmIcon"></i>
+                            <span id="confirmText">Pay ₹<%= totalAmount.toLocaleString('en-IN') %></span>
+                        </button>
+
+                        <p class="secure-note">
+                            <i class="fi fi-rr-shield-check me-1"></i> All transactions are secure & encrypted
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Razorpay Checkout Script -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        const EVENT_ID = '<%= event._id %>';
+        const TOTAL_AMOUNT = <%= totalAmount %>;
+        const WALLET_BALANCE = <%= walletBalance %>;
+        const RZP_KEY = '<%= razorpayKeyId %>';
+        const USER_NAME = '<%= userName %>';
+        const USER_EMAIL = '<%= userEmail %>';
+        const CART_DATA = <%- JSON.stringify(cartItems.map(i => ({ ticketId: i.ticket._id.toString(), quantity: i.quantity }))) %>;
+
+        let selectedMethod = WALLET_BALANCE >= TOTAL_AMOUNT ? 'wallet' : 'razorpay';
+        updateMethodUI();
+
+        function selectMethod(method) {
+            if (method === 'wallet' && WALLET_BALANCE < TOTAL_AMOUNT) return;
+            selectedMethod = method;
+            updateMethodUI();
+        }
+
+        function updateMethodUI() {
+            // Card borders
+            document.getElementById('walletMethod').classList.toggle('selected', selectedMethod === 'wallet');
+            document.getElementById('razorpayMethod').classList.toggle('selected', selectedMethod === 'razorpay');
+
+            // Indicator
+            if (selectedMethod === 'wallet') {
+                document.getElementById('methodIcon').className = 'fi fi-rr-wallet';
+                document.getElementById('methodIcon').style.color = 'var(--primary)';
+                document.getElementById('methodName').textContent = 'EventHub Wallet';
+                document.getElementById('methodSub').textContent = `₹${TOTAL_AMOUNT.toLocaleString('en-IN')} will be deducted from wallet`;
+                document.getElementById('confirmIcon').className = 'fi fi-rr-wallet';
+                document.getElementById('confirmText').textContent = `Pay ₹${TOTAL_AMOUNT.toLocaleString('en-IN')} via Wallet`;
+            } else {
+                document.getElementById('methodIcon').className = 'fi fi-rr-credit-card';
+                document.getElementById('methodIcon').style.color = '#5a78ff';
+                document.getElementById('methodName').textContent = 'Online Payment (Razorpay)';
+                document.getElementById('methodSub').textContent = 'UPI / Card / Net Banking / Wallets';
+                document.getElementById('confirmIcon').className = 'fi fi-rr-credit-card';
+                document.getElementById('confirmText').textContent = `Pay ₹${TOTAL_AMOUNT.toLocaleString('en-IN')} Online`;
+            }
+        }
+
+        async function handlePayment() {
+            if (selectedMethod === 'wallet') {
+                await payWithWallet();
+            } else {
+                await payWithRazorpay();
+            }
+        }
+
+        // â”€â”€ Wallet Payment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        async function payWithWallet() {
+            const btn = document.getElementById('confirmBtn');
+            btn.disabled = true;
+            document.getElementById('confirmText').textContent = 'Processing...';
+            Loader.show('PROCESSING PAYMENT...');
+            try {
+                const res = await axios.post(`/user/events/${EVENT_ID}/book`, {
+                    cart: CART_DATA
+                });
+                if (res.data.success) {
+                    window.location.href = res.data.redirectUrl;
+                }
+            } catch (err) {
+                Loader.hide();
+                btn.disabled = false;
+                updateMethodUI();
+                const msg = err.response?.data?.message || 'Payment failed.';
+                Toast.error(msg);
+                if (err.response?.data?.code === 'INSUFFICIENT_WALLET') {
+                    setTimeout(() => window.location.href = `/user/booking/failed?reason=${encodeURIComponent(msg)}`, 1500);
+                }
+            }
+        }
+
+        // â”€â”€ Razorpay Payment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        async function payWithRazorpay() {
+            const btn = document.getElementById('confirmBtn');
+            btn.disabled = true;
+            document.getElementById('confirmText').textContent = 'Initializing...';
+            Loader.show('OPENING PAYMENT...');
+            try {
+                const res = await axios.post(`/user/events/${EVENT_ID}/razorpay-order`, {
+                    cart: CART_DATA
+                });
+                if (!res.data.success) throw new Error(res.data.message);
+
+                Loader.hide();
+                btn.disabled = false;
+                updateMethodUI();
+
+                const options = {
+                    key: RZP_KEY,
+                    amount: res.data.order.amount,
+                    currency: 'INR',
+                    name: 'EventHub',
+                    description: `<%= event.title %> - Multiple Tickets`,
+                    order_id: res.data.order.id,
+                    prefill: { name: USER_NAME, email: USER_EMAIL },
+                    theme: { color: '#E63946' },
+                    modal: { escape: true },
+                    handler: async function(response) {
+                        Loader.show('VERIFYING PAYMENT...');
+                        try {
+                            const verifyRes = await axios.post(`/user/events/${EVENT_ID}/verify-payment`, {
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                                cart: CART_DATA
+                            });
+                            
+                            // FIX 2: Fixed the syntax error here (removed the extra '}')
+                            if (verifyRes.data.success) {
+                                window.location.href = verifyRes.data.redirectUrl;
+                            }
+                            
+                        } catch(err) {
+                            Loader.hide();
+                            const msg = err.response?.data?.message || 'Payment verification failed.';
+                            window.location.href = `/user/booking/failed?reason=${encodeURIComponent(msg)}`;
+                        }
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.on('payment.failed', function(resp) {
+                    Loader.hide();
+                    const msg = resp.error?.description || 'Payment failed.';
+                    window.location.href = `/user/booking/failed?reason=${encodeURIComponent(msg)}`;
+                });
+                rzp.open();
+
+            } catch (err) {
+                Loader.hide();
+                btn.disabled = false;
+                updateMethodUI();
+                Toast.error(err.response?.data?.message || 'Failed to initialize payment.');
+            }
+        }
+    </script>
+</body>
+</html>

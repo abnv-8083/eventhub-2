@@ -1,0 +1,220 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body class="bg-mesh">
+    <%- include('../../partials/navbars/user-nav') %>
+
+    <!-- â”€â”€ Full-Width Hero Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+    <div class="event-hero">
+        <% if(event.banners && event.banners.length > 0) { %>
+            <img src="<%= event.banners[0] %>" class="event-hero-img" id="mainBanner" alt="<%= event.title %>">
+        <% } else { %>
+            <div class="event-hero-placeholder">
+                <i class="fi fi-rr-picture" style="font-size:5rem;color:rgba(255,255,255,0.07);"></i>
+            </div>
+        <% } %>
+        <div class="event-hero-overlay"></div>
+        <div class="event-hero-content animate stagger-1">
+            <span class="event-category-pill"><%= event.category?.name %></span>
+            <h1 class="event-hero-title"><%= event.title %></h1>
+            <p class="event-hero-organizer">
+                Hosted by <strong style="color:rgba(255,255,255,0.85)"><%= event.organizer?.organizationName || event.organizer?.fullName %></strong>
+            </p>
+        </div>
+    </div>
+
+    <!-- Banner thumbnails (only if multiple banners) -->
+    <% if(event.banners && event.banners.length > 1) { %>
+    <div class="banner-thumbs-bar">
+        <% event.banners.forEach((b, i) => { %>
+            <img src="<%= b %>" class="banner-thumb <%= i===0?'active':'' %>" onclick="switchBanner(this,'<%= b %>')">
+        <% }) %>
+    </div>
+    <% } %>
+
+    <!-- â”€â”€ Main Content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+    <div class="detail-container">
+
+        <!-- Back Link + Wishlist Row -->
+        <div class="d-flex justify-content-between align-items-center mb-4 animate stagger-1">
+            <a href="/user/events" style="color:rgba(255,255,255,0.4);font-size:0.85rem;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:color 0.2s;"
+               onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">
+                <i class="fi fi-rr-arrow-left"></i> Back to Events
+            </a>
+            <% if(locals.user) { %>
+            <button id="wishlistBtn" onclick="toggleWishlist('<%= event._id %>')" class="wishlist-btn <%= isWishlisted ? 'wishlisted' : '' %>">
+                <i class="fi fi-rr-heart"></i>
+                <span><%= isWishlisted ? 'Wishlisted' : 'Add to Wishlist' %></span>
+            </button>
+            <% } %>
+        </div>
+
+        <!-- Quick Stats Bar -->
+        <div class="quick-stats animate stagger-2">
+            <div class="stat-item">
+                <div class="stat-icon"><i class="fi fi-rr-calendar-clock"></i></div>
+                <div>
+                    <p class="stat-label mb-0">Start</p>
+                    <p class="stat-value mb-0"><%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %> Â&middot; <%= event.startTime %></p>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon"><i class="fi fi-rr-calendar-check"></i></div>
+                <div>
+                    <p class="stat-label mb-0">End</p>
+                    <p class="stat-value mb-0"><%= new Date(event.endDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %> Â&middot; <%= event.endTime %></p>
+                </div>
+            </div>
+            <div class="stat-item" style="flex:2;">
+                <div class="stat-icon"><i class="fi fi-rr-marker"></i></div>
+                <div>
+                    <p class="stat-label mb-0">Venue</p>
+                    <p class="stat-value mb-0"><%= event.location.address %></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- â”€â”€ Left Column â”€â”€ -->
+            <div class="col-lg-8">
+
+                <!-- About -->
+                <div class="info-card animate stagger-3">
+                    <p class="section-label">About This Event</p>
+                    <p class="text-dim mb-0" style="line-height:1.9;white-space:pre-wrap;font-size:0.93rem;"><%= event.description %></p>
+                </div>
+
+                <!-- Map -->
+                <div class="info-card animate stagger-4">
+                    <p class="section-label">Venue Location</p>
+                    <p class="text-dim small mb-3"><i class="fi fi-rr-marker me-1"></i><%= event.location.address %></p>
+                    <div id="eventMap"></div>
+                </div>
+            </div>
+
+            <!-- â”€â”€ Right Column: Ticket Panel â”€â”€ -->
+            <div class="col-lg-4 animate stagger-3">
+                <div class="ticket-panel text-center p-4">
+                    <h5 class="text-white fw-bold mb-3" style="font-size: 1.4rem;">Ready to join?</h5>
+                    <p class="text-dim mb-4" style="font-size: 0.9rem;">Secure your spot before tickets sell out.</p>
+                    
+                    <a href="/user/events/<%= event._id %>/buy-tickets" class="btn btn-primary w-100 shadow-sm" style="height: 3.2rem; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 1.05rem; font-weight: 600;">
+                        Get Tickets
+                    </a>
+
+                    <div class="text-center mt-4">
+                        <p class="text-dim mb-0" style="font-size:0.75rem;"><i class="fi fi-rr-shield-check me-1"></i> Secure booking Â&middot; Instant confirmation</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><!-- /detail-container -->
+
+    <!-- â”€â”€ Booking Modal â”€â”€ -->
+    <div class="booking-overlay" id="bookingOverlay">
+        <div class="booking-modal-box">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <p class="text-dim small mb-0">Book Ticket</p>
+                    <h5 class="fw-bold text-white mb-0" id="modalTicketName"></h5>
+                </div>
+                <button class="close-modal-btn" onclick="closeBookingModal()">Ã—</button>
+            </div>
+
+            <p class="text-dim small mb-2">Quantity</p>
+            <div class="qty-row">
+                <button class="qty-btn" onclick="changeQty(-1)">âˆ’</button>
+                <span class="qty-display" id="qtyDisplay">1</span>
+                <button class="qty-btn" onclick="changeQty(1)">+</button>
+            </div>
+            <p class="text-dim text-center mb-3" style="font-size:0.78rem; margin-top:-0.5rem;">
+                Max <span id="maxQtyDisplay">1</span> per person
+            </p>
+
+            <div class="modal-total">
+                <span class="text-dim">Total</span>
+                <span class="fw-bold text-white" style="font-size:1.3rem;" id="modalTotal">₹0</span>
+            </div>
+
+            <button class="btn btn-primary w-100" style="height:3rem;border-radius:10px;font-size:0.97rem;font-weight:600;" onclick="proceedToCheckout()">
+                <i class="fi fi-rr-shopping-cart me-2"></i>Proceed to Checkout
+            </button>
+            <p class="text-dim text-center mt-2 mb-0" style="font-size:0.76rem;"><i class="fi fi-rr-shield-check me-1"></i> No hidden fees</p>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Map
+        const map = L.map('eventMap').setView([<%= event.location.lat %>, <%= event.location.lng %>], 15);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 20
+        }).addTo(map);
+        const customIcon = L.divIcon({
+            html: '<div style="width:14px;height:14px;background:#E63946;border-radius:50%;border:3px solid white;box-shadow:0 0 14px rgba(230,57,70,0.7);"></div>',
+            iconSize: [14,14], iconAnchor: [7,7]
+        });
+        L.marker([<%= event.location.lat %>, <%= event.location.lng %>], { icon: customIcon }).addTo(map)
+            .bindPopup(`<b><%= event.title %></b><br><small><%= event.location.address %></small>`).openPopup();
+
+        // Banner switch
+        function switchBanner(thumb, src) {
+            document.getElementById('mainBanner').src = src;
+            document.querySelectorAll('.banner-thumb').forEach(t => t.classList.remove('active'));
+            thumb.classList.add('active');
+        }
+
+        // Modal state
+        let curTicketId = '', curPrice = 0, curQty = 1, curMax = 1;
+
+        function openBookingModal(tid, name, price, maxQty) {
+            <% if(!locals.user) { %> window.location.href = '/user/login'; return; <% } %>
+            curTicketId = tid; curPrice = price; curQty = 1; curMax = maxQty;
+            document.getElementById('modalTicketName').textContent = name;
+            document.getElementById('maxQtyDisplay').textContent = maxQty;
+            updateModalQty();
+            document.getElementById('bookingOverlay').classList.add('open');
+        }
+        function closeBookingModal() { document.getElementById('bookingOverlay').classList.remove('open'); }
+        function updateModalQty() {
+            document.getElementById('qtyDisplay').textContent = curQty;
+            const total = curPrice * curQty;
+            document.getElementById('modalTotal').textContent = total === 0 ? 'Free' : '₹' + total.toLocaleString('en-IN');
+        }
+        function changeQty(d) {
+            curQty = Math.max(1, Math.min(curMax, curQty + d));
+            updateModalQty();
+        }
+        function proceedToCheckout() {
+            window.location.href = `/user/events/<%= event._id %>/checkout?ticketId=${curTicketId}&quantity=${curQty}`;
+        }
+        document.getElementById('bookingOverlay').addEventListener('click', e => {
+            if (e.target.id === 'bookingOverlay') closeBookingModal();
+        });
+
+        // Wishlist
+        async function toggleWishlist(eventId) {
+            try {
+                const res = await axios.post(`/user/events/${eventId}/wishlist`);
+                if (res.data.success) {
+                    Toast.success(res.data.message);
+                    const btn = document.getElementById('wishlistBtn');
+                    if (res.data.wishlisted) {
+                        btn.classList.add('wishlisted');
+                        btn.querySelector('span').textContent = 'Wishlisted';
+                    } else {
+                        btn.classList.remove('wishlisted');
+                        btn.querySelector('span').textContent = 'Add to Wishlist';
+                    }
+                }
+            } catch (err) {
+                if (err.response?.status === 401) window.location.href = '/user/login';
+                else Toast.error('Failed to update wishlist');
+            }
+        }
+    </script>
+</body>
+</html>

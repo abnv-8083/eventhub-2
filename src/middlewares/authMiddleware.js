@@ -24,7 +24,11 @@ export const isAdminGuest = (req, res, next) => {
 // ==========================================
 export const isUserAuthenticated = (req, res, next) => {
     if (!req.session || (!req.session.user && !req.user)) {
-        // FIXED: Removed the trailing slash before the question mark!
+        // Return JSON for AJAX/API calls, redirect for browser navigation
+        const isAjax = req.xhr || req.headers.accept?.includes('application/json');
+        if (isAjax) {
+            return res.status(HTTP_STATUS.UNAUTHORIZED).json({ success: false, message: 'Session expired. Please log in.' });
+        }
         return res.redirect('/user/login?message=Session Expired. Please log in.');
     }
     next();

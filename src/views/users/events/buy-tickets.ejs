@@ -1,0 +1,214 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+
+</head>
+<body class="bg-mesh pb-5">
+    <%- include('../../partials/navbars/user-nav') %>
+
+    <div class="buy-container">
+        <div class="event-header animate stagger-1">
+            <a href="/user/events/<%= event._id %>" class="btn btn-outline btn-sm mb-4 px-3" style="border-radius: 10px;">
+                <i class="fi fi-rr-arrow-left me-1"></i> Back to Details
+            </a>
+            <h1 class="text-white fw-bold mb-2"><%= event.title %></h1>
+            <div class="d-flex align-items-center gap-3 text-dim small">
+                <span><i class="fi fi-rr-calendar me-2" style="color:var(--primary);"></i><%= new Date(event.startDate).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) %></span>
+                <span><i class="fi fi-rr-marker me-2" style="color:var(--primary);"></i><%= event.location.address %></span>
+            </div>
+        </div>
+
+        <div class="animate stagger-2">
+            <h5 class="fw-bold text-white mb-4">Select Tickets</h5>
+            <% tickets.forEach(ticket => { %>
+                <div class="ticket-selection-card <%= ticket.capacity <= 0 ? 'sold-out' : '' %>" id="ticket-card-<%= ticket._id %>">
+                    <div class="ticket-info">
+                        <h6 class="fw-bold text-white mb-1"><%= ticket.name %></h6>
+                        <p class="text-dim small mb-0" id="ticket-capacity-<%= ticket._id %>">
+                            Max <%= ticket.maxPerUser %> per person &middot; 
+                            <%= ticket.capacity > 0 ? ticket.capacity + ' available' : 'Sold Out' %>
+                        </p>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-4">
+                        <span class="ticket-price-tag"><%= ticket.price === 0 ? 'Free' : '₹' + ticket.price.toLocaleString('en-IN') %></span>
+                        
+                        <div class="qty-controls">
+                            <button type="button" class="qty-btn" onclick="updateQty('<%= ticket._id %>', -1, <%= ticket.price %>)" id="minus-<%= ticket._id %>" disabled>
+                                <i class="fi fi-rr-minus small"></i>
+                            </button>
+                            <span class="qty-display" id="qty-<%= ticket._id %>">0</span>
+                            <button type="button" class="qty-btn" 
+                                id="plus-<%= ticket._id %>"
+                                data-price="<%= ticket.price %>"
+                                data-max="<%= ticket.maxPerUser %>"
+                                onclick="updateQty('<%= ticket._id %>', 1, <%= ticket.price %>, <%= ticket.maxPerUser %>, <%= ticket.capacity %>)">
+                                <i class="fi fi-rr-plus small"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+
+    <div class="checkout-footer" id="checkoutFooter">
+        <div class="container-fluid max-width-900 mx-auto px-0">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-dim m-0 small text-uppercase fw-bold" style="letter-spacing: 1px;">Total Amount</p>
+                    <h3 class="text-white fw-bold m-0" id="displayTotal">₹0</h3>
+                </div>
+                <button onclick="proceedToCheckout()" class="btn btn-primary px-5 py-3" style="border-radius: 14px; font-weight: 700; box-shadow: 0 8px 20px rgba(230, 57, 70, 0.3);">
+                    Proceed to Checkout <i class="fi fi-rr-arrow-right ms-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cart = {};
+        // Tracks the currently-displayed available count per ticket so we can
+        // decrement it when the user adds to cart and restore it on removal.
+        let localAvailable = {};
+
+        function updateQty(id, change, price, maxPerUser, capacity) {
+            if (!cart[id]) {
+                cart[id] = { qty: 0, price: price };
+                // Seed local available from the capacity passed in on first interaction
+                if (localAvailable[id] === undefined) localAvailable[id] = capacity;
+            }
+
+            const currentAvail = localAvailable[id] !== undefined ? localAvailable[id] : capacity;
+            let newQty = cart[id].qty + change;
+
+            // Constraints
+            if (newQty < 0) return;
+            if (change > 0 && newQty > maxPerUser) return;
+            if (change > 0 && currentAvail <= 0) return;   // no stock left locally
+
+            cart[id].qty = newQty;
+
+            // Adjust the local available counter
+            localAvailable[id] = currentAvail - change;    // +1 adds → available -1, vice versa
+
+            // Update quantity display
+            document.getElementById(`qty-${id}`).innerText = newQty;
+            document.getElementById(`minus-${id}`).disabled = newQty === 0;
+
+            // Update the availability label in real time
+            const capacityLabel = document.getElementById(`ticket-capacity-${id}`);
+            const plusBtn       = document.getElementById(`plus-${id}`);
+            if (capacityLabel && plusBtn) {
+                const remaining = localAvailable[id];
+                if (remaining <= 0) {
+                    capacityLabel.innerHTML = `Max ${maxPerUser} per person · <span class="text-warning fw-bold">None left in cart</span>`;
+                    plusBtn.disabled = true;
+                } else {
+                    capacityLabel.innerText = `Max ${maxPerUser} per person · ${remaining} available`;
+                    plusBtn.disabled = false;
+                }
+            }
+
+            updateTotal();
+        }
+
+        function updateTotal() {
+            let total = 0;
+            let totalQty = 0;
+            
+            Object.values(cart).forEach(item => {
+                total += item.qty * item.price;
+                totalQty += item.qty;
+            });
+
+            document.getElementById('displayTotal').innerText = '₹' + total.toLocaleString('en-IN');
+            
+            const footer = document.getElementById('checkoutFooter');
+            if (totalQty > 0) {
+                footer.classList.add('show');
+            } else {
+                footer.classList.remove('show');
+            }
+        }
+
+        function proceedToCheckout() {
+            const cartArray = Object.keys(cart)
+                .filter(id => cart[id].qty > 0)
+                .map(id => ({
+                    ticketId: id,
+                    quantity: cart[id].qty
+                }));
+
+            if (cartArray.length === 0) return;
+
+            const cartString = encodeURIComponent(JSON.stringify(cartArray));
+            window.location.href = `/user/events/<%= event._id %>/checkout?cart=${cartString}`;
+        }
+
+        // Reuse the global socket from head.ejs (window.socket)
+        const eventId = '<%= event._id %>';
+
+        function joinEventRoom() {
+            window.socket.emit('joinEvent', eventId);
+            console.log('🎟️ Joined event room:', eventId);
+        }
+
+        // Join immediately if connected, else wait for the connect event
+        if (window.socket.connected) {
+            joinEventRoom();
+        } else {
+            window.socket.once('connect', joinEventRoom);
+        }
+
+        // ── Remove any stale listener before adding a fresh one ──────────────
+        // window.socket is a persistent global — without .off() every page visit
+        // stacks up another handler, and old handlers reference stale DOM nodes.
+        function handleStockUpdate(data) {
+            console.log('📦 ticketStockUpdate received:', data);
+            data.tickets.forEach(updatedTicket => {
+                const capacityLabel = document.getElementById(`ticket-capacity-${updatedTicket.ticketId}`);
+                const plusBtn      = document.getElementById(`plus-${updatedTicket.ticketId}`);
+                const card         = document.getElementById(`ticket-card-${updatedTicket.ticketId}`);
+
+                if (!capacityLabel) {
+                    console.warn('⚠️ No element found for ticketId:', updatedTicket.ticketId);
+                    return;
+                }
+
+                // Keep localAvailable in sync with the server-pushed value so that
+                // subsequent + clicks decrement from the correct live stock count.
+                // Account for any qty already in the user's local cart.
+                const inCart = cart[updatedTicket.ticketId]?.qty || 0;
+                localAvailable[updatedTicket.ticketId] = updatedTicket.newCapacity - inCart;
+
+                const remaining = localAvailable[updatedTicket.ticketId];
+
+                if (updatedTicket.newCapacity <= 0) {
+                    capacityLabel.innerHTML = '<span class="text-danger fw-bold">Sold Out</span>';
+                    if (card) card.classList.add('sold-out');
+                    if (plusBtn) plusBtn.disabled = true;
+                } else {
+                    if (card) card.classList.remove('sold-out'); 
+                    
+                    const maxPerUser = plusBtn ? plusBtn.dataset.max : '?';
+                    capacityLabel.innerText = `Max ${maxPerUser} per person · ${remaining} available`;
+                    if (plusBtn) plusBtn.disabled = remaining <= 0;
+                }
+
+                // Update + button onclick so the capacity constraint stays current
+                if (plusBtn) {
+                    plusBtn.setAttribute('onclick',
+                        `updateQty('${updatedTicket.ticketId}', 1, ${plusBtn.dataset.price}, ${plusBtn.dataset.max}, ${updatedTicket.newCapacity})`
+                    );
+                    if (updatedTicket.newCapacity <= 0) plusBtn.disabled = true;
+                }
+            });
+        }
+
+        window.socket.off('ticketStockUpdate', handleStockUpdate); // remove stale listener if any
+        window.socket.on('ticketStockUpdate', handleStockUpdate);
+    </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+so this is the implementation rule
+
+1) use existing themes for newly created elements
+
+2) don't make the code as more complex make it simple because after this I need to understand the code
+
+3) give the report or code explanation of the implementation

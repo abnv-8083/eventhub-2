@@ -1,15 +1,15 @@
 <aside class="sidebar">
     <div class="sidebar-nav">
-        <a href="/organizer/dashboard" class="active">
+        <a href="/organizer/dashboard" class="<%= title === 'Dashboard' ? 'active' : '' %>">
             <i class="fi fi-rr-apps"></i> <span>Dashboard</span>
         </a>
-        <a href="/organizer/events">
+        <a href="/organizer/events" class="<%= title === 'My Events' || title === 'Create Event' || title === 'Manage Events' || title === 'Edit Event' ? 'active' : '' %>">
             <i class="fi fi-rr-calendar-lines"></i> <span>My Events</span>
         </a>
-        <a href="/organizer/tickets">
+        <a href="/organizer/tickets" class="<%= title === 'Tickets & Sales' ? 'active' : '' %>">
             <i class="fi fi-rr-ticket"></i> <span>Tickets & Sales</span>
         </a>
-        <a href="/organizer/settings">
+        <a href="/organizer/settings" class="<%= title === 'Settings' ? 'active' : '' %>">
             <i class="fi fi-rr-settings"></i> <span>Settings</span>
         </a>
     </div>
