@@ -22,12 +22,6 @@ adminRoutes.get('/organizers', adminController.getAdminOrganizers)
 
 adminRoutes.post('/organizers/update-status', adminController.updateOrganizerStatus)
 
-adminRoutes.get('/notifications', adminController.getNotifications);
-
-adminRoutes.post('/notifications/mark-read', adminController.markNotificationsRead);
-
-adminRoutes.delete('/notifications/:notificationId', adminController.deleteNotification);
-
 adminRoutes.get('/category', categoryController.getCategoryPage)
 adminRoutes.post('/categories/add', categoryController.addCategory)
 adminRoutes.post('/categories/update/:id', categoryController.updateCategory)
@@ -41,5 +35,10 @@ adminRoutes.post('/events/update-status', adminEventController.updateEventStatus
 // Admin Payouts
 adminRoutes.get('/payouts', adminPayoutController.getAdminPayouts);
 adminRoutes.post('/payouts/approve', adminPayoutController.approvePayout);
+
+// Admin Notifications
+adminRoutes.get('/notifications', adminController.getMyNotifications);
+adminRoutes.post('/notifications/mark-read', adminController.markNotificationsRead);
+adminRoutes.delete('/notifications/:id', adminController.deleteNotification);
 
 export default adminRoutes

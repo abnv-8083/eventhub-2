@@ -23,13 +23,19 @@
         <script src="/socket.io/socket.io.js"></script>
         <script>
             // Only keep the core Socket registration here!
-            const currentUserId = '<%= locals.user ? locals.user._id : (locals.organizer ? locals.organizer._id : (locals.admin ? locals.admin._id : "")) %>'.trim();
+            let currentUserId = '';
+            <% if (locals.user && locals.user._id) { %> currentUserId = '<%= locals.user._id %>'; <% } %>
+            <% if (locals.organizer && locals.organizer._id) { %> currentUserId = '<%= locals.organizer._id %>'; <% } %>
+            <% if (locals.admin && locals.admin._id) { %> currentUserId = '<%= locals.admin._id %>'; <% } %>
             
+            currentUserId = currentUserId.trim();
+
             window.socket = io();
 
             function registerUserToSocket() {
                 if (currentUserId) {
                     window.socket.emit('register', currentUserId);
+                    console.log(`✅ [SOCKET] Frontend registered to Room: [${currentUserId}]`);
                 }
             }
 

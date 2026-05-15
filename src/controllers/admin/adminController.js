@@ -1,7 +1,7 @@
 import HTTP_STATUS from '../../constant/statusCode.js';
 import * as adminServices from '../../services/admin/adminServices.js';
 import * as dashboardService from '../../services/admin/adminDashboardService.js';
-
+import Notification from '../../models/notifications/notification.js';
 
 // ─── Admin Dashboard ──────────────────────────────────────────────────────────
 export const getAdminDashboard = async (req, res, next) => {
@@ -134,39 +134,52 @@ export const updateOrganizerStatus = async (req, res, next) => {
 };
 
 
-// ─── Notifications ────────────────────────────────────────────────────────────
-export const getNotifications = async (req, res, next) => {
-    try {
-        const result = await dashboardService.getNotifications(req.session.admin._id);
-        res.status(200).json({ success: true, ...result });
-    } catch (error) {
-        next(error);
-    }
-};
-
-export const markNotificationsRead = async (req, res, next) => {
-    try {
-        await dashboardService.markNotificationsRead(req.session.admin._id);
-        res.status(200).json({ success: true });
-    } catch (error) {
-        next(error);
-    }
-};
-
-export const deleteNotification = async (req, res, next) => {
-    try {
-        await dashboardService.deleteNotification(req.params.notificationId, req.session.admin._id);
-        res.status(200).json({ success: true, message: 'Notification deleted' });
-    } catch (error) {
-        next(error);
-    }
-};
-
 
 // ─── Category Page (simple render) ───────────────────────────────────────────
 export const getCategoryPage = (req, res, next) => {
     try {
         res.render('admin/categories/index', { title: 'Category Management', categories: null });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ─── Fetch Admin Notifications ──────────────────────────────────────────────
+export const getMyNotifications = async (req, res, next) => {
+    try {
+        const notifications = await Notification.find({ recipient: req.session.admin._id })
+            .sort({ createdAt: -1 })
+            .limit(15);
+            
+        const unreadCount = await Notification.countDocuments({ recipient: req.session.admin._id, isRead: false });
+        res.json({ success: true, notifications, unreadCount });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ─── Mark Notifications as Read ─────────────────────────────────────────────
+export const markNotificationsRead = async (req, res, next) => {
+    try {
+        await Notification.updateMany(
+            { recipient: req.session.admin._id, isRead: false },
+            { $set: { isRead: true } }
+        );
+        res.json({ success: true });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ─── Delete Individual Notification ─────────────────────────────────────────
+export const deleteNotification = async (req, res, next) => {
+    try {
+        const deleted = await Notification.findOneAndDelete({
+            _id: req.params.id,
+            recipient: req.session.admin._id
+        });
+        if (!deleted) return res.status(404).json({ success: false, message: 'Notification not found' });
+        res.json({ success: true, message: 'Notification deleted' });
     } catch (error) {
         next(error);
     }
