@@ -6,32 +6,27 @@
             <button class="profile-avatar-btn" id="userMenuBtn">
                 <span><%= admin.fullName.charAt(0).toUpperCase() %></span>
             </button>
-            <div class="dropdown" id="notificationDropdown">
-                <button class="nav-bell-btn position-relative" type="button" id="notificationBell" style="width: 45px; height: 45px;" data-bs-toggle="dropdown" aria-expanded="false">
-                    <svg class="custom-nav-bell" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                    </svg>
-                    <span id="notificationDot" class="position-absolute border border-2 border-dark rounded-circle bg-danger" 
-                        style="display: none; width: 10px; height: 10px; top: 8px; right: 8px;">
-                    </span>
+            <div class="dropdown me-3" id="notificationDropdown">
+                <button class="nav-bell-btn" type="button">
+                    <div class="position-relative">
+                        <i class="fi fi-rr-bell custom-nav-bell"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" id="notificationDot" style="display: none; border-color: #0A0A0A !important;"></span>
+                    </div>
                 </button>
                 
-                <ul class="dropdown-menu dropdown-menu-end mt-3 glass-notif-modal" id="notifMenuUI">
-                    
+                <div class="dropdown-menu dropdown-menu-end shadow">
                     <div class="notif-header">
-                        <h6 class="m-0 text-white fw-bold" style="font-size: 0.95rem;">Notifications</h6>
-                        <button class="btn btn-link btn-sm text-dim p-0 text-decoration-none x-small" id="clearAllNotifications">Mark all read</button>
+                        <h6 class="m-0 text-white fw-bold"><i class="fi fi-rr-bell-ring me-2 text-primary"></i>System Alerts</h6>
+                        <button class="btn btn-link p-0 text-decoration-none text-dim small" style="font-size: 0.75rem;" id="clearAllNotifications">Mark all read</button>
                     </div>
                     
                     <div id="notificationList">
-                        
                         <div class="p-5 text-center text-dim" id="emptyNotificationMsg">
                             <i class="fi fi-rr-envelope-open d-block mb-2 opacity-50" style="font-size: 2rem;"></i>
                             <p class="small m-0">All caught up!</p>
                         </div>
-                        
                     </div>
-                </ul>
+                </div>
             </div>
         </nav>
     </div>

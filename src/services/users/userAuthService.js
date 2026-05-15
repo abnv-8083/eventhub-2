@@ -8,6 +8,7 @@ import generateOTP from "../../utils/generateOtp.js";
 import passport from "passport";
 import { getIO, getActiveUsers } from "../../utils/socket.js";
 import Notification from "../../models/notifications/notification.js";
+import { sendNotification, notifyAllAdmins } from '../../utils/notify.js';
 
 export const findUser = async (userdata)=>{
     if(userdata.role == 'organizer'){
@@ -64,7 +65,7 @@ export const verifyAndCreateUser = async (email, otp, tempUserData)=>{
         return await newUser.save()
     }else{
         
-        const newUser = new User({
+        const newOrganizer = new User({
             fullName: tempUserData.fullName,
             email: tempUserData.email,
             password: hashPassword,
@@ -78,35 +79,9 @@ export const verifyAndCreateUser = async (email, otp, tempUserData)=>{
         // ==========================================
         // REAL-TIME NOTIFICATION LOGIC
         // ==========================================
-        try {
-            const io = getIO();
-            const activeUsers = getActiveUsers();
-            
-            // 1. Find all admins to notify
-            const admins = await User.find({ role: 'admin' });
-
-            for (const admin of admins) {
-                const message = `New Organizer Application: ${newUser.organizationName || newUser.fullName} is waiting for approval.`;
-                
-                // 2. Save to Database (for the reload/history)
-                await Notification.create({
-                    recipient: admin._id,
-                    message: message,
-                    status: 'info'
-                });
-
-                // 3. Emit via Socket (for the REAL-TIME update)
-                // Since the user is joined to a room named after their ID, we can emit directly to it!
-                io.to(admin._id.toString()).emit('statusUpdate', {
-                    status: 'info',
-                    message: message
-                });
-            }
-        } catch (err) {
-            console.error("Real-time notification failed:", err);
-        }
+        await notifyAllAdmins(`New Request: "${newOrganizer.organizationName}" has applied to be an organizer and requires your approval.`, 'info');
         await sendOrganizerCredentials(tempUserData.email, tempUserData.password, tempUserData.organizationName)
-        return await newUser.save()
+        return await newOrganizer.save()
     }
 }
 
@@ -219,17 +194,7 @@ export const verifyAndReregister = async (email, otp, userData) => {
         throw new AppError('Invalid Organizer to Resubmit the Application', HTTP_STATUS.NOT_FOUND);
     }
 
-    // 4. Notify Admins again
-    const io = getIO();
-    const activeUsers = getActiveUsers();
-    const admins = await User.find({role: 'admin'});
-
-    admins.forEach(admin =>{
-        io.to(admin._id.toString()).emit('statusUpdate', {
-            status: 'info',
-            message: `Organizer Resubmission: ${userData.organizationName} is waiting for approval.`
-        });
-    });
+    await notifyAllAdmins(`Organizer Resubmission: "${userData.organizationName}" is waiting for approval.`, 'info');
 
     return getUser;
 }

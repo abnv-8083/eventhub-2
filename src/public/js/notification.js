@@ -40,23 +40,30 @@ class NotificationManager {
         if (!window.socket) return;
         
         window.socket.on('bookingStatusUpdate', (data) => {
-            // Show Toast Alert
-            if (typeof Toast !== 'undefined') {
-                if (data.status === 'success') Toast.success(`✅ ${data.message}`);
-                else Toast.error(`⚠️ ${data.message}`); 
-            }
+            console.log("🔥 [LIVE NOTIFICATION RECEIVED]:", data); // Added debug log
 
-            // Update UI Elements
-            if (this.emptyMsg) this.emptyMsg.style.display = 'none';
-            if (this.redDot) this.redDot.style.display = 'block';
+            try {
+                // Safe Toast Fallback
+                if (typeof Toast !== 'undefined') {
+                    if (data.status === 'success') Toast.success(`✅ ${data.message}`);
+                    else if (data.status === 'warning' || data.status === 'danger') Toast.error(`⚠️ ${data.message}`);
+                    else {
+                        // Fallback for 'info'
+                        if (Toast.info) Toast.info(`ℹ️ ${data.message}`);
+                        else Toast.success(`ℹ️ ${data.message}`);
+                    }
+                }
 
-            // Build and inject HTML
-            const html = this.buildNotificationHtml(data, false);
-            this.notifList.insertAdjacentHTML('afterbegin', html);
+                // Update UI Elements
+                if (this.emptyMsg) this.emptyMsg.style.display = 'none';
+                if (this.redDot) this.redDot.style.display = 'block';
 
-            // Optional: Auto-reload if user is currently looking at tickets
-            if (window.location.pathname.includes('/user/tickets')) {
-                setTimeout(() => window.location.reload(), 2500);
+                // Build and inject HTML
+                const html = this.buildNotificationHtml(data, false);
+                this.notifList.insertAdjacentHTML('afterbegin', html);
+
+            } catch (err) {
+                console.error("❌ Error rendering live notification:", err);
             }
         });
     }
@@ -64,10 +71,15 @@ class NotificationManager {
     // --- 2. Fetch Initial Notifications on Load ---
     async loadSavedNotifications() {
 
-        if (!window.location.pathname.startsWith('/user') && !window.location.pathname.startsWith('/organizer')) {
+        // ✨ FIX: Added the admin path check here!
+        if (!window.location.pathname.startsWith('/user') && 
+            !window.location.pathname.startsWith('/organizer') && 
+            !window.location.pathname.startsWith('/admin')) {
             return;
         }
-        const basePath = window.location.pathname.startsWith('/organizer') ? '/organizer' : '/user';
+        let basePath = '/user';
+        if (window.location.pathname.startsWith('/organizer')) basePath = '/organizer';
+        if (window.location.pathname.startsWith('/admin')) basePath = '/admin';
         try {
             const res = await axios.get(`${basePath}/notifications`);
             if (res.data.success) {
@@ -138,7 +150,9 @@ class NotificationManager {
     // --- 3. Delete Individual Notification ---
     async deleteNotification(notifId, event) {
         event.stopPropagation(); // Keep dropdown open
-        const basePath = window.location.pathname.startsWith('/organizer') ? '/organizer' : '/user';
+        let basePath = '/user';
+        if (window.location.pathname.startsWith('/organizer')) basePath = '/organizer';
+        if (window.location.pathname.startsWith('/admin')) basePath = '/admin';
         try {
             const el = document.getElementById(`notif-${notifId}`);
             if (el) {
@@ -172,7 +186,9 @@ class NotificationManager {
         if (this.clearBtn) {
             this.clearBtn.addEventListener('click', async (e) => {
                 e.stopPropagation(); 
-                const basePath = window.location.pathname.startsWith('/organizer') ? '/organizer' : '/user';
+                let basePath = '/user';
+                if (window.location.pathname.startsWith('/organizer')) basePath = '/organizer';
+                if (window.location.pathname.startsWith('/admin')) basePath = '/admin';
                 try {
                     await axios.post(`${basePath}/notifications/mark-read`);
                     if (this.redDot) this.redDot.style.display = 'none';
