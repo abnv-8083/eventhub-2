@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="bg-mesh">
+    <%- include('../../partials/navbars/organizer-nav') %>
+    <div class="dashboard-layout">
+        <%- include('../../partials/organizer-sidebar', { title: 'My Events' }) %>
+        <main class="dashboard-main">
+
+            <%# ── Page Header ─────────────────────────────── %>
+            <div class="d-flex align-items-center justify-content-between mb-5 animate stagger-1" style="position: relative; z-index: 100;">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="/organizer/events/<%= event._id %>" class="btn btn-outline btn-sm" style="border-radius:10px;">
+                        <i class="fi fi-rr-arrow-left me-1"></i>Back
+                    </a>
+                    <div>
+                        <p class="page-label">Sales Analytics</p>
+                        <h2 class="fw-bold m-0" style="letter-spacing:-0.5px;"><%= event.title %></h2>
+                        <p class="text-dim m-0" style="font-size:0.82rem;">
+                            <i class="fi fi-rr-calendar me-1"></i>
+                            <%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}) %>
+                            <% if(event.category) { %> &nbsp;·&nbsp; <%= event.category.name %><% } %>
+                        </p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <!-- Export Dropdown -->
+                    <div class="export-dropdown-wrap" id="exportDropWrap">
+                        <button class="export-trigger-btn" id="exportTrigger" onclick="toggleExportMenu()">
+                            <i class="fi fi-rr-file-export me-2"></i>
+                            Export
+                            <i class="fi fi-rr-angle-small-down ms-2" id="exportChevron"></i>
+                        </button>
+                        <div class="export-menu" id="exportMenu">
+                            <a class="export-menu-item" href="/organizer/events/<%= event._id %>/sales-report/export/excel<%= (locals.startDate && locals.endDate) ? `?startDate=${startDate}&endDate=${endDate}` : '' %>"
+                               onclick="startExport(this, 'Generating Excel...')">
+                                <div class="export-menu-icon excel-icon">
+                                    <i class="fi fi-rr-file-spreadsheet"></i>
+                                </div>
+                                <div>
+                                    <p class="export-menu-label">Export Excel</p>
+                                    <p class="export-menu-sub">Detailed workbook (.xlsx)</p>
+                                </div>
+                            </a>
+                            <a class="export-menu-item" href="/organizer/events/<%= event._id %>/sales-report/export/pdf<%= (locals.startDate && locals.endDate) ? `?startDate=${startDate}&endDate=${endDate}` : '' %>"
+                               onclick="startExport(this, 'Generating PDF...')">
+                                <div class="export-menu-icon pdf-icon">
+                                    <i class="fi fi-rr-file-pdf"></i>
+                                </div>
+                                <div>
+                                    <p class="export-menu-label">Export PDF</p>
+                                    <p class="export-menu-sub">Print-ready A4 report (.pdf)</p>
+                                </div>
+                            </a>
+                            <div class="export-menu-divider"></div>
+                            <button class="export-menu-item" onclick="window.print(); toggleExportMenu();">
+                                <div class="export-menu-icon print-icon">
+                                    <i class="fi fi-rr-print"></i>
+                                </div>
+                                <div>
+                                    <p class="export-menu-label">Print Page</p>
+                                    <p class="export-menu-sub">Print this report</p>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                    <a href="/organizer/events/<%= event._id %>/bookings" class="btn btn-primary btn-sm" style="border-radius:10px;">
+                        <i class="fi fi-rr-money me-1"></i>All Bookings
+                    </a>
+                </div>
+            </div>
+
+            <%# ── Date Filter ─────────────────────────────── %>
+            <div class="glass-premium mb-4 animate stagger-2" style="border-radius:14px; padding: 1.2rem;">
+                <form action="/organizer/events/<%= event._id %>/sales-report" method="GET" class="d-flex flex-wrap align-items-end gap-3 m-0">
+                    <div>
+                        <label class="form-label text-dim small mb-1">Start Date</label>
+                        <input type="date" id="startDate" name="startDate" class="form-control bg-dark border-secondary text-white" value="<%= locals.startDate || '' %>" required>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label text-dim small mb-1">End Date</label>
+                        <input type="date" id="endDate" name="endDate" class="form-control bg-dark border-secondary text-white" value="<%= locals.endDate || '' %>" required>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4"><i class="fi fi-rr-filter me-2"></i>Filter</button>
+                        <% if (locals.startDate || locals.endDate) { %>
+                            <a href="/organizer/events/<%= event._id %>/sales-report" class="btn btn-outline-light px-4">Clear</a>
+                        <% } %>
+                    </div>
+                </form>
+            </div>
+            
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const startDateInput = document.getElementById('startDate');
+                    const endDateInput = document.getElementById('endDate');
+                    if (startDateInput && endDateInput) {
+                        startDateInput.addEventListener('change', (e) => {
+                            endDateInput.min = e.target.value;
+                            if (endDateInput.value && endDateInput.value < e.target.value) {
+                                endDateInput.value = e.target.value;
+                            }
+                        });
+                        // Initialize min on load
+                        if (startDateInput.value) {
+                            endDateInput.min = startDateInput.value;
+                        }
+                    }
+                });
+            </script>
+
+            <%# ── Summary KPI Cards ───────────────────────── %>
+            <div class="row g-3 mb-4 animate stagger-3">
+                <div class="col-6 col-lg-3">
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background:rgba(46,204,113,0.1);color:#2ecc71;">
+                            <i class="fi fi-rr-coins"></i>
+                        </div>
+                        <p class="kpi-label">Gross Revenue</p>
+                        <p class="kpi-value" style="color:#2ecc71;">&#8377;<%= totalRevenue.toLocaleString('en-IN',{minimumFractionDigits:2}) %></p>
+                        <p class="kpi-sub">Net: &#8377;<%= parseFloat(netRevenue).toLocaleString('en-IN',{minimumFractionDigits:2}) %></p>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background:rgba(230,57,70,0.1);color:#E63946;">
+                            <i class="fi fi-rr-ticket"></i>
+                        </div>
+                        <p class="kpi-label">Tickets Sold</p>
+                        <p class="kpi-value"><%= totalTicketsSold %> <span class="text-dim" style="font-size:1rem;">/ <%= totalCapacity %></span></p>
+                        <div class="kpi-progress">
+                            <div class="kpi-progress-fill" style="width:<%= fillRate %>%;background:#E63946;"></div>
+                        </div>
+                        <p class="kpi-sub"><%= fillRate %>% capacity filled</p>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background:rgba(52,152,219,0.1);color:#3498db;">
+                            <i class="fi fi-rr-users"></i>
+                        </div>
+                        <p class="kpi-label">Total Bookings</p>
+                        <p class="kpi-value"><%= totalBookings %></p>
+                        <p class="kpi-sub"><%= activeBookingCount %> active · <%= cancelledCount %> cancelled</p>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background:rgba(155,89,182,0.1);color:#9b59b6;">
+                            <i class="fi fi-rr-chart-histogram"></i>
+                        </div>
+                        <p class="kpi-label">Avg. Order Value</p>
+                        <p class="kpi-value">&#8377;<%= parseFloat(avgOrderValue).toLocaleString('en-IN',{minimumFractionDigits:2}) %></p>
+                        <p class="kpi-sub">Platform fee: &#8377;<%= parseFloat(platformFee).toLocaleString('en-IN',{minimumFractionDigits:2}) %></p>
+                    </div>
+                </div>
+            </div>
+
+            <%# ── Revenue Trend Chart ─────────────────────── %>
+            <div class="glass-premium p-4 mb-4 animate stagger-3" style="border-radius:18px;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <p class="page-label">Revenue Chart</p>
+                        <h5 class="fw-bold m-0">Daily Revenue Trend</h5>
+                        <p class="text-dim m-0" style="font-size:0.8rem;">Last 30 days of booking activity</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="chart-toggle-btn active" id="btnRevenue" onclick="toggleChart('revenue')">Revenue</button>
+                        <button class="chart-toggle-btn" id="btnBookings" onclick="toggleChart('bookings')">Bookings</button>
+                    </div>
+                </div>
+                <div style="position:relative;height:260px;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <%# ── Two-column: tier breakdown + payment split ── %>
+            <div class="row g-4 mb-4 animate stagger-4">
+                <%# Tier Breakdown %>
+                <div class="col-lg-7">
+                    <div class="glass-premium p-4 h-100" style="border-radius:18px;">
+                        <p class="page-label">Ticket Analysis</p>
+                        <h5 class="fw-bold mb-4">Per-Tier Breakdown</h5>
+
+                        <% if(tierBreakdown && tierBreakdown.length > 0) { %>
+                        <div class="d-flex flex-column gap-3">
+                            <% const tierColors = ['#E63946','#2ecc71','#3498db','#f39c12','#9b59b6','#4ECDC4']; %>
+                            <% tierBreakdown.forEach((tier, idx) => { %>
+                            <div class="tier-breakdown-row">
+                                <div class="tier-breakdown-header">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div style="width:10px;height:10px;border-radius:50%;background:<%= tierColors[idx % tierColors.length] %>;flex-shrink:0;"></div>
+                                        <strong style="color:white;font-size:0.9rem;"><%= tier.name %></strong>
+                                        <span class="text-dim" style="font-size:0.8rem;">&#8377;<%= tier.price.toLocaleString('en-IN') %> each</span>
+                                    </div>
+                                    <span style="color:<%= tierColors[idx % tierColors.length] %>;font-weight:700;font-size:0.9rem;">
+                                        &#8377;<%= tier.revenue.toLocaleString('en-IN') %>
+                                    </span>
+                                </div>
+                                <div class="tier-breakdown-meta">
+                                    <span><%= tier.sold %> sold</span>
+                                    <span><%= tier.remaining %> remaining</span>
+                                    <span><%= tier.capacity %> capacity</span>
+                                </div>
+                                <div class="tier-progress-wrap">
+                                    <div class="tier-progress-bar" style="background:rgba(255,255,255,0.06);">
+                                        <div style="width:<%= tier.fillPct %>%;height:100%;border-radius:100px;background:<%= tierColors[idx % tierColors.length] %>;transition:width 0.8s ease;"></div>
+                                    </div>
+                                    <span class="text-dim" style="font-size:0.75rem;flex-shrink:0;"><%= tier.fillPct %>%</span>
+                                </div>
+                            </div>
+                            <% }) %>
+                        </div>
+                        <% } else { %>
+                        <div class="text-center py-4 text-dim">
+                            <i class="fi fi-rr-ticket" style="font-size:2rem;opacity:0.3;display:block;margin-bottom:0.75rem;"></i>
+                            No ticket tier data available.
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <%# Payment & Status Charts %>
+                <div class="col-lg-5 d-flex flex-column gap-4">
+                    <div class="glass-premium p-4" style="border-radius:18px;flex:1;">
+                        <p class="page-label">Payment</p>
+                        <h5 class="fw-bold mb-3">Payment Methods</h5>
+                        <div style="position:relative;height:160px;display:flex;align-items:center;justify-content:center;">
+                            <canvas id="paymentChart"></canvas>
+                        </div>
+                        <div class="d-flex justify-content-center gap-4 mt-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:10px;height:10px;border-radius:50%;background:#3498db;"></div>
+                                <span class="text-dim" style="font-size:0.8rem;">Razorpay &#8377;<%= (paymentMethodMap.razorpay||0).toLocaleString('en-IN') %></span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:10px;height:10px;border-radius:50%;background:#2ecc71;"></div>
+                                <span class="text-dim" style="font-size:0.8rem;">Wallet &#8377;<%= (paymentMethodMap.wallet||0).toLocaleString('en-IN') %></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-premium p-4" style="border-radius:18px;">
+                        <p class="page-label">Status</p>
+                        <h5 class="fw-bold mb-3">Booking Distribution</h5>
+                        <div class="d-flex flex-column gap-2">
+                            <div class="dist-row">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:8px;height:8px;border-radius:50%;background:#2ecc71;"></div>
+                                    <span style="font-size:0.85rem;color:rgba(255,255,255,0.75);">Active</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="dist-bar-wrap">
+                                        <div class="dist-bar-fill" style="width:<%= totalBookings > 0 ? Math.round((statusDistribution.active/totalBookings)*100) : 0 %>%;background:#2ecc71;"></div>
+                                    </div>
+                                    <span style="font-size:0.85rem;font-weight:700;color:#2ecc71;min-width:24px;text-align:right;"><%= statusDistribution.active %></span>
+                                </div>
+                            </div>
+                            <div class="dist-row">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:8px;height:8px;border-radius:50%;background:#f1c40f;"></div>
+                                    <span style="font-size:0.85rem;color:rgba(255,255,255,0.75);">On Hold</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="dist-bar-wrap">
+                                        <div class="dist-bar-fill" style="width:<%= totalBookings > 0 ? Math.round((statusDistribution.on_hold/totalBookings)*100) : 0 %>%;background:#f1c40f;"></div>
+                                    </div>
+                                    <span style="font-size:0.85rem;font-weight:700;color:#f1c40f;min-width:24px;text-align:right;"><%= statusDistribution.on_hold %></span>
+                                </div>
+                            </div>
+                            <div class="dist-row">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:8px;height:8px;border-radius:50%;background:#E63946;"></div>
+                                    <span style="font-size:0.85rem;color:rgba(255,255,255,0.75);">Cancelled</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="dist-bar-wrap">
+                                        <div class="dist-bar-fill" style="width:<%= totalBookings > 0 ? Math.round((statusDistribution.cancelled/totalBookings)*100) : 0 %>%;background:#E63946;"></div>
+                                    </div>
+                                    <span style="font-size:0.85rem;font-weight:700;color:#E63946;min-width:24px;text-align:right;"><%= statusDistribution.cancelled %></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <%# ── Recent Transactions Table ───────────────── %>
+            <div class="glass-premium animate stagger-5" style="border-radius:18px;overflow:hidden;">
+                <div class="d-flex justify-content-between align-items-center p-4" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <div>
+                        <p class="page-label">Transactions</p>
+                        <h5 class="fw-bold m-0">Recent Bookings</h5>
+                    </div>
+                    <a href="/organizer/events/<%= event._id %>/bookings" class="btn btn-outline btn-sm" style="border-radius:8px;">
+                        View All <i class="fi fi-rr-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Attendee</th>
+                                <th>Tickets</th>
+                                <th>Payment</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if(recentTransactions && recentTransactions.length > 0) { %>
+                                <% recentTransactions.forEach(txn => { %>
+                                <tr>
+                                    <td>
+                                        <div>
+                                            <strong style="color:white;font-size:0.875rem;"><%= txn.userName %></strong>
+                                            <p class="text-dim m-0" style="font-size:0.75rem;"><%= txn.userEmail %></p>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.75);padding:3px 10px;border-radius:100px;font-size:0.78rem;font-weight:600;">
+                                            <%= txn.ticketCount %> ticket<%= txn.ticketCount !== 1 ? 's' : '' %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <% if(txn.paymentMethod === 'wallet') { %>
+                                            <span style="color:#4ECDC4;font-size:0.82rem;font-weight:600;"><i class="fi fi-rr-wallet me-1"></i>Wallet</span>
+                                        <% } else { %>
+                                            <span style="color:#3498db;font-size:0.82rem;font-weight:600;"><i class="fi fi-rr-credit-card me-1"></i>Razorpay</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <strong style="color:#2ecc71;font-size:0.9rem;">&#8377;<%= txn.amount.toLocaleString('en-IN') %></strong>
+                                    </td>
+                                    <td class="text-dim" style="font-size:0.82rem;">
+                                        <%= new Date(txn.bookingDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %>
+                                    </td>
+                                    <td>
+                                        <% if(txn.status === 'active') { %>
+                                            <span class="status-badge status-approved">Active</span>
+                                        <% } else if(txn.status === 'on_hold') { %>
+                                            <span class="status-badge status-pending">On Hold</span>
+                                        <% } else { %>
+                                            <span class="status-badge status-rejected">Cancelled</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-dim">
+                                    <i class="fi fi-rr-receipt" style="font-size:2rem;opacity:0.3;display:block;margin-bottom:1rem;"></i>
+                                    No transactions yet.
+                                </td>
+                            </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+    // ── Export Dropdown ──────────────────────────────────────────────────────────
+    function toggleExportMenu() {
+        const menu    = document.getElementById('exportMenu');
+        const chevron = document.getElementById('exportChevron');
+        const trigger = document.getElementById('exportTrigger');
+        const isOpen  = menu.classList.contains('open');
+
+        menu.classList.toggle('open', !isOpen);
+        trigger.classList.toggle('active', !isOpen);
+        chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
+
+    function startExport(linkEl, message) {
+        // Close menu
+        document.getElementById('exportMenu').classList.remove('open');
+        document.getElementById('exportTrigger').classList.remove('active');
+        document.getElementById('exportChevron').style.transform = 'rotate(0deg)';
+        // Show loader
+        Loader.show(message);
+        // Hide loader after file has likely started downloading (3s is enough)
+        setTimeout(() => Loader.hide(), 4000);
+    }
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+        const wrap = document.getElementById('exportDropWrap');
+        if (wrap && !wrap.contains(e.target)) {
+            document.getElementById('exportMenu')?.classList.remove('open');
+            document.getElementById('exportTrigger')?.classList.remove('active');
+            if (document.getElementById('exportChevron'))
+                document.getElementById('exportChevron').style.transform = 'rotate(0deg)';
+        }
+    });
+
+    // ── Chart.js Setup ──────────────────────────────────────────────────────────
+    const CHART_DATA = <%- JSON.stringify(dailyRevenueTrend) %>;
+    const PAYMENT_MAP = <%- JSON.stringify(paymentMethodMap) %>;
+
+    const chartLabels  = CHART_DATA.map(d => d.label);
+    const revenueData  = CHART_DATA.map(d => d.revenue);
+    const bookingsData = CHART_DATA.map(d => d.bookings);
+
+    Chart.defaults.color = 'rgba(255,255,255,0.4)';
+    Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+    // Revenue / Bookings line chart
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+    gradient.addColorStop(0, 'rgba(230,57,70,0.25)');
+    gradient.addColorStop(1, 'rgba(230,57,70,0)');
+
+    const bookingGradient = ctx.createLinearGradient(0, 0, 0, 260);
+    bookingGradient.addColorStop(0, 'rgba(52,152,219,0.25)');
+    bookingGradient.addColorStop(1, 'rgba(52,152,219,0)');
+
+    let activeDataset = 'revenue';
+
+    const revenueChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Revenue (₹)',
+                data: revenueData,
+                borderColor: '#E63946',
+                backgroundColor: gradient,
+                borderWidth: 2,
+                pointRadius: 3,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#E63946',
+                tension: 0.4,
+                fill: true,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(10,10,10,0.95)',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    titleFont: { family: "'Syne', sans-serif", weight: 700, size: 13 },
+                    bodyFont: { family: "'DM Sans', sans-serif", size: 12 },
+                    callbacks: {
+                        label: ctx => activeDataset === 'revenue'
+                            ? `  ₹${ctx.parsed.y.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+                            : `  ${ctx.parsed.y} bookings`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+                    ticks: { maxTicksLimit: 10, font: { size: 11 } }
+                },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+                    ticks: {
+                        font: { size: 11 },
+                        callback: v => activeDataset === 'revenue' ? '₹' + v.toLocaleString('en-IN') : v
+                    },
+                    beginAtZero: true,
+                }
+            }
+        }
+    });
+
+    function toggleChart(type) {
+        activeDataset = type;
+        document.getElementById('btnRevenue').classList.toggle('active', type === 'revenue');
+        document.getElementById('btnBookings').classList.toggle('active', type === 'bookings');
+
+        const isRevenue = type === 'revenue';
+        revenueChart.data.datasets[0].data            = isRevenue ? revenueData : bookingsData;
+        revenueChart.data.datasets[0].label           = isRevenue ? 'Revenue (₹)' : 'Bookings';
+        revenueChart.data.datasets[0].borderColor     = isRevenue ? '#E63946' : '#3498db';
+
+        const newGrad = ctx.createLinearGradient(0, 0, 0, 260);
+        if (isRevenue) {
+            newGrad.addColorStop(0, 'rgba(230,57,70,0.25)');
+            newGrad.addColorStop(1, 'rgba(230,57,70,0)');
+        } else {
+            newGrad.addColorStop(0, 'rgba(52,152,219,0.25)');
+            newGrad.addColorStop(1, 'rgba(52,152,219,0)');
+        }
+        revenueChart.data.datasets[0].backgroundColor = newGrad;
+        revenueChart.data.datasets[0].pointBackgroundColor = isRevenue ? '#E63946' : '#3498db';
+        revenueChart.update();
+    }
+
+    // Payment method doughnut chart
+    const payCtx = document.getElementById('paymentChart').getContext('2d');
+    const rzpAmt    = PAYMENT_MAP.razorpay || 0;
+    const walletAmt = PAYMENT_MAP.wallet   || 0;
+    const hasData   = rzpAmt > 0 || walletAmt > 0;
+
+    new Chart(payCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Razorpay', 'Wallet'],
+            datasets: [{
+                data: hasData ? [rzpAmt, walletAmt] : [1, 1],
+                backgroundColor: hasData
+                    ? ['rgba(52,152,219,0.8)', 'rgba(46,204,113,0.8)']
+                    : ['rgba(255,255,255,0.06)', 'rgba(255,255,255,0.06)'],
+                borderColor: 'transparent',
+                borderWidth: 0,
+                hoverOffset: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '72%',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    enabled: hasData,
+                    backgroundColor: 'rgba(10,10,10,0.95)',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    padding: 10,
+                    callbacks: {
+                        label: ctx => `  ₹${ctx.parsed.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+                    }
+                }
+            }
+        }
+    });
+    </script>
+</body>
+</html>

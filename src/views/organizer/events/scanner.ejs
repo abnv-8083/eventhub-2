@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head', { title: 'Ticket Scanner' }) %>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        .scanner-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(15, 15, 15, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        #reader {
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        #reader video {
+            object-fit: cover;
+        }
+
+        .scan-result-card {
+            display: none;
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            border-radius: 12px;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .scan-result-card.success {
+            display: block;
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid rgba(46, 204, 113, 0.3);
+        }
+
+        .scan-result-card.error {
+            display: block;
+            background: rgba(230, 57, 70, 0.1);
+            border: 1px solid rgba(230, 57, 70, 0.3);
+        }
+
+        .pulse-ring {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #fff;
+        }
+
+        .success .pulse-ring {
+            background: #2ecc71;
+            box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4);
+            animation: pulse-success 2s infinite;
+        }
+
+        .error .pulse-ring {
+            background: #e63946;
+            box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.4);
+            animation: pulse-error 2s infinite;
+        }
+
+        @keyframes pulse-success {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(46, 204, 113, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+        }
+
+        @keyframes pulse-error {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(230, 57, 70, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); }
+        }
+        
+        .ticket-details {
+            text-align: left;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Fix html5-qrcode injected styles */
+        #reader__dashboard_section_csr span { color: white !important; }
+        #reader__dashboard_section_swaplink { color: var(--primary) !important; }
+        #reader button { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 8px 16px; 
+            border-radius: 8px; 
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body class="bg-mesh">
+    <div class="d-flex min-vh-100">
+        <%- include('../../partials/organizer-sidebar') %>
+        
+        <div class="flex-grow-1 p-4" style="margin-left: 260px;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold text-white mb-0">Ticket Scanner</h3>
+            </div>
+
+            <div class="scanner-container glass-premium">
+                <div id="reader"></div>
+                
+                <button class="btn btn-primary w-100 mb-3" id="startBtn" onclick="startScanner()" style="display:none;">
+                    <i class="fi fi-rr-camera"></i> Start Scanner
+                </button>
+                <button class="btn btn-outline w-100 mb-3" id="stopBtn" onclick="stopScanner()" style="display:none;">
+                    <i class="fi fi-rr-stop"></i> Stop Scanner
+                </button>
+
+                <div id="resultCard" class="scan-result-card">
+                    <div class="pulse-ring" id="resultIcon">
+                        <i class="fi fi-rr-check"></i>
+                    </div>
+                    <h4 class="fw-bold text-white" id="resultTitle">Valid Ticket!</h4>
+                    <p class="text-dim mb-0" id="resultMessage">Access Granted.</p>
+                    
+                    <div class="ticket-details" id="ticketDetails" style="display:none;">
+                        <p class="text-white mb-1"><strong>Attendee:</strong> <span id="attendeeName"></span></p>
+                        <p class="text-white mb-1"><strong>Event:</strong> <span id="eventName"></span></p>
+                        <div id="ticketItems" class="mt-2 text-dim small"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let html5QrcodeScanner = null;
+        let isScanning = false;
+        let lastScannedCode = null;
+        let scanCooldown = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize scanner but don't start it automatically to save battery
+            document.getElementById('startBtn').style.display = 'block';
+        });
+
+        function startScanner() {
+            if (!html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5Qrcode("reader");
+            }
+            
+            const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
+            
+            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
+            .then(() => {
+                isScanning = true;
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('stopBtn').style.display = 'block';
+            })
+            .catch(err => {
+                Toast.error("Could not access camera. Please check permissions.");
+            });
+        }
+
+        function stopScanner() {
+            if (html5QrcodeScanner && isScanning) {
+                html5QrcodeScanner.stop().then(() => {
+                    isScanning = false;
+                    document.getElementById('startBtn').style.display = 'block';
+                    document.getElementById('stopBtn').style.display = 'none';
+                });
+            }
+        }
+
+        async function onScanSuccess(decodedText) {
+            if (scanCooldown) return;
+            
+            // Prevent scanning the exact same code repeatedly in 3 seconds
+            if (decodedText === lastScannedCode) return;
+            
+            lastScannedCode = decodedText;
+            scanCooldown = true;
+            
+            // Extract Booking ID from URL if it's a URL, otherwise assume it's just the ID
+            let bookingId = decodedText;
+            try {
+                if (decodedText.startsWith('http')) {
+                    const url = new URL(decodedText);
+                    const parts = url.pathname.split('/');
+                    bookingId = parts[parts.length - 1];
+                }
+            } catch(e) {}
+
+            await verifyTicket(bookingId);
+            
+            setTimeout(() => { 
+                scanCooldown = false; 
+                lastScannedCode = null; // Clear memory after 3s so they can rescan if needed
+            }, 3000);
+        }
+
+        async function verifyTicket(bookingId) {
+            const resultCard = document.getElementById('resultCard');
+            const resultIcon = document.getElementById('resultIcon');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+            const ticketDetails = document.getElementById('ticketDetails');
+            
+            // Reset state
+            resultCard.className = 'scan-result-card';
+            ticketDetails.style.display = 'none';
+            resultTitle.innerText = "Verifying...";
+            resultMessage.innerText = "Checking database...";
+            resultCard.style.display = 'block';
+
+            try {
+                const res = await axios.get(`/organizer/verify-ticket/${bookingId}`);
+                
+                if (res.data.success) {
+                    const booking = res.data.booking;
+                    resultCard.className = 'scan-result-card success';
+                    resultIcon.innerHTML = '<i class="fi fi-rr-check"></i>';
+                    resultTitle.innerText = 'VALID TICKET';
+                    resultMessage.innerText = 'Access Granted!';
+                    
+                    document.getElementById('attendeeName').innerText = booking.user.fullName;
+                    document.getElementById('eventName').innerText = booking.event.title;
+                    
+                    const itemsHtml = booking.tickets.map(t => 
+                        `<div>${t.quantity}x ${t.ticketName} <span class="badge ${t.status === 'cancelled' ? 'bg-danger' : 'bg-success'}">${t.status}</span></div>`
+                    ).join('');
+                    document.getElementById('ticketItems').innerHTML = itemsHtml;
+                    
+                    ticketDetails.style.display = 'block';
+                    
+                    // Optional: play success sound
+                }
+            } catch (err) {
+                resultCard.className = 'scan-result-card error';
+                resultIcon.innerHTML = '<i class="fi fi-rr-cross"></i>';
+                resultTitle.innerText = 'INVALID TICKET';
+                resultMessage.innerText = err.response?.data?.message || 'Error verifying ticket.';
+                
+                // Optional: play error sound
+            }
+        }
+    </script>
+</body>
+</html>
