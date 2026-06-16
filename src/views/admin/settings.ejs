@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head') %>
+    <title>Admin Settings | EventHub</title>
+</head>
+<body class="bg-mesh">
+    
+    <%- include('../partials/navbars/admin-nav') %>
+
+    <div class="dashboard-layout">
+        <%- include('../partials/admin-sidebar', { title: 'Settings' }) %>
+        
+        <main class="dashboard-main">
+            <!-- Page Header -->
+            <div class="mb-4 animate stagger-1">
+                <h2 class="fw-bold">Platform Settings</h2>
+                <p class="text-dim">Manage your profile, security, and global platform configurations.</p>
+            </div>
+
+            <!-- 1. Profile Banner -->
+            <div class="glass-premium dynamic-card p-4 rounded-3 mb-4 animate stagger-2 d-flex flex-wrap align-center gap-4 border-red" style="position: relative; overflow: hidden;">
+                <div style="position: absolute; right: 0; top: 0; width: 300px; height: 100%; background: linear-gradient(90deg, transparent, rgba(230, 57, 70, 0.05)); z-index: 0;"></div>
+                
+                <div class="profile-avatar-btn" style="width: 100px; height: 100px; font-size: 2.5rem; z-index: 1;">
+                    <% if(admin.avatar) {%>
+                        <img src="<%= admin.avatar %>" id="currentAvatarPreview" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                    <% }else{ %>
+                        <span id="currentAvatarPreview"><%= admin.fullName ? admin.fullName.charAt(0).toUpperCase() : 'A' %></span>
+                    <% } %>
+                </div>
+                
+                <div style="z-index: 1;">
+                    <h3 class="fw-bold mb-1"><%= admin.fullName %></h3>
+                    <p class="text-dim mb-2 d-flex align-center gap-2" style="font-size: 0.95rem;">
+                        <i class="fi fi-rr-envelope text-muted"></i> <%= admin.email %>
+                    </p>
+                    <div class="d-flex align-center gap-2">
+                        <span class="badge" style="background: rgba(230, 57, 70, 0.15); color: var(--primary); padding: 5px 12px; border-radius: 6px; font-size: 0.75rem; letter-spacing: 0.5px;">
+                            <i class="fi fi-rr-star" style="font-size: 0.7rem; margin-right: 4px;"></i> Super Admin
+                        </span>
+                    </div>
+                </div>
+
+                <div class="ms-auto" style="z-index: 1;">
+                    <input type="file" id="avatarUpload" name="avatar" accept="image/png, image/jpeg, image/jpg, image/webp" style="display: none;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('avatarUpload').click()">
+                        <i class="fi fi-rr-picture me-1"></i> Change Photo
+                    </button>
+                    <p class="text-dim mt-2 mb-0 text-end" style="font-size: 0.75rem;">Upload JPG/PNG.</p>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- 2. Main Details Form -->
+                <div class="col-lg-6 animate stagger-3">
+                    <form id="profileUpdateForm" novalidate class="glass-premium dynamic-card p-4 rounded-3 d-flex flex-column h-100 mb-4">
+                        <h4 class="fw-bold mb-4">Account Details</h4>
+                        
+                        <div class="form-floating mb-4">
+                            <input type="text" id="fullName" name="fullName" class="form-control input" placeholder=" " value="<%= admin.fullName %>" data-rule="required, name, min3, max50">
+                            <label for="fullName">Full Name</label>
+                        </div>
+
+                        <div class="form-floating mb-4">
+                            <input type="email" class="form-control input" value="<%= admin.email %>" readonly disabled style="opacity: 0.6; cursor: not-allowed;">
+                            <label>Email Address</label>
+                            <i class="fi fi-rr-lock text-dim" style="position: absolute; right: 15px; top: 18px; font-size: 1rem;"></i>
+                        </div>
+
+                        <div class="text-end mt-auto">
+                            <button type="submit" class="btn btn-primary px-5">Save Profile</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="col-lg-6 animate stagger-4 d-flex flex-column gap-4">
+                    <!-- Security Card -->
+                    <div class="glass-premium dynamic-card p-4 rounded-3">
+                        <h4 class="mb-4 fw-bold">Security</h4>
+
+                        <div class="d-flex justify-between align-center p-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border);">
+                            <div>
+                                <h6 class="fw-bold mb-1" style="font-size: 0.95rem;">Password</h6>
+                                <p class="text-dim m-0" style="font-size: 0.85rem;">••••••••••••</p>
+                            </div>
+                            <button type="button" class="btn btn-outline btn-sm px-3" onclick="openModal('passwordModal')">
+                                Edit
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Platform Configuration Card -->
+                    <div class="glass-premium dynamic-card p-4 rounded-3">
+                        <h4 class="mb-4 fw-bold">Global Configuration</h4>
+                        <form id="platformUpdateForm" novalidate>
+                            <div class="form-floating mb-4">
+                                <input type="number" id="platformFeePercentage" name="platformFeePercentage" class="form-control input" placeholder=" " value="<%= platform.platformFeePercentage %>" data-rule="required, number" data-min="0" data-max="100">
+                                <label for="platformFeePercentage">Platform Fee Percentage (%)</label>
+                            </div>
+
+                            <div class="form-floating mb-4">
+                                <input type="email" id="supportEmail" name="supportEmail" class="form-control input" placeholder=" " value="<%= platform.supportEmail %>" data-rule="required, email">
+                                <label for="supportEmail">Support Email</label>
+                            </div>
+
+                            <div class="form-floating mb-4">
+                                <input type="tel" id="supportPhone" name="supportPhone" class="form-control input" placeholder=" " value="<%= platform.supportPhone %>" data-rule="required">
+                                <label for="supportPhone">Support Phone</label>
+                            </div>
+
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary px-5">Update Configuration</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Password Update Modal -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h5 class="fw-bold m-0 text-white">Update Password</h5>
+                <i class="fi fi-rr-cross modal-close" onclick="closeModal('passwordModal')"></i>
+            </div>
+            <form id="passwordUpdateForm" novalidate>
+                <div class="modal-body">
+                    
+                    <div class="form-floating password-group mb-4">
+                        <input type="password" name="currentPassword" class="form-control input" id="currentPassword" placeholder=" " data-rule="required">
+                        <label for="currentPassword">Current Password</label>
+                        <button type="button" class="password-toggle" onclick="togglePassword('currentPassword', this)">
+                            <i class="fi fi-rr-eye"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="form-floating password-group mb-4">
+                        <input type="password" name="newPassword" class="form-control input" id="newPassword" placeholder=" " data-rule="required, password, min8">
+                        <label for="newPassword">New Password</label>
+                        <button type="button" class="password-toggle" onclick="togglePassword('newPassword', this)">
+                            <i class="fi fi-rr-eye"></i>
+                        </button>
+                    </div>
+
+                    <div class="form-floating password-group mb-2">
+                        <input type="password" name="confirmPassword" class="form-control input" id="confirmPassword" placeholder=" " data-rule="required, password, match:newPassword">
+                        <label for="confirmPassword">Confirm New Password</label>
+                        <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
+                            <i class="fi fi-rr-eye"></i>
+                        </button>
+                    </div>
+                    
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn text-dim" style="background: transparent;" onclick="closeModal('passwordModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Avatar Cropper Modal -->
+    <div class="modal-overlay" id="cropModal">
+        <div class="modal-container" style="max-width: 600px;">
+            <div class="modal-header">
+                <h5 class="fw-bold m-0 text-white">Crop Profile Picture</h5>
+                <i class="fi fi-rr-cross modal-close" onclick="closeModal('cropModal')"></i>
+            </div>
+            <div class="modal-body text-center">
+                <div class="img-container" style="max-height: 400px; width: 100%; background: #000; overflow: hidden; border-radius: 8px;">
+                    <img id="imageToCrop" src="" alt="Picture to crop" style="max-width: 100%; display: block;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn text-dim" style="background: transparent;" onclick="closeModal('cropModal')">Cancel</button>
+                <button type="button" class="btn btn-primary" id="cropAndApplyBtn">Apply Crop</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
+    <script>
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.classList.remove('active');
+            }
+        });
+
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fi-rr-eye', 'fi-rr-eye-crossed');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fi-rr-eye-crossed', 'fi-rr-eye');
+            }
+        }
+
+        // Setup Cropper
+        let cropper;
+        const avatarInput = document.getElementById('avatarUpload');
+        const imageToCrop = document.getElementById('imageToCrop');
+        const cropAndApplyBtn = document.getElementById('cropAndApplyBtn');
+
+        avatarInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+                const file = files[0];
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    Toast.error('Please upload a valid image file (JPG, PNG, or WEBP).');
+                    avatarInput.value = '';
+                    return;
+                }
+                const maxSize = 2 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    Toast.error('Image is too large. Maximum size is 2MB.');
+                    avatarInput.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    imageToCrop.src = event.target.result;
+                    openModal('cropModal');
+                    if (cropper) cropper.destroy();
+                    cropper = new Cropper(imageToCrop, {
+                        aspectRatio: 1, 
+                        viewMode: 1,    
+                        background: false,
+                        zoomable: true,
+                        guides: true,
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        cropAndApplyBtn.addEventListener('click', () => {
+            if (!cropper) return;
+            const originalBtnText = cropAndApplyBtn.innerText;
+            cropAndApplyBtn.innerText = 'Uploading...';
+            cropAndApplyBtn.disabled = true;
+
+            const canvas = cropper.getCroppedCanvas({ width: 500, height: 500 });
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('avatar', blob, 'profile_cropped.jpg'); 
+
+                try {
+                    const response = await axios.post('/admin/avatar', formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    });
+
+                    if (response.data.success) {
+                        const newAvatarUrl = response.data.avatarUrl;
+                        const previewEl = document.getElementById('currentAvatarPreview');
+                        if(previewEl.tagName === 'IMG') {
+                            previewEl.src = newAvatarUrl;
+                        } else {
+                            const newImg = document.createElement('img');
+                            newImg.id = 'currentAvatarPreview';
+                            newImg.src = newAvatarUrl;
+                            newImg.style.cssText = "width: 100%; height: 100%; border-radius: 50%; object-fit: cover;";
+                            previewEl.parentNode.replaceChild(newImg, previewEl);
+                        }
+
+                        const navAvatar = document.querySelector('.profile-avatar-btn img');
+                        if(navAvatar) navAvatar.src = newAvatarUrl;
+
+                        closeModal('cropModal');
+                        Toast.success(response.data.message);
+                    }
+                } catch (error) {
+                    Toast.error(error.response?.data?.message || 'Failed to upload image.');
+                } finally {
+                    cropAndApplyBtn.innerText = originalBtnText;
+                    cropAndApplyBtn.disabled = false;
+                    avatarInput.value = '';
+                }
+            }, 'image/jpeg', 0.9);
+        });
+
+        // Smart Form Logic
+        const profileForm = document.getElementById('profileUpdateForm');
+        const submitBtn = profileForm?.querySelector('button[type="submit"]');
+
+        if (profileForm && submitBtn) {
+            let initialState = Object.fromEntries(new FormData(profileForm).entries());
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+            submitBtn.style.cursor = 'not-allowed';
+
+            const checkFormChanges = () => {
+                let currentState = Object.fromEntries(new FormData(profileForm).entries());
+                let isChanged = JSON.stringify(currentState) !== JSON.stringify(initialState);
+                if (isChanged) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                } else {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                    submitBtn.style.cursor = 'not-allowed';
+                }
+            };
+
+            profileForm.addEventListener('input', checkFormChanges);
+            profileForm.addEventListener('change', checkFormChanges);
+
+            profileForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if(!EV.validateForm(profileForm)) return;
+
+                submitBtn.innerText = 'Saving...';
+                submitBtn.disabled = true;
+                submitBtn.style.cursor = 'wait';
+
+                const data = Object.fromEntries(new FormData(profileForm).entries());
+
+                try {
+                    const response = await axios.post('/admin/profile', data);
+                    if (response.data.success) {
+                        Toast.success(response.data.message);
+                        initialState = Object.fromEntries(new FormData(profileForm).entries());
+                        checkFormChanges();
+                    }
+                } catch (error) {
+                    Toast.error(error.response?.data?.message || 'Update failed.');
+                } finally {
+                    submitBtn.innerText = 'Save Profile';
+                    submitBtn.style.cursor = 'pointer';
+                }
+            });
+        }
+
+        // Platform Configuration Logic
+        const platformForm = document.getElementById('platformUpdateForm');
+        const platformSubmitBtn = platformForm?.querySelector('button[type="submit"]');
+
+        if (platformForm && platformSubmitBtn) {
+            let initialState = Object.fromEntries(new FormData(platformForm).entries());
+            platformSubmitBtn.disabled = true;
+            platformSubmitBtn.style.opacity = '0.5';
+            platformSubmitBtn.style.cursor = 'not-allowed';
+
+            const checkFormChanges = () => {
+                let currentState = Object.fromEntries(new FormData(platformForm).entries());
+                let isChanged = JSON.stringify(currentState) !== JSON.stringify(initialState);
+                if (isChanged) {
+                    platformSubmitBtn.disabled = false;
+                    platformSubmitBtn.style.opacity = '1';
+                    platformSubmitBtn.style.cursor = 'pointer';
+                } else {
+                    platformSubmitBtn.disabled = true;
+                    platformSubmitBtn.style.opacity = '0.5';
+                    platformSubmitBtn.style.cursor = 'not-allowed';
+                }
+            };
+
+            platformForm.addEventListener('input', checkFormChanges);
+            platformForm.addEventListener('change', checkFormChanges);
+
+            platformForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if(!EV.validateForm(platformForm)) return;
+
+                platformSubmitBtn.innerText = 'Updating...';
+                platformSubmitBtn.disabled = true;
+                platformSubmitBtn.style.cursor = 'wait';
+
+                const data = Object.fromEntries(new FormData(platformForm).entries());
+
+                try {
+                    const response = await axios.post('/admin/platform-settings', data);
+                    if (response.data.success) {
+                        Toast.success(response.data.message);
+                        initialState = Object.fromEntries(new FormData(platformForm).entries());
+                        checkFormChanges();
+                    }
+                } catch (error) {
+                    Toast.error(error.response?.data?.message || 'Update failed.');
+                } finally {
+                    platformSubmitBtn.innerText = 'Update Configuration';
+                    platformSubmitBtn.style.cursor = 'pointer';
+                }
+            });
+        }
+
+        // Password Update Logic
+        document.getElementById('passwordUpdateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            if(!EV.validateForm(form)) return;
+
+            const btn = form.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.innerText = 'Saving...';
+            btn.disabled = true;
+
+            const data = Object.fromEntries(new FormData(form).entries());
+
+            try {
+                const response = await axios.post('/admin/update-password', data);
+                if (response.data.success) {
+                    Toast.success(response.data.message);
+                    closeModal('passwordModal');
+                    form.reset();
+                }
+            } catch (error) {
+                Toast.error(error.response?.data?.message || 'Failed to update password.');
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
