@@ -5,107 +5,281 @@
 
 
 <body class="bg-mesh">
-    <div class="floating-blob"></div>
+    <div class="floating-blob" style="top: -100px; left: -100px; opacity: 0.18;"></div>
+    <div class="floating-blob" style="bottom: -100px; right: -100px; width: 300px; height: 300px; animation-delay: -7s; opacity: 0.12;"></div>
 
     <% if (user) { %>
         <%- include('partials/navbars/user-nav') %>
-            <% } else { %>
-                <%- include('partials/navbar-guest') %>
-                    <% } %>
+    <% } else { %>
+        <%- include('partials/navbar-guest') %>
+    <% } %>
 
-                        <main>
-                            <section class="section container text-center"
-                                style="padding-top: 10rem; padding-bottom: 8rem; position: relative;">
-                                <!-- Background Glow -->
-                                <div class="hero-glow"
-                                    style="position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); width: 60%; height: 40%; background: radial-gradient(circle, rgba(230, 57, 70, 0.15) 0%, transparent 70%); z-index: -1;">
-                                </div>
+    <main style="position: relative; z-index: 1;">
 
-                                <div class="glass-dark d-inline-block p-2 mb-4 animate stagger-1"
-                                    style="border-radius: 50px; padding: 0.5rem 1.5rem !important; border: 1px solid rgba(255,255,255,0.1);">
-                                    <span class="text-gradient"
-                                        style="font-size: 0.85rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
-                                        Discover the Best Events in Kozhikode
-                                    </span>
-                                </div>
+        <!-- ── Hero Section ───────────────────────────────────────── -->
+        <section class="container text-center" style="padding-top: 9rem; padding-bottom: 6rem; position: relative;">
 
-                                <h1 class="animate stagger-2"
-                                    style="font-size: clamp(3rem, 8vw, 5rem); line-height: 1; margin-bottom: 1.5rem; letter-spacing: -2px;">
-                                    Unforgettable Experiences,<br>
-                                    <span class="text-gradient glow-text">Just a Tap Away.</span>
-                                </h1>
+            <!-- Glow orb -->
+            <div style="position: absolute; top: 10%; left: 50%; transform: translate(-50%, 0); width: 700px; height: 400px; background: radial-gradient(ellipse, rgba(230,57,70,0.12) 0%, transparent 70%); pointer-events: none; z-index: -1; filter: blur(20px);"></div>
 
-                                <p class="text-muted animate stagger-3"
-                                    style="max-width: 650px; margin: 0 auto 3rem; font-size: 1.2rem; opacity: 0.8;">
-                                    The premier platform for tech summits, sports tournaments, and live workshops.
-                                    Secure your spot with instant QR validation.
-                                </p>
-                            </section>
+            <!-- Badge -->
+            <div data-aos="fade-down" data-aos-delay="100" class="d-inline-flex align-items-center gap-2 mb-4" style="background: rgba(230,57,70,0.08); border: 1px solid rgba(230,57,70,0.2); border-radius: 100px; padding: 7px 20px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.8);">
+                <span style="width: 7px; height: 7px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 8px var(--primary); animation: pulseDot 2s infinite; flex-shrink: 0;"></span>
+                Kozhikode's Premier Event Platform
+            </div>
 
-                            <!-- index.ejs Search Update -->
-                            <section class="container animate stagger-4"
-                                style="margin-top: -4rem; position: relative; z-index: 10;">
-                                <div class="glass-dark p-2 d-flex gap-2 align-center"
-                                    style="border-radius: var(--radius-lg); box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
-                                    <div class="flex-grow-1 d-flex align-center p-2">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" class="text-dim mr-3">
-                                            <circle cx="11" cy="11" r="8"></circle>
-                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                        </svg>
-                                        <input type="text" class="input"
-                                            placeholder="Search events, organizers, or locations..."
-                                            style="background: transparent; border: none; box-shadow: none;">
-                                    </div>
-                                    <div style="width: 1px; height: 30px; background: var(--border);"></div>
-                                    <select class="input"
-                                        style="width: 180px; background: transparent; border: none; box-shadow: none;">
-                                        <option value="">All Categories</option>
-                                        <option value="tech">Technology</option>
-                                        <option value="sports">Sports</option>
-                                    </select>
-                                    <button class="btn btn-primary"
-                                        style="border-radius: var(--radius-md); padding: 0.8rem 2rem;">Find
-                                        Events</button>
-                                </div>
-                            </section>
+            <!-- Hero headline -->
+            <h1 data-aos="fade-up" data-aos-delay="200" style="font-size: clamp(3rem, 8vw, 5.5rem); line-height: 1; margin-bottom: 1.5rem; letter-spacing: -3px; font-weight: 800;">
+                Unforgettable Experiences,<br>
+                <span class="text-gradient glow-text">Just a Tap Away.</span>
+            </h1>
 
-                            <section class="container section pt-0">
-                                <div class="d-flex justify-between align-center mb-4">
-                                    <h2>Trending <span class="text-gradient">This Week</span></h2>
-                                    <a href="/events" class="text-muted">View all &rarr;</a>
-                                </div>
+            <!-- Sub-headline -->
+            <p data-aos="fade-up" data-aos-delay="300" class="text-muted" style="max-width: 600px; margin: 0 auto 3rem; font-size: 1.15rem; line-height: 1.7; opacity: 0.75;">
+                Tech summits, sports tournaments &amp; live workshops — discover and book with instant QR validation.
+            </p>
 
-                                <div class="footer-grid" style="gap: 2rem;">
-                                    <% if (locals.events && events.length> 0) { %>
-                                        <% events.forEach(event=> { %>
-                                            <%- include('partials/event-card', { event: event }) %>
-                                                <% }) %>
-                                                    <% } else { %>
-                                                        <!-- Show 3 Skeleton Cards or a "No Events" message -->
-                                                        <div class="glass-dark p-5 text-center"
-                                                            style="border-radius: var(--radius-lg); border-style: dashed;">
-                                                            <div class="mb-3" style="font-size: 2rem; opacity: 0.5;">📅
-                                                            </div>
-                                                            <h3 class="text-white mb-2">No Events This Week</h3>
-                                                            <p class="text-dim mb-4">We're currently scouting for the
-                                                                best experiences in town.</p>
-                                                            <a href="/organizer/apply" class="btn btn-outline">
-                                                                Be the first to host an event &rarr;
-                                                            </a>
-                                                        </div>
-                                                        <% } %>
-                                </div>
-                            </section>
-                        </main>
+            <!-- CTA Buttons -->
+            <div data-aos="fade-up" data-aos-delay="400" class="d-flex justify-center gap-3 flex-wrap mb-5">
+                <% if (user) { %>
+                    <a href="/user/events" class="btn btn-primary" style="height: 52px; padding: 0 2rem; font-size: 1rem; border-radius: 12px;">
+                        <i class="fi fi-rr-search me-2"></i>Browse Events
+                    </a>
+                <% } else { %>
+                    <a href="/user/signup" class="btn btn-primary" style="height: 52px; padding: 0 2rem; font-size: 1rem; border-radius: 12px;">
+                        Get Started &rarr;
+                    </a>
+                    <a href="/user/login" class="btn btn-outline" style="height: 52px; padding: 0 2rem; font-size: 1rem; border-radius: 12px;">
+                        Sign In
+                    </a>
+                <% } %>
+            </div>
 
-                        <footer>
-                            <div class="container footer-bottom">
-                                <p>&copy; 2026 EventHub Platform. All rights reserved.</p>
-                            </div>
-                        </footer>
+            <!-- Stats row -->
+            <div data-aos="fade-up" data-aos-delay="500" class="d-flex justify-center gap-4 flex-wrap" style="opacity: 0.65;">
+                <div class="text-center">
+                    <div style="font-size: 1.5rem; font-weight: 800; font-family: var(--font-display);">500+</div>
+                    <div style="font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em;">Events Hosted</div>
+                </div>
+                <div style="width: 1px; background: var(--border);"></div>
+                <div class="text-center">
+                    <div style="font-size: 1.5rem; font-weight: 800; font-family: var(--font-display);">12k+</div>
+                    <div style="font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em;">Happy Attendees</div>
+                </div>
+                <div style="width: 1px; background: var(--border);"></div>
+                <div class="text-center">
+                    <div style="font-size: 1.5rem; font-weight: 800; font-family: var(--font-display);">99%</div>
+                    <div style="font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em;">Satisfaction Rate</div>
+                </div>
+            </div>
+        </section>
 
-            
+        <!-- ── Search Bar ──────────────────────────────────────────── -->
+        <style>
+            .hero-search-bar {
+                border-radius: 100px;
+                padding: 0.6rem 0.6rem 0.6rem 1.8rem;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+                border: 1px solid rgba(255,255,255,0.09);
+                background: rgba(15,15,15,0.6);
+                backdrop-filter: blur(20px);
+                transition: all 0.3s ease;
+            }
+            .hero-search-bar:focus-within {
+                border-color: rgba(230, 57, 70, 0.4);
+                box-shadow: 0 20px 60px rgba(230, 57, 70, 0.15);
+            }
+            .hero-search-input {
+                width: 100%;
+                background: transparent;
+                border: none;
+                color: white;
+                outline: none;
+                font-size: 1rem;
+                height: 48px;
+                padding: 0;
+            }
+            .hero-search-input::placeholder { color: rgba(255,255,255,0.5); font-weight: 400; }
+            .hero-search-select {
+                width: 180px;
+                background: transparent;
+                border: none;
+                color: white;
+                outline: none;
+                font-size: 0.95rem;
+                height: 48px;
+                cursor: pointer;
+                padding-right: 1.5rem;
+                -moz-appearance: none;
+                -webkit-appearance: none;
+                appearance: none;
+                background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+                background-repeat: no-repeat;
+                background-position-x: 100%;
+                background-position-y: 50%;
+                font-weight: 500;
+            }
+            .hero-search-select option { background: #111; color: white; padding: 10px; }
+            .hero-search-divider {
+                width: 1px; height: 32px; background: rgba(255,255,255,0.15); margin: 0 1.2rem; flex-shrink: 0;
+            }
+            @media (max-width: 768px) {
+                .hero-search-bar {
+                    flex-direction: column;
+                    border-radius: 20px;
+                    padding: 1.2rem;
+                    gap: 1rem;
+                }
+                .hero-search-divider { display: none; }
+                .hero-search-select { width: 100%; }
+                .hero-search-bar .btn { width: 100%; border-radius: 12px !important; }
+            }
+        </style>
+
+        <section data-aos="fade-up" data-aos-delay="600" class="container" style="margin-top: -2rem; position: relative; z-index: 10; margin-bottom: 5rem;">
+            <form action="/user/events" method="GET" class="hero-search-bar d-flex align-items-center">
+                <div class="flex-grow-1 d-flex align-items-center gap-3 w-100">
+                    <i class="fi fi-rr-search text-dim" style="font-size: 1.2rem; flex-shrink: 0; margin-top: 2px;"></i>
+                    <input type="text" name="search" class="hero-search-input" placeholder="Search events, organizers, locations...">
+                </div>
+                
+                <div class="hero-search-divider"></div>
+                
+                <select name="category" class="hero-search-select">
+                    <option value="all">All Categories</option>
+                    <option value="Music">Music</option>
+                    <option value="Business">Business</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Workshop">Workshops</option>
+                    <option value="Tech">Technology</option>
+                    <option value="Art">Art</option>
+                    <option value="Food">Food</option>
+                </select>
+                
+                <button type="submit" class="btn btn-primary ms-md-3 mt-3 mt-md-0" style="border-radius: 100px; padding: 0 2.2rem; height: 54px; font-weight: 600; font-size: 1.05rem; white-space: nowrap;">
+                    Find Events
+                </button>
+            </form>
+        </section>
+
+        <!-- ── Trending Events ─────────────────────────────────────── -->
+        <section class="container section pt-0" style="padding-bottom: 6rem;">
+            <div data-aos="fade-up" class="d-flex justify-between align-center mb-5">
+                <div>
+                    <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary); font-weight: 700; margin-bottom: 6px;">
+                        <span style="display: inline-block; width: 20px; height: 2px; background: var(--primary); vertical-align: middle; margin-right: 8px;"></span>
+                        Featured
+                    </p>
+                    <h2 style="font-size: 2rem; letter-spacing: -1px; margin: 0;">Trending <span class="text-gradient">This Week</span></h2>
+                </div>
+                <a href="/events" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-dim); font-size: 0.88rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.08); border-radius: 100px; padding: 7px 18px; transition: all 0.25s ease;"
+                   onmouseover="this.style.borderColor='rgba(230,57,70,0.4)'; this.style.color='white';"
+                   onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.color='';">
+                    View all <i class="fi fi-rr-arrow-right" style="font-size: 0.8rem;"></i>
+                </a>
+            </div>
+
+            <div class="event-grid" style="gap: 2rem;">
+                <% if (locals.events && events.length > 0) { %>
+                    <% events.forEach(event => { %>
+                        <%- include('partials/event-card', { event: event }) %>
+                    <% }) %>
+                <% } else { %>
+                    <div class="glass-premium p-5 text-center" style="border-radius: 20px; border-style: dashed; border-color: rgba(255,255,255,0.1);">
+                        <div style="width: 70px; height: 70px; border-radius: 50%; background: rgba(230,57,70,0.08); border: 1px solid rgba(230,57,70,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 1.8rem;">📅</div>
+                        <h3 class="text-white mb-2" style="font-size: 1.2rem;">No Events This Week</h3>
+                        <p class="text-dim mb-4" style="font-size: 0.9rem;">We're scouting for the best experiences. Be the first!</p>
+                        <a href="/organizer/apply" class="btn btn-outline">Host an Event &rarr;</a>
+                    </div>
+                <% } %>
+            </div>
+        </section>
+
+        <!-- ── Feature Highlights ──────────────────────────────────── -->
+        <section class="container section" style="padding-top: 0; padding-bottom: 6rem;">
+            <div data-aos="fade-up" class="text-center mb-5">
+                <h2 style="font-size: 2rem; letter-spacing: -1px;">Why <span class="text-gradient">EventHub?</span></h2>
+                <p class="text-dim" style="font-size: 0.95rem; margin-top: 0.5rem;">Everything you need for a seamless event experience.</p>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
+                <% const features = [
+                    { icon: 'fi-rr-ticket', color: '#E63946', title: 'Instant Booking', desc: 'Reserve your spot in seconds. No waiting, no hassle.' },
+                    { icon: 'fi-rr-qr-scan', color: '#4ECDC4', title: 'QR Validation', desc: 'Digital tickets with secure QR codes for entry.' },
+                    { icon: 'fi-rr-wallet', color: '#F4A261', title: 'EventHub Wallet', desc: 'Store credits and pay faster at checkout.' },
+                    { icon: 'fi-rr-calendar-star', color: '#2ECC71', title: 'Event Calendar', desc: 'Never miss an event with your personal calendar.' }
+                ]; %>
+                <% features.forEach((f, index) => { %>
+                <div data-aos="fade-up" data-aos-delay="<%= index * 100 %>" class="glass-premium" style="border-radius: 16px; padding: 1.75rem; border: 1px solid rgba(255,255,255,0.07); transition: all 0.3s ease;"
+                     onmouseover="this.style.transform='translateY(-6px)'; this.style.borderColor='rgba(230,57,70,0.2)';"
+                     onmouseout="this.style.transform=''; this.style.borderColor='rgba(255,255,255,0.07)';">
+                    <div style="width: 48px; height: 48px; border-radius: 12px; background: <%= f.color %>1a; border: 1px solid <%= f.color %>33; display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; font-size: 1.2rem; color: <%= f.color %>;">
+                        <i class="fi <%= f.icon %>"></i>
+                    </div>
+                    <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.3px;"><%= f.title %></h4>
+                    <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; margin: 0;"><%= f.desc %></p>
+                </div>
+                <% }) %>
+            </div>
+        </section>
+
+        <!-- ── CTA Section ─────────────────────────────────────────── -->
+        <section class="container section" style="padding-top: 0; padding-bottom: 8rem;">
+            <div data-aos="zoom-in" class="glass-premium" style="border-radius: 24px; padding: 4rem 2rem; text-align: center; background: linear-gradient(135deg, rgba(230,57,70,0.15) 0%, rgba(15,15,15,0.8) 100%); border: 1px solid rgba(230,57,70,0.2); position: relative; overflow: hidden;">
+                <!-- Decorative BG elements -->
+                <div style="position: absolute; top: -50px; left: -50px; width: 200px; height: 200px; background: var(--primary); filter: blur(100px); opacity: 0.15;"></div>
+                <div style="position: absolute; bottom: -50px; right: -50px; width: 200px; height: 200px; background: #4ECDC4; filter: blur(100px); opacity: 0.1;"></div>
+                
+                <h2 style="font-size: 2.5rem; letter-spacing: -1px; margin-bottom: 1rem; position: relative; z-index: 1;">Ready to Host Your Own Event?</h2>
+                <p class="text-dim" style="max-width: 500px; margin: 0 auto 2.5rem; font-size: 1.05rem; position: relative; z-index: 1;">Join hundreds of organizers who use EventHub to sell tickets, manage attendees, and grow their community effortlessly.</p>
+                
+                <a href="/organizer/apply" class="btn btn-primary" style="position: relative; z-index: 1; height: 56px; padding: 0 3rem; font-size: 1.1rem; border-radius: 100px; font-weight: 600;">
+                    Become an Organizer
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="container footer-bottom">
+            <p style="font-size: 0.85rem; color: var(--text-dim);">&copy; 2026 EventHub Platform &mdash; All rights reserved.</p>
+        </div>
+    </footer>
+    <script>
+        const IS_LOGGED_IN = <%= locals.user ? 'true' : 'false' %>;
+
+        async function toggleWishlist(e, eventId, btn) {
+            e.stopPropagation();
+            if (!IS_LOGGED_IN) {
+                window.location.href = '/user/login?message=Please login to save events';
+                return;
+            }
+            try {
+                const res = await axios.post(`/user/events/${eventId}/wishlist`, {}, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (res.data.success) {
+                    const active = res.data.wishlisted;
+                    btn.classList.toggle('wishlisted', active);
+                    btn.querySelector('i').className = active ? 'fi fi-sr-heart' : 'fi fi-rr-heart';
+                    btn.title = active ? 'Remove from wishlist' : 'Add to wishlist';
+                    if (window.Toast) {
+                        Toast[active ? 'success' : 'info'](res.data.message);
+                    } else {
+                        alert(res.data.message);
+                    }
+                }
+            } catch (err) {
+                if (err.response?.status === 401) {
+                    window.location.href = '/user/login?message=Please login to save events';
+                } else {
+                    if (window.Toast) Toast.error('Could not update wishlist. Try again.');
+                    else alert('Could not update wishlist. Try again.');
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+    <script>AOS.init({ duration: 800, once: true, offset: 50 });</script>
 </body>
-
 </html>

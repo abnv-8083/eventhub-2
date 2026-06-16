@@ -43,10 +43,12 @@ const errorHandler = (err, req, res, next) => {
 
         // Operational, trusted error: send message to client
         if (error.isOperational) {
-            if (req.originalUrl.startsWith('/api')) {
+            if (req.originalUrl.startsWith('/api') || req.xhr || req.headers?.accept?.indexOf('json') > -1) {
                 return res.status(error.statusCode || 500).json({
+                    success: false,
                     status: error.status || 'error',
-                    message: error.message
+                    message: error.message,
+                    code: error.code || undefined
                 });
             }
             return res.status(error.statusCode || 500).render('error', {
@@ -58,8 +60,9 @@ const errorHandler = (err, req, res, next) => {
         } else {
             console.error('💥 FATAL ERROR:', err);
             
-            if (req.originalUrl.startsWith('/api')) {
+            if (req.originalUrl.startsWith('/api') || req.xhr || req.headers?.accept?.indexOf('json') > -1) {
                 return res.status(500).json({
+                    success: false,
                     status: 'error',
                     message: 'Something went very wrong!'
                 });

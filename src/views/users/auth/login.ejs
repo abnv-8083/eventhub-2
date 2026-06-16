@@ -33,13 +33,13 @@
                 <form id="loginForm" novalidate>
                     
                     <div class="form-floating animate stagger-1">
-                        <input type="email" id="email" name="email" class="input" placeholder=" " required>
+                        <input type="email" id="email" name="email" class="input" placeholder=" " data-rule="required, email">
                         <label for="email">Email Address</label>
                     </div>
 
                     <div class="form-floating position-relative mb-4">
                         <!-- 1. Make sure this input has id="password" -->
-                        <input type="password" class="form-control input" name="password" id="password" placeholder=" " required>
+                        <input type="password" class="form-control input" name="password" id="password" placeholder=" " data-rule="required">
                         <label for="password">Password</label>
                         
                         <!-- 2. Add the onclick event to the button -->
@@ -89,7 +89,7 @@
         </div>
     </div>
     <div class="modal-overlay" id="statusModal">
-        <div class="modal-container glass-dark" style="max-width: 420px; text-align: center;">
+        <div class="modal-container glass-premium dynamic-card" style="max-width: 420px; text-align: center;">
             <div class="modal-header border-bottom-0 pb-0 justify-content-end">
                 <i class="fi fi-rr-cross modal-close" onclick="closeStatusModal()"></i>
             </div>
@@ -127,8 +127,7 @@
         loginForm.addEventListener('submit', async (e)=>{
             e.preventDefault()
 
-            if(!loginForm.checkValidity()){
-                loginForm.reportValidity()
+            if(!EV.validateForm(loginForm)){
                 return
             }
             Loader.show()
@@ -182,6 +181,22 @@
             modal.classList.remove('active');
             setTimeout(() => modal.style.display = 'none', 300);
         }
+
+        // Check for URL query messages (e.g., from blocked Google Auth)
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const message = urlParams.get('message');
+            if (message) {
+                // Ensure Toast exists (assumes your layout has it)
+                if (typeof Toast !== 'undefined' && Toast.error) {
+                    Toast.error(message);
+                } else {
+                    alert(message);
+                }
+                // Optional: remove the query param from URL without reloading
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
 
     </script>
 </body>

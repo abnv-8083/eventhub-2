@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <%- include('../../partials/head') %>
@@ -19,50 +19,79 @@
             </div>
         </div>
 
+        <% 
+            let isClosed = false;
+            if (event.endDate) {
+                const endDateObj = new Date(event.endDate);
+                if (event.endTime) {
+                    const [hours, minutes] = event.endTime.split(':');
+                    endDateObj.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+                } else {
+                    endDateObj.setHours(23, 59, 59, 999);
+                }
+                isClosed = new Date() > endDateObj;
+            }
+        %>
+
         <div class="animate stagger-2">
-            <h5 class="fw-bold text-white mb-4">Select Tickets</h5>
-            <% tickets.forEach(ticket => { %>
-                <div class="ticket-selection-card <%= ticket.capacity <= 0 ? 'sold-out' : '' %>" id="ticket-card-<%= ticket._id %>">
-                    <div class="ticket-info">
-                        <h6 class="fw-bold text-white mb-1"><%= ticket.name %></h6>
-                        <p class="text-dim small mb-0" id="ticket-capacity-<%= ticket._id %>">
-                            Max <%= ticket.maxPerUser %> per person &middot; 
-                            <%= ticket.capacity > 0 ? ticket.capacity + ' available' : 'Sold Out' %>
-                        </p>
-                    </div>
-                    
-                    <div class="d-flex align-items-center gap-4">
-                        <span class="ticket-price-tag"><%= ticket.price === 0 ? 'Free' : '₹' + ticket.price.toLocaleString('en-IN') %></span>
+            <% if (isClosed) { %>
+                <div class="text-center p-5 mt-4" style="background: rgba(230, 57, 70, 0.05); border: 1px dashed rgba(230, 57, 70, 0.3); border-radius: 20px;">
+                    <i class="fi fi-rr-time-past mb-3" style="font-size: 3rem; color: #e63946; display: block;"></i>
+                    <h4 class="fw-bold text-white mb-2">Event Finished</h4>
+                    <p class="text-dim mb-0">This event has already concluded. Ticket bookings are permanently closed.</p>
+                </div>
+            <% } else { %>
+                <h5 class="fw-bold text-white mb-4">Select Tickets</h5>
+                <% tickets.forEach(ticket => { %>
+                    <div class="ticket-selection-card glass-premium dynamic-card <%= ticket.capacity <= 0 ? 'sold-out' : '' %>" id="ticket-card-<%= ticket._id %>" style="padding: 1.5rem; border-radius: 16px; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="ticket-info">
+                            <h6 class="fw-bold text-white mb-1"><%= ticket.name %></h6>
+                            <p class="text-dim small mb-0" id="ticket-capacity-<%= ticket._id %>">
+                                Max <%= ticket.maxPerUser %> per person &middot; 
+                                <%= ticket.capacity > 0 ? ticket.capacity + ' available' : 'Sold Out' %>
+                            </p>
+                        </div>
                         
-                        <div class="qty-controls">
-                            <button type="button" class="qty-btn" onclick="updateQty('<%= ticket._id %>', -1, <%= ticket.price %>)" id="minus-<%= ticket._id %>" disabled>
-                                <i class="fi fi-rr-minus small"></i>
-                            </button>
-                            <span class="qty-display" id="qty-<%= ticket._id %>">0</span>
-                            <button type="button" class="qty-btn" 
-                                id="plus-<%= ticket._id %>"
-                                data-price="<%= ticket.price %>"
-                                data-max="<%= ticket.maxPerUser %>"
-                                onclick="updateQty('<%= ticket._id %>', 1, <%= ticket.price %>, <%= ticket.maxPerUser %>, <%= ticket.capacity %>)">
-                                <i class="fi fi-rr-plus small"></i>
-                            </button>
+                        <div class="d-flex align-items-center gap-4">
+                            <span class="ticket-price-tag"><%= ticket.price === 0 ? 'Free' : '₹' + ticket.price.toLocaleString('en-IN') %></span>
+                            
+                            <div class="qty-controls">
+                                <button type="button" class="qty-btn" onclick="updateQty('<%= ticket._id %>', -1, <%= ticket.price %>)" id="minus-<%= ticket._id %>" disabled>
+                                    <i class="fi fi-rr-minus small"></i>
+                                </button>
+                                <span class="qty-display" id="qty-<%= ticket._id %>">0</span>
+                                <button type="button" class="qty-btn" 
+                                    id="plus-<%= ticket._id %>"
+                                    data-price="<%= ticket.price %>"
+                                    data-max="<%= ticket.maxPerUser %>"
+                                    data-capacity="<%= ticket.capacity %>"
+                                    onclick="updateQty('<%= ticket._id %>', 1, <%= ticket.price %>, <%= ticket.maxPerUser %>, <%= ticket.capacity %>)">
+                                    <i class="fi fi-rr-plus small"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            <% }) %>
+                <% }) %>
+            <% } %>
         </div>
     </div>
 
-    <div class="checkout-footer" id="checkoutFooter">
+    <div class="checkout-footer glass-premium" id="checkoutFooter" style="border-top: 1px solid rgba(255,255,255,0.08); background: rgba(8,8,8,0.85); backdrop-filter: blur(20px);">
         <div class="container-fluid max-width-900 mx-auto px-0">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
                     <p class="text-dim m-0 small text-uppercase fw-bold" style="letter-spacing: 1px;">Total Amount</p>
                     <h3 class="text-white fw-bold m-0" id="displayTotal">₹0</h3>
                 </div>
-                <button onclick="proceedToCheckout()" class="btn btn-primary px-5 py-3" style="border-radius: 14px; font-weight: 700; box-shadow: 0 8px 20px rgba(230, 57, 70, 0.3);">
-                    Proceed to Checkout <i class="fi fi-rr-arrow-right ms-2"></i>
-                </button>
+                <% if(locals.user) { %>
+                    <button onclick="proceedToCheckout()" class="btn btn-primary px-5 py-3" style="border-radius: 14px; font-weight: 700; box-shadow: 0 8px 20px rgba(230, 57, 70, 0.3);">
+                        Proceed to Checkout <i class="fi fi-rr-arrow-right ms-2"></i>
+                    </button>
+                <% } else { %>
+                    <button onclick="openLoginModal()" class="btn btn-primary px-5 py-3" style="border-radius: 14px; font-weight: 700; box-shadow: 0 8px 20px rgba(230, 57, 70, 0.3);">
+                        Login to Continue <i class="fi fi-rr-sign-in-alt ms-2"></i>
+                    </button>
+                <% } %>
             </div>
         </div>
     </div>
@@ -103,16 +132,39 @@
             if (capacityLabel && plusBtn) {
                 const remaining = localAvailable[id];
                 if (remaining <= 0) {
-                    capacityLabel.innerHTML = `Max ${maxPerUser} per person · <span class="text-warning fw-bold">None left in cart</span>`;
+                    capacityLabel.innerHTML = `Max ${maxPerUser} per person &middot; <span class="text-warning fw-bold">None left in cart</span>`;
                     plusBtn.disabled = true;
                 } else {
-                    capacityLabel.innerText = `Max ${maxPerUser} per person · ${remaining} available`;
+                    capacityLabel.innerHTML = `Max ${maxPerUser} per person &middot; ${remaining} available`;
                     plusBtn.disabled = false;
                 }
             }
 
             updateTotal();
+            localStorage.setItem('EventHub_cart_<%= event._id %>', JSON.stringify(cart));
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const savedCart = localStorage.getItem('EventHub_cart_<%= event._id %>');
+                if (savedCart) {
+                    const parsedCart = JSON.parse(savedCart);
+                    Object.keys(parsedCart).forEach(id => {
+                        const plusBtn = document.getElementById('plus-' + id);
+                        if (plusBtn && parsedCart[id].qty > 0) {
+                            const price = parseFloat(plusBtn.dataset.price);
+                            const max = parseInt(plusBtn.dataset.max);
+                            const capacity = parseInt(plusBtn.dataset.capacity);
+                            
+                            const desiredQty = parsedCart[id].qty;
+                            updateQty(id, desiredQty, price, max, capacity);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Could not load cart from session storage", e);
+            }
+        });
 
         function updateTotal() {
             let total = 0;
@@ -210,5 +262,62 @@
         window.socket.off('ticketStockUpdate', handleStockUpdate); // remove stale listener if any
         window.socket.on('ticketStockUpdate', handleStockUpdate);
     </script>
+    <% if(!locals.user) { %>
+    <div class="modal-overlay" id="quickLoginModal" style="z-index: 9999;">
+        <div class="modal-container glass-premium" style="max-width: 450px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); padding: 2rem;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="text-white fw-bold m-0">Quick Login</h4>
+                <button class="btn btn-link text-dim p-0" onclick="closeLoginModal()"><i class="fi fi-rr-cross"></i></button>
+            </div>
+            <p class="text-dim small mb-4">Please log in to continue with your ticket booking.</p>
+            <form id="quickLoginForm" onsubmit="handleQuickLogin(event)">
+                <div class="form-floating mb-3">
+                    <input type="email" class="form-control" id="quickEmail" placeholder="name@example.com" required style="background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.1);">
+                    <label for="quickEmail" class="text-dim">Email address</label>
+                </div>
+                <div class="form-floating mb-4">
+                    <input type="password" class="form-control" id="quickPassword" placeholder="Password" required style="background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.1);">
+                    <label for="quickPassword" class="text-dim">Password</label>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-3" style="border-radius: 12px; font-weight: 700;" id="quickLoginBtn">
+                    Login
+                </button>
+                <div class="text-center mt-3">
+                    <a href="/user/signup" class="text-dim small text-decoration-none">Don't have an account? <span class="text-primary fw-bold">Sign up</span></a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        function openLoginModal() {
+            document.getElementById('quickLoginModal').classList.add('active');
+        }
+        function closeLoginModal() {
+            document.getElementById('quickLoginModal').classList.remove('active');
+        }
+        async function handleQuickLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('quickLoginBtn');
+            const email = document.getElementById('quickEmail').value;
+            const password = document.getElementById('quickPassword').value;
+            
+            btn.innerHTML = '<i class="fi fi-rr-spinner-alt fa-spin"></i> Logging in...';
+            btn.disabled = true;
+            
+            try {
+                const res = await axios.post('/user/login', { email, password });
+                if (res.data.success) {
+                    Toast.success('Logged in successfully!');
+                    proceedToCheckout(); 
+                }
+            } catch (err) {
+                btn.innerHTML = 'Login';
+                btn.disabled = false;
+                Toast.error(err.response?.data?.message || 'Login failed');
+            }
+        }
+    </script>
+    <% } %>
 </body>
 </html>

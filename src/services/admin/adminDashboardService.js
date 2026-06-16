@@ -5,6 +5,8 @@ import Notification from '../../models/notifications/notification.js';
 import AppError from '../../utils/AppError.js';
 import HTTP_STATUS from '../../constant/statusCode.js';
 import { getIO } from '../../utils/socket.js';
+import { sendNotification } from '../../utils/notify.js';
+import { PAYMENT_STATUS } from '../../constant/paymentConstants.js';
 
 
 // ─── Admin Dashboard Stats ────────────────────────────────────────────────────
@@ -14,7 +16,7 @@ export const getDashboardStats = async () => {
         User.countDocuments({ role: 'organizer' }),
         Event.countDocuments(),
         Event.countDocuments({ status: 'pending' }),
-        Booking.find({ paymentStatus: 'completed' }),
+        Booking.find({ paymentStatus: PAYMENT_STATUS.COMPLETED }),
         Event.find()
             .sort({ createdAt: -1 })
             .limit(5)
@@ -29,16 +31,16 @@ export const getDashboardStats = async () => {
 };
 
 
-// ─── Update Organizer Status & Notify ────────────────────────────────────────
+// ─── Update Organizer Status & Notify ──────────────────────────────────────────
 export const updateOrganizerStatus = async (orgId, status) => {
     const updatedOrg = await User.findByIdAndUpdate(orgId, { status }, { new: true });
     if (!updatedOrg) throw new AppError('Organizer not found', HTTP_STATUS.NOT_FOUND);
 
-    const io = getIO();
-    io.to(orgId.toString()).emit('statusUpdate', {
-        status: updatedOrg.status,
-        message: `Your organizer account application has been ${updatedOrg.status}!`,
-    });
+    let notifStatus = 'info';
+    if (status === 'approved') notifStatus = 'success';
+    if (status === 'rejected') notifStatus = 'danger';
+
+    await sendNotification(orgId.toString(), `Your organizer account application has been ${updatedOrg.status}!`, notifStatus);
 
     return updatedOrg;
 };

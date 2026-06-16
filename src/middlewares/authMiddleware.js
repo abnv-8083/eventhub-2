@@ -19,6 +19,13 @@ export const isAdminGuest = (req, res, next) => {
     next();
 };
 
+export const isUserLogged = (req,res,next) =>{
+    if(!req.session.user){
+        return res.redirect('/user/login')
+    }
+    next()
+}
+
 // ==========================================
 // 2. AUTHENTICATION MIDDLEWARES (For Protected Routes)
 // ==========================================

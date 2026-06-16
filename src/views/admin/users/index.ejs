@@ -21,19 +21,19 @@
 
             <div class="row g-4 mb-4 animate stagger-2">
                 <div class="col-md-4">
-                    <div class="glass p-4 rounded-3 h-100 stat-card">
+                    <div class="glass-premium p-4 rounded-3 h-100 stat-card dynamic-card">
                         <p class="text-dim small text-uppercase fw-bold mb-2">Total Users</p>
                         <h3 class="fw-bold m-0" style="font-size: 2rem;"><%= totalUsers %></h3>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="glass p-4 rounded-3 h-100 stat-card">
+                    <div class="glass-premium p-4 rounded-3 h-100 stat-card dynamic-card">
                         <p class="text-dim small text-uppercase fw-bold mb-2">Active This Week</p>
                         <h3 class="fw-bold m-0" style="font-size: 2rem;">3,210</h3>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="glass p-4 rounded-3 h-100 border-red stat-card" style="background: rgba(230, 57, 70, 0.05);">
+                    <div class="glass-premium p-4 rounded-3 h-100 border-red stat-card dynamic-card" style="background: rgba(230, 57, 70, 0.05);">
                         <p class="text-dim small text-uppercase fw-bold mb-2">Banned Accounts</p>
                         <h3 class="fw-bold m-0 text-danger" style="font-size: 2rem;"><%= bannedUsers %></h3>
                     </div>
@@ -70,7 +70,7 @@
                 </div>
             </div>
 
-            <div class="glass-dark p-4 rounded-3 animate stagger-3">
+            <div class="glass-premium dynamic-card p-4 rounded-3 animate stagger-3">
                 <div style="overflow-x: auto;">
                     <table class="data-table">
                         <thead>
@@ -118,6 +118,9 @@
                                         </td>
                                         <td class="text-end">
                                             <div class="d-flex justify-content-end align-center gap-2">
+                                                <a href="/admin/users/<%= user._id %>" class="action-btn icon-only" title="View Details">
+                                                    <i class="fi fi-rr-eye"></i>
+                                                </a>
                                                 <button class="action-btn action-btn-delete icon-only" title="Delete User" onclick="confirmDeleteUser('<%= user._id %>', this)">
                                                     <i class="fi fi-rr-trash"></i>
                                                 </button>

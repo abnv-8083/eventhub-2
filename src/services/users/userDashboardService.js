@@ -2,24 +2,33 @@ import Booking from '../../models/payments/booking.js';
 import User from '../../models/users/user.js';
 import AppError from '../../utils/AppError.js';
 import HTTP_STATUS from '../../constant/statusCode.js';
+import { PAYMENT_STATUS } from '../../constant/paymentConstants.js';
 
 
 // ─── User Dashboard Stats ─────────────────────────────────────────────────────
 export const getDashboardData = async (userId) => {
     const now = new Date();
 
-    const allBookings = await Booking.find({ user: userId, paymentStatus: 'completed' })
+    const allBookings = await Booking.find({ user: userId, paymentStatus: PAYMENT_STATUS.COMPLETED })
         .populate({ path: 'event', populate: { path: 'category', select: 'name' } })
         .sort({ createdAt: -1 });
 
     const upcomingBookings = allBookings.filter(b => b.event && new Date(b.event.startDate) >= now);
-    const totalTickets     = allBookings.reduce((sum, b) => sum + b.quantity, 0);
+    const totalTickets     = allBookings.reduce((sum, b) => sum + (b.tickets ? b.tickets.reduce((acc, t) => acc + (t.quantity || 0), 0) : (b.quantity || 0)), 0);
 
     const nextBooking = [...upcomingBookings].sort(
         (a, b) => new Date(a.event.startDate) - new Date(b.event.startDate)
     )[0] || null;
 
-    return { upcomingCount: upcomingBookings.length, totalTickets, nextBooking };
+    const calendarEvents = allBookings.map(b => ({
+        title: b.event?.title || 'Unknown Event',
+        start: b.event?.startDate || new Date(),
+        url: `/user/tickets/${b._id}`,
+        backgroundColor: b.status === 'active' ? '#4361ee' : (b.status === 'on_hold' ? '#f39c12' : '#e63946'),
+        borderColor: 'transparent'
+    }));
+
+    return { upcomingCount: upcomingBookings.length, totalTickets, nextBooking, calendarEvents };
 };
 
 

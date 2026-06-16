@@ -5,6 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= locals.title ? title + ' | EventHub' : 'EventHub | Premium Events' %></title>
     <link rel="stylesheet" href="/css/style.css?v=<%= Date.now() %>">
+    <!-- Premium Google Fonts: Plus Jakarta Sans (Display) + Inter (Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* GLOBAL AUTOCOMPLETE STYLES FOR DARK THEME (Cache-Busting & High Specificity) */
+        input.form-control:-webkit-autofill,
+        input.form-control:-webkit-autofill:hover, 
+        input.form-control:-webkit-autofill:focus, 
+        input.form-control:-webkit-autofill:active,
+        .form-control:-webkit-autofill,
+        .form-control:-webkit-autofill:hover,
+        .form-control:-webkit-autofill:focus,
+        .form-control:-webkit-autofill:active,
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px #1a1a1a inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+            transition: background-color 5000s ease-in-out 0s !important;
+            background-color: transparent !important;
+            color: #ffffff !important;
+            caret-color: #ffffff !important;
+        }
+
+        .form-floating > .form-control:-webkit-autofill ~ label,
+        .form-floating > input:-webkit-autofill ~ label,
+        .form-floating input.form-control:-webkit-autofill ~ label {
+            color: rgba(255, 255, 255, 0.7) !important;
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.7) !important;
+        }
+    </style>
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof AOS !== 'undefined') {
+                AOS.init({ once: true, duration: 800, offset: 50 });
+            }
+        });
+    </script>
+    
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css'>
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.1.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
     <script src="/js/validation.js" defer></script>

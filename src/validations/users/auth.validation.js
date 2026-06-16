@@ -54,6 +54,10 @@ export const registerSchema = Joi.object({
             'string.pattern.base': 'Enter a valid phone number (digits only, 7–15 chars).'
         }),
         otherwise: Joi.optional().allow('', null)
+    }),
+
+    referralCode: Joi.string().trim().uppercase().max(10).optional().allow('', null).messages({
+        'string.max': 'Referral code cannot exceed 10 characters.'
     })
 });
 
@@ -88,6 +92,33 @@ export const updateProfileSchema = Joi.object({
     dob: Joi.date().iso().max(eighteenYearsAgo).allow('', null).messages({
         'date.max': 'You must be at least 18 years old to use this platform.',
         'date.format': 'Please provide a valid date format.'
+    }),
+
+    phone: Joi.string().trim().pattern(/^[0-9]{10,15}$/).allow('', null).messages({
+        'string.pattern.base': 'Phone number must contain ONLY numbers (10-15 digits). No spaces or symbols.'
+    }),
+
+    address: safeStr(Joi.string().trim().max(250)).allow('', null).messages({
+        'string.max': 'Address cannot exceed 250 characters.'
+    }),
+
+    bio: safeStr(Joi.string().trim().max(500)).allow('', null).messages({
+        'string.max': 'Bio cannot exceed 500 characters.'
+    })
+});
+
+export const updateOrganizerProfileSchema = Joi.object({
+    organizationName: safeStr(Joi.string().trim().min(3).max(50)).required().messages({
+        'string.empty': 'Organization Name is required.',
+        'string.min': 'Organization Name must be at least 3 characters long.',
+        'string.max': 'Organization Name cannot exceed 50 characters.'
+    }),
+
+    fullName: Joi.string().trim().pattern(/^[a-zA-Z\s]+$/).min(3).max(50).required().messages({
+        'string.empty': 'Representative Name is required.',
+        'string.pattern.base': 'Name can only contain letters and spaces. No numbers or special characters.',
+        'string.min': 'Representative Name must be at least 3 characters long.',
+        'string.max': 'Representative Name cannot exceed 50 characters.'
     }),
 
     phone: Joi.string().trim().pattern(/^[0-9]{10,15}$/).allow('', null).messages({

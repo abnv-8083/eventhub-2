@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <%- include('../../partials/head') %>
@@ -101,13 +101,34 @@
                     <h5 class="text-white fw-bold mb-3" style="font-size: 1.4rem;">Ready to join?</h5>
                     <p class="text-dim mb-4" style="font-size: 0.9rem;">Secure your spot before tickets sell out.</p>
                     
-                    <a href="/user/events/<%= event._id %>/buy-tickets" class="btn btn-primary w-100 shadow-sm" style="height: 3.2rem; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 1.05rem; font-weight: 600;">
-                        Get Tickets
-                    </a>
+                    <% 
+                        let isClosed = false;
+                        if (event.endDate) {
+                            const endDateObj = new Date(event.endDate);
+                            if (event.endTime) {
+                                const [hours, minutes] = event.endTime.split(':');
+                                endDateObj.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+                            } else {
+                                endDateObj.setHours(23, 59, 59, 999);
+                            }
+                            isClosed = new Date() > endDateObj;
+                        }
+                    %>
+                    
+                    <% if (isClosed) { %>
+                        <div class="p-3 mb-3" style="background: rgba(230, 57, 70, 0.1); border: 1px dashed rgba(230, 57, 70, 0.3); border-radius: 12px;">
+                            <h5 class="fw-bold mb-1" style="color: #e63946;">Event Finished</h5>
+                            <p class="text-dim mb-0" style="font-size: 0.85rem;">Bookings are now closed.</p>
+                        </div>
+                    <% } else { %>
+                        <a href="/user/events/<%= event._id %>/buy-tickets" class="btn btn-primary w-100 shadow-sm" style="height: 3.2rem; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 1.05rem; font-weight: 600;">
+                            Get Tickets
+                        </a>
 
-                    <div class="text-center mt-4">
-                        <p class="text-dim mb-0" style="font-size:0.75rem;"><i class="fi fi-rr-shield-check me-1"></i> Secure booking Â&middot; Instant confirmation</p>
-                    </div>
+                        <div class="text-center mt-4">
+                            <p class="text-dim mb-0" style="font-size:0.75rem;"><i class="fi fi-rr-shield-check me-1"></i> Secure booking &middot; Instant confirmation</p>
+                        </div>
+                    <% } %>
                 </div>
             </div>
         </div>

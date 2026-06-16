@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <%- include('../../partials/head') %>
@@ -25,24 +25,31 @@
                const approved_c = events.filter(e => e.status==='approved' && !e.isBlocked).length;
                const pending_c  = events.filter(e => e.status==='pending').length;
                const rejected_c = events.filter(e => e.status==='rejected').length;
+               const draft_c    = events.filter(e => e.status==='draft').length;
             %>
             <div class="row g-3 mb-4 animate stagger-2">
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-2">
                     <div class="summary-stat">
                         <div class="summary-stat-icon" style="background:rgba(255,255,255,0.05);"><i class="fi fi-rr-calendar" style="color:rgba(255,255,255,0.6);"></i></div>
                         <div><p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">Total</p><h4 class="fw-bold m-0"><%= total %></h4></div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-2">
                     <div class="summary-stat">
                         <div class="summary-stat-icon" style="background:rgba(46,204,113,0.1);"><i class="fi fi-rr-check" style="color:#2ecc71;"></i></div>
                         <div><p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">Live</p><h4 class="fw-bold m-0" style="color:#2ecc71;"><%= approved_c %></h4></div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-2">
                     <div class="summary-stat">
                         <div class="summary-stat-icon" style="background:rgba(243,156,18,0.1);"><i class="fi fi-rr-clock" style="color:#f39c12;"></i></div>
                         <div><p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">Pending</p><h4 class="fw-bold m-0" style="color:#f39c12;"><%= pending_c %></h4></div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="summary-stat">
+                        <div class="summary-stat-icon" style="background:rgba(155,89,182,0.1);"><i class="fi fi-rr-disk" style="color:#9b59b6;"></i></div>
+                        <div><p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">Drafts</p><h4 class="fw-bold m-0" style="color:#9b59b6;"><%= draft_c %></h4></div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
@@ -63,9 +70,11 @@
                 <div class="d-flex align-items-center gap-2 flex-wrap flex-grow-1 flex-md-grow-0">
                     <select id="evtStatus" class="input px-3 flex-grow-1" style="height:42px; padding-top:0; padding-bottom:0; border-radius:12px; min-width:140px; width:auto;">
                         <option value="all" <%= filters?.status==='all'||!filters?.status?'selected':'' %>>All Status</option>
+                        <option value="draft"    <%= filters?.status==='draft'   ?'selected':'' %>>Drafts</option>
                         <option value="pending"  <%= filters?.status==='pending' ?'selected':'' %>>Pending</option>
                         <option value="approved" <%= filters?.status==='approved'?'selected':'' %>>Approved</option>
                         <option value="rejected" <%= filters?.status==='rejected'?'selected':'' %>>Rejected</option>
+                        <option value="inactive" <%= filters?.status==='inactive'?'selected':'' %>>Inactive</option>
                         <option value="blocked"  <%= filters?.status==='blocked' ?'selected':'' %>>Blocked</option>
                     </select>
                     
@@ -87,7 +96,7 @@
             <div class="row g-4 animate stagger-4">
                 <% events.forEach(event => { %>
                 <div class="col-sm-6 col-lg-4">
-                    <div class="event-card" onclick="window.location.href='/organizer/events/<%= event._id %>'">
+                    <div class="event-card dynamic-card glass-premium" onclick="window.location.href='/organizer/events/<%= event._id %>'">
                         <!-- Thumbnail -->
                         <% if(event.banners && event.banners.length > 0) { %>
                             <img class="event-card-thumb" src="<%= event.banners[0] %>" alt="<%= event.title %>">
@@ -100,10 +109,14 @@
                             <div class="mb-2">
                                 <% if(event.isBlocked) { %>
                                     <span class="status-badge status-rejected" style="font-size:0.7rem;"><i class="fi fi-rr-ban me-1"></i>Blocked</span>
+                                <% } else if(event.status==='draft') { %>
+                                    <span class="status-badge" style="font-size:0.7rem;background:rgba(155,89,182,0.15);color:#9b59b6;border:1px solid rgba(155,89,182,0.3);"><i class="fi fi-rr-disk me-1"></i>Draft</span>
                                 <% } else if(event.status==='pending') { %>
                                     <span class="status-badge status-pending" style="font-size:0.7rem;"><i class="fi fi-rr-clock me-1"></i>Pending</span>
                                 <% } else if(event.status==='approved') { %>
                                     <span class="status-badge status-approved" style="font-size:0.7rem;"><i class="fi fi-rr-check me-1"></i>Live</span>
+                                <% } else if(event.status==='inactive') { %>
+                                    <span class="status-badge" style="font-size:0.7rem;background:rgba(108,117,125,0.15);color:#6c757d;border:1px solid rgba(108,117,125,0.3);"><i class="fi fi-rr-time-past me-1"></i>Inactive</span>
                                 <% } else { %>
                                     <span class="status-badge status-rejected" style="font-size:0.7rem;"><i class="fi fi-rr-cross me-1"></i>Rejected</span>
                                 <% } %>
@@ -131,16 +144,19 @@
                             </a>
                             <div class="d-flex gap-2">
                                 <% if(event.status==='approved') { %>
-                                <a href="/organizer/events/<%= event._id %>/bookings" class="action-icon-btn" title="Booking">
+                                <a href="/organizer/events/<%= event._id %>/bookings" class="action-icon-btn" title="Bookings">
                                     <i class="fi fi-rr-money"></i>
                                 </a>
+                                <a href="/organizer/events/<%= event._id %>/sales-report" class="action-icon-btn" title="Sales Report" style="color:#2ecc71;border-color:rgba(46,204,113,0.2);">
+                                    <i class="fi fi-rr-chart-histogram"></i>
+                                </a>
                                 <% } %>
-                                <% if(event.status==='pending' || event.status==='approved') { %>
-                                <a href="/organizer/events/<%= event._id %>/edit" class="action-icon-btn" title="Edit">
+                                <% if(event.status==='pending' || event.status==='approved' || event.status==='draft' || event.status==='inactive') { %>
+                                <a href="/organizer/events/<%= event._id %>/edit" class="action-icon-btn" title="<%= event.status === 'draft' ? 'Continue' : 'Edit' %>">
                                     <i class="fi fi-rr-edit"></i>
                                 </a>
                                 <% } %>
-                                <% if(event.status==='rejected') { %>
+                                <% if(event.status==='rejected' || event.status==='inactive') { %>
                                 <button onclick="handleResubmit('<%= event._id %>')" class="action-icon-btn success" title="Resubmit">
                                     <i class="fi fi-rr-redo"></i>
                                 </button>

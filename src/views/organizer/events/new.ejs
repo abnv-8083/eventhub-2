@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -112,35 +112,59 @@
                 </div>
             </div>
 
-            <div class="animate stagger-2" style="max-width: 1100px; margin: 0 auto;">
-                
-                <div class="wizard-tracker mb-5">
-                    <div class="wizard-line-container">
-                        <div class="wizard-line-progress" id="wizardProgress"></div>
+            <div class="animate stagger-2">
+                <div class="row g-4">
+                    <!-- Vertical Sidebar -->
+                    <div class="col-lg-3 col-md-4">
+                        <div class="glass-premium p-4 sticky-top" style="top: 100px; border-radius: 16px;">
+                            <h5 class="fw-bold mb-4">Create Event</h5>
+                            <div class="wizard-steps-vertical d-flex flex-column gap-3">
+                                <div class="wizard-step-vert active" id="nav-step-1" onclick="goToStep(1)" style="cursor:pointer; padding: 12px; border-radius: 12px; border: 1px solid var(--primary); background: rgba(230,57,70,0.1); display: flex; gap: 12px; align-items: center; transition: all 0.3s;">
+                                    <div class="step-icon" style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: white;"><i class="fi fi-rr-document-signed"></i></div>
+                                    <div class="step-info text-start">
+                                        <h6 class="m-0 fw-bold" style="color: white;">Details</h6>
+                                        <small class="text-dim">Basic info & Location</small>
+                                    </div>
+                                </div>
+                                <div class="wizard-step-vert" id="nav-step-2" onclick="goToStep(2)" style="cursor:pointer; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: flex; gap: 12px; align-items: center; transition: all 0.3s;">
+                                    <div class="step-icon" style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: rgba(255,255,255,0.5);"><i class="fi fi-rr-ticket"></i></div>
+                                    <div class="step-info text-start">
+                                        <h6 class="m-0 fw-bold" style="color: rgba(255,255,255,0.7);">Tickets</h6>
+                                        <small class="text-dim">Pricing & Capacity</small>
+                                    </div>
+                                </div>
+                                <div class="wizard-step-vert" id="nav-step-3" onclick="goToStep(3)" style="cursor:pointer; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: flex; gap: 12px; align-items: center; transition: all 0.3s;">
+                                    <div class="step-icon" style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: rgba(255,255,255,0.5);"><i class="fi fi-rr-picture"></i></div>
+                                    <div class="step-info text-start">
+                                        <h6 class="m-0 fw-bold" style="color: rgba(255,255,255,0.7);">Media</h6>
+                                        <small class="text-dim">Banners & Publish</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 pt-4 border-top" style="border-color: rgba(255,255,255,0.1) !important;">
+                                <p class="text-dim small mb-2">Overall Progress</p>
+                                <div class="progress mb-4" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                                    <div class="progress-bar bg-primary" id="wizardProgress" style="width: 0%; border-radius: 10px; transition: width 0.3s;"></div>
+                                </div>
+                                <button type="button" class="btn btn-outline w-100 py-2 mb-2" onclick="submitDraft()" style="border-radius: 10px; font-weight: 600;">
+                                    <i class="fi fi-rr-disk me-2"></i> Save as Draft
+                                </button>
+                                <small class="text-dim d-block text-center" style="font-size: 0.75rem;">You can safely resume later.</small>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="wizard-step active" id="nav-step-1">
-                        <div class="step-circle"><i class="fi fi-rr-document-signed"></i></div>
-                        <div class="step-label d-none d-sm-block">Event Details</div>
-                    </div>
-                    <div class="wizard-step" id="nav-step-2">
-                        <div class="step-circle"><i class="fi fi-rr-ticket"></i></div>
-                        <div class="step-label d-none d-sm-block">Tickets</div>
-                    </div>
-                    <div class="wizard-step" id="nav-step-3">
-                        <div class="step-circle"><i class="fi fi-rr-picture"></i></div>
-                        <div class="step-label d-none d-sm-block">Banners & Publish</div>
-                    </div>
-                </div>
-
-                <form id="createEventForm" novalidate>
+                    <!-- Right Form Content -->
+                    <div class="col-lg-9 col-md-8">
+                        <form id="createEventForm" novalidate>
                     
                     <%# ─── STEP 1: EVENT DETAILS ───────────────────────────────────── %>
                     <div id="step-1" class="step-container active">
                         
                         <div class="row g-4 mb-4">
-                            <div class="col-lg-7">
-                                <div class="glass-dark p-4 rounded-3 h-100">
+                            <div class="col-lg-8">
+                                <div class="glass-premium dynamic-card p-4 rounded-3 h-100">
                                     <h5 class="fw-bold mb-4 d-flex align-items-center gap-2">
                                         <i class="fi fi-rr-info text-primary"></i> Basic Information
                                     </h5>
@@ -152,19 +176,22 @@
                                     </div>
 
                                     <div class="row g-4 mb-4">
-                                        <div class="col-md-7">
-                                            <div class="form-floating">
-                                                <select id="category" name="category" class="form-control input" style="cursor: pointer;">
-                                                    <option value="" disabled selected>Choose Category...</option>
-                                                    <% categories.forEach(cat => { %>
-                                                        <option value="<%= cat._id %>"><%= cat.name %></option>
-                                                    <% }) %>
-                                                </select>
-                                                <label for="category">Event Category</label>
-                                                <div class="field-error" id="err-category"></div>
+                                        <div class="col-md-12">
+                                            <label class="form-label text-dim mb-3 d-block">Select Category</label>
+                                            <div class="category-selector">
+                                                <% categories.forEach(cat => { %>
+                                                    <label class="category-option">
+                                                        <input type="radio" name="category" value="<%= cat.id %>" required onchange="document.getElementById('previewCategory').textContent = '<%= cat.name %>'">
+                                                        <div class="category-card">
+                                                            <i class="fi <%= cat.icon %>"></i>
+                                                            <span><%= cat.name %></span>
+                                                        </div>
+                                                    </label>
+                                                <% }) %>
                                             </div>
+                                            <div class="field-error" id="err-category"></div>
                                         </div>
-                                        <div class="col-md-5">
+                                        <div class="col-md-12 mt-3">
                                             <div class="d-flex justify-content-between align-items-center px-4 rounded-3 h-100 w-100"
                                                 style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); min-height: 3.5rem; border-radius: 12px;">
                                                 <span class="text-white" style="font-weight: 500;">Feature Event?</span>
@@ -185,21 +212,21 @@
                                 </div>
                             </div>
 
-                            <div class="col-lg-5">
-                                <div class="glass-dark p-4 rounded-3 h-100">
+                            <div class="col-lg-4">
+                                <div class="glass-premium dynamic-card p-4 rounded-3 h-100">
                                     <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
                                         <i class="fi fi-rr-calendar text-primary"></i> Date & Time
                                     </h5>
                                     
                                     <div class="row g-3 mb-3">
-                                        <div class="col-sm-6">
+                                        <div class="col-12">
                                             <div class="form-floating">
-                                                <input type="date" id="startDate" name="startDate" class="form-control input" placeholder=" ">
+                                                <input type="date" id="startDate" name="startDate" class="form-control input" placeholder=" " min="<%= new Date().toISOString().split('T')[0] %>">
                                                 <label>Start Date</label>
                                                 <div class="field-error" id="err-startDate"></div>
                                             </div>
                                         </div>
-                                        <div class="col-sm-6">
+                                        <div class="col-12">
                                             <div class="form-floating">
                                                 <input type="time" id="startTime" name="startTime" class="form-control input" placeholder=" ">
                                                 <label>Start Time</label>
@@ -209,14 +236,14 @@
                                     </div>
 
                                     <div class="row g-3">
-                                        <div class="col-sm-6">
+                                        <div class="col-12">
                                             <div class="form-floating">
-                                                <input type="date" id="endDate" name="endDate" class="form-control input" placeholder=" ">
+                                                <input type="date" id="endDate" name="endDate" class="form-control input" placeholder=" " min="<%= new Date().toISOString().split('T')[0] %>">
                                                 <label>End Date</label>
                                                 <div class="field-error" id="err-endDate"></div>
                                             </div>
                                         </div>
-                                        <div class="col-sm-6">
+                                        <div class="col-12">
                                             <div class="form-floating">
                                                 <input type="time" id="endTime" name="endTime" class="form-control input" placeholder=" ">
                                                 <label>End Time</label>
@@ -228,7 +255,7 @@
                             </div>
                         </div>
 
-                        <div class="glass-dark p-4 rounded-3 mb-4">
+                        <div class="glass-premium dynamic-card p-4 rounded-3 mb-4">
                             <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
                                 <i class="fi fi-rr-marker text-primary"></i> Venue Location
                             </h5>
@@ -256,8 +283,8 @@
                     <%# ─── STEP 2: TICKETS ─────────────────────────────────────────── %>
                     <div id="step-2" class="step-container">
                         <div class="row justify-content-center">
-                            <div class="col-lg-10">
-                                <div class="glass-dark p-4 rounded-3 mb-4">
+                            <div class="col-lg-12">
+                                <div class="glass-premium dynamic-card p-4 rounded-3 mb-4">
                                     <div class="d-flex align-items-center justify-content-between gap-3 mb-4 pb-3 text-start w-100" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                                         <div class="text-start">
                                             <h5 class="fw-bold m-0 d-flex align-items-center justify-content-start gap-2 text-start" style="font-size: clamp(1.1rem, 3vw, 1.25rem);">
@@ -291,7 +318,7 @@
                     <div id="step-3" class="step-container">
                         <div class="row g-4">
                             <div class="col-lg-7">
-                                <div class="glass-dark p-4 rounded-3 text-center h-100">
+                                <div class="glass-premium dynamic-card p-4 rounded-3 text-center h-100">
                                     <h5 class="fw-bold mb-3 d-flex align-items-center gap-2 text-start">
                                         <i class="fi fi-rr-picture text-primary"></i> Upload Event Banners
                                     </h5>
@@ -331,7 +358,7 @@
                             </div>
 
                             <div class="col-lg-5 d-flex flex-column gap-4">
-                                <div class="glass-dark p-4 rounded-3" id="previewCard">
+                                <div class="glass-premium dynamic-card p-4 rounded-3" id="previewCard">
                                     <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
                                         <i class="fi fi-rr-eye text-primary"></i> Live Preview
                                     </h5>
@@ -350,7 +377,7 @@
                                     </div>
                                 </div>
 
-                                <div class="glass-dark p-4 rounded-3">
+                                <div class="glass-premium dynamic-card p-4 rounded-3">
                                     <button type="submit" class="btn btn-primary w-100 py-3" style="border-radius: 12px; font-weight: 700; letter-spacing: 1px; box-shadow: 0 8px 25px rgba(230,57,70,0.3);">
                                         <i class="fi fi-rr-rocket-lunch me-2"></i> Publish Event
                                     </button>
@@ -365,7 +392,9 @@
                         </div>
                     </div>
 
-                </form>
+                        </form>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -443,19 +472,29 @@
             document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active'));
             document.getElementById(`step-${stepIndex}`).classList.add('active');
 
-            document.querySelectorAll('.wizard-step').forEach((el, index) => {
-                el.classList.remove('active', 'completed');
-                const icon = el.querySelector('i');
+            document.querySelectorAll('.wizard-step-vert').forEach((el, index) => {
+                el.style.border = '1px solid rgba(255,255,255,0.1)';
+                el.style.background = 'transparent';
+                
+                const iconDiv = el.querySelector('.step-icon');
+                iconDiv.style.background = 'rgba(255,255,255,0.05)';
+                iconDiv.style.color = 'rgba(255,255,255,0.5)';
+                
+                const title = el.querySelector('h6');
+                title.style.color = 'rgba(255,255,255,0.7)';
                 
                 if (index + 1 === stepIndex) {
-                    el.classList.add('active');
-                    if(index === 0) icon.className = 'fi fi-rr-document-signed';
-                    if(index === 1) icon.className = 'fi fi-rr-ticket';
-                    if(index === 2) icon.className = 'fi fi-rr-picture';
+                    el.style.border = '1px solid var(--primary)';
+                    el.style.background = 'rgba(230,57,70,0.1)';
+                    iconDiv.style.background = 'var(--primary)';
+                    iconDiv.style.color = 'white';
+                    title.style.color = 'white';
                 }
                 if (index + 1 < stepIndex) {
-                    el.classList.add('completed');
-                    icon.className = 'fi fi-rr-check';
+                    el.style.border = '1px solid #2ecc71';
+                    iconDiv.style.background = '#2ecc71';
+                    iconDiv.style.color = '#000';
+                    iconDiv.querySelector('i').className = 'fi fi-rr-check';
                 }
             });
 
@@ -476,12 +515,14 @@
             const title = document.getElementById('title').value.trim();
             const startDate = document.getElementById('startDate').value;
             const address = document.getElementById('address').value;
-            const catEl = document.getElementById('category');
-            const selectedOpt = catEl.options[catEl.selectedIndex];
-            const catText = (selectedOpt && selectedOpt.value) ? selectedOpt.text : '';
+            
+            // Category is now a radio button, find the checked one
+            const checkedCat = document.querySelector('input[name="category"]:checked');
+            const catText = checkedCat ? checkedCat.parentElement.querySelector('span').textContent : '';
 
             document.getElementById('previewTitle').textContent = title || 'Your Event Title';
             document.getElementById('previewCategory').textContent = catText;
+
             document.getElementById('previewDate').textContent = startDate
                 ? new Date(startDate + 'T00:00:00').toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' })
                 : 'Date TBD';
@@ -503,29 +544,55 @@
         function validateStep1() {
             clearAllErrors();
             let valid = true;
+            const now   = new Date();
             const today = new Date(); today.setHours(0, 0, 0, 0);
 
             const title = document.getElementById('title').value.trim();
             if (!title) { showFieldError('title', 'Event title is required'); valid = false; }
             else if (title.length < 5) { showFieldError('title', 'Title must be at least 5 characters'); valid = false; }
 
-            if (!document.getElementById('category').value) { showFieldError('category', 'Please select a category'); valid = false; }
+            const checkedCat = document.querySelector('input[name="category"]:checked');
+            if (!checkedCat) { showFieldError('category', 'Please select a category'); valid = false; }
 
             const description = document.getElementById('description').value.trim();
             if (!description) { showFieldError('description', 'Event description is required'); valid = false; }
             else if (description.length < 20) { showFieldError('description', 'Must be at least 20 characters'); valid = false; }
 
             const startDate = document.getElementById('startDate').value;
-            if (!startDate) { showFieldError('startDate', 'Start date is required'); valid = false; }
-            else if (new Date(startDate) < today) { showFieldError('startDate', 'Cannot be in the past'); valid = false; }
+            const startTime = document.getElementById('startTime').value;
+            const endDate   = document.getElementById('endDate').value;
+            const endTime   = document.getElementById('endTime').value;
 
-            if (!document.getElementById('startTime').value) { showFieldError('startTime', 'Start time is required'); valid = false; }
+            // Start date validation
+            if (!startDate) {
+                showFieldError('startDate', 'Start date is required'); valid = false;
+            } else if (new Date(startDate) < today) {
+                showFieldError('startDate', 'Start date cannot be in the past'); valid = false;
+            }
 
-            const endDate = document.getElementById('endDate').value;
-            if (!endDate) { showFieldError('endDate', 'End date is required'); valid = false; }
-            else if (startDate && endDate < startDate) { showFieldError('endDate', 'Must be same or after start date'); valid = false; }
+            // Start time validation — also check the combined datetime is not in the past
+            if (!startTime) {
+                showFieldError('startTime', 'Start time is required'); valid = false;
+            } else if (startDate) {
+                const startDatetime = new Date(`${startDate}T${startTime}`);
+                if (startDatetime <= now) {
+                    showFieldError('startTime', 'Start time has already passed — please choose a future time'); valid = false;
+                }
+            }
 
-            if (!document.getElementById('endTime').value) { showFieldError('endTime', 'End time is required'); valid = false; }
+            // End date validation
+            if (!endDate) {
+                showFieldError('endDate', 'End date is required'); valid = false;
+            } else if (startDate && endDate < startDate) {
+                showFieldError('endDate', 'End date must be same or after start date'); valid = false;
+            }
+
+            // End time validation — when same day, end time must be after start time
+            if (!endTime) {
+                showFieldError('endTime', 'End time is required'); valid = false;
+            } else if (startDate && endDate && startDate === endDate && startTime && endTime <= startTime) {
+                showFieldError('endTime', 'End time must be after start time on the same day'); valid = false;
+            }
 
             if (!document.getElementById('address').value) { showFieldError('address', 'Please click the map to set a location'); valid = false; }
 
@@ -709,25 +776,25 @@
                 </div>
                 <div class="ticket-variant-body">
                     <div class="form-floating mb-3">
-                        <input type="text" class="form-control input ticket-name" placeholder=" " required>
+                        <input type="text" class="form-control input ticket-name" placeholder=" " data-rule="required">
                         <label>Ticket Name (e.g. VIP, General)</label>
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-sm-6">
                             <div class="form-floating">
-                                <input type="number" class="form-control input ticket-price" placeholder=" " required min="0">
+                                <input type="number" class="form-control input ticket-price" placeholder=" " data-rule="required, number" data-min="0">
                                 <label>Price (₹)</label>
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <div class="form-floating">
-                                <input type="number" class="form-control input ticket-capacity" placeholder=" " required min="1">
+                                <input type="number" class="form-control input ticket-capacity" placeholder=" " data-rule="required, number" data-min="1">
                                 <label>Total Capacity</label>
                             </div>
                         </div>
                     </div>
                     <div class="form-floating">
-                        <input type="number" class="form-control input ticket-max" placeholder=" " required min="1" value="5">
+                        <input type="number" class="form-control input ticket-max" placeholder=" " data-rule="required, number" data-min="1" value="5">
                         <label>Max Tickets Allowed Per User</label>
                     </div>
                 </div>
@@ -745,7 +812,9 @@
         addTicketVariant(); // Start with 1 default tier
 
         // ─── DATE SETUP ───────────────────────────────────────────────────
-        const todayStr = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const offset = now.getTimezoneOffset() * 60000;
+        const todayStr = new Date(now.getTime() - offset).toISOString().split('T')[0];
         document.getElementById('startDate').min = todayStr;
         document.getElementById('endDate').min = todayStr;
 
@@ -757,6 +826,57 @@
                 showFieldError('endDate', 'End date must be after start date');
             }
         });
+
+        async function submitDraft() {
+            const title = document.getElementById('title').value.trim();
+            if (!title) {
+                Toast.error('Please enter an Event Title to save as draft');
+                showFieldError('title', 'Title is required for drafts');
+                goToStep(1);
+                return;
+            }
+
+            const form = document.getElementById('createEventForm');
+            const formData = new FormData(form);
+            formData.append('action', 'draft');
+
+            const ticketEls = ticketsContainer.querySelectorAll('.ticket-variant');
+            const tickets = [];
+            for (const el of ticketEls) {
+                const name = el.querySelector('.ticket-name').value.trim();
+                const price = parseFloat(el.querySelector('.ticket-price').value);
+                const capacity = parseInt(el.querySelector('.ticket-capacity').value);
+                const max = parseInt(el.querySelector('.ticket-max').value);
+                if (name) {
+                    tickets.push({ 
+                        name: name, 
+                        price: isNaN(price) ? 0 : price, 
+                        capacity: isNaN(capacity) ? 1 : capacity, 
+                        maxPerUser: isNaN(max) ? 1 : max 
+                    });
+                }
+            }
+            formData.set('tickets', JSON.stringify(tickets));
+
+            if (croppedBlobs[1]) formData.append('banners', croppedBlobs[1], 'banner1.jpg');
+            if (croppedBlobs[2]) formData.append('banners', croppedBlobs[2], 'banner2.jpg');
+
+            Loader.show('SAVING DRAFT...');
+            try {
+                const res = await axios.post('/organizer/events', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                if (res.data.success) {
+                    Toast.success('Draft saved successfully!');
+                    setTimeout(() => window.location.href = '/organizer/events/' + res.data.eventId + '/edit', 1000);
+                }
+            } catch (err) {
+                Loader.hide();
+                Toast.error(err.response?.data?.message || 'Failed to save draft.');
+            } finally {
+                Loader.hide();
+            }
+        }
 
         // ─── FINAL SUBMISSION ─────────────────────────────────────────────
         document.getElementById('createEventForm').addEventListener('submit', async (e) => {
@@ -784,6 +904,7 @@
             try {
                 const formData = new FormData(e.target);
                 formData.append('tickets', JSON.stringify(tickets));
+                formData.append('action', 'publish');
 
                 if (croppedBlobs[1]) formData.append('banners', croppedBlobs[1], 'banner1.jpg');
                 if (croppedBlobs[2]) formData.append('banners', croppedBlobs[2], 'banner2.jpg');

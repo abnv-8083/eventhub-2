@@ -1,11 +1,8 @@
 <!-- src/views/partials/admin-sidebar.ejs -->
 <aside class="sidebar">
-    <!-- Adjusted padding to align logo with nav items -->
-    <div class="sidebar-brand px-3 py-4">
-        <a href="/admin/dashboard" class="logo" style="text-decoration: none;">
-            <h3 class="m-0" style="font-size: 1.6rem; font-weight: 800;">Event<span>Hub</span></h3>
-        </a>
-    </div>
+    <button class="sidebar-toggle-btn" id="adminSidebarToggleBtn" title="Toggle Sidebar">
+        <i class="fi fi-rr-angle-left"></i>
+    </button>
     
     <nav class="sidebar-nav px-2">
         <a href="/admin/dashboard" class="<%= title === 'Admin Dashboard' ? 'active' : '' %>">
@@ -24,15 +21,15 @@
             <i class="fi fi-rr-user"></i> <span>User Base</span>
         </a>
 
-        <a href="/admin/category" class="<%= title === 'Category Management' ? 'active' : '' %>">
-            <i class="fi fi-rr-apps-add"></i> <span>Categories</span>
+        <a href="/admin/categories" class="<%= title === 'Manage Categories' ? 'active' : '' %>">
+            <i class="fi fi-rr-list"></i> <span>Categories</span>
         </a>
 
         <a href="/admin/payouts" class="<%= title === 'Manage Payouts' ? 'active' : '' %>">
             <i class="fi fi-rr-money"></i> <span>Payouts</span>
         </a>
 
-        <a href="/admin/settings" class="<%= title === 'System Settings' ? 'active' : '' %>">
+        <a href="/admin/settings" class="<%= title === 'Admin Settings' ? 'active' : '' %>">
             <i class="fi fi-rr-settings"></i> <span>Settings</span>
         </a>
     </nav>
@@ -44,3 +41,19 @@
         </a>
     </div>
 </aside>
+
+<script>
+    // Sidebar Toggle Logic
+    const layout = document.querySelector('.dashboard-layout');
+    const toggleBtn = document.getElementById('adminSidebarToggleBtn');
+    
+    if (layout && toggleBtn) {
+        if (localStorage.getItem('sidebar-collapsed') === 'true') {
+            layout.classList.add('sidebar-collapsed');
+        }
+        toggleBtn.addEventListener('click', () => {
+            layout.classList.toggle('sidebar-collapsed');
+            localStorage.setItem('sidebar-collapsed', layout.classList.contains('sidebar-collapsed'));
+        });
+    }
+</script>

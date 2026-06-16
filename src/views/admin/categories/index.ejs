@@ -2,207 +2,77 @@
 <html lang="en">
 <head>
     <%- include('../../partials/head') %>
-    <title>Manage Categories | EventHub Admin</title>
+    <title>Manage Categories | EventHub</title>
 </head>
 <body class="bg-mesh">
+    
     <%- include('../../partials/navbars/admin-nav') %>
+
     <div class="dashboard-layout">
-        <%- include('../../partials/admin-sidebar', { title: 'Manage Category' }) %>
+        <%- include('../../partials/admin-sidebar', { title: 'Categories' }) %>
         
         <main class="dashboard-main">
-            <div class="d-flex justify-content-between align-items-center mb-5 animate stagger-1">
-                <div>
-                    <h2 class="fw-bold">Event Categories</h2>
-                    <p class="text-dim m-0">Organize and classify platform events.</p>
-                </div>
-                <button class="btn btn-primary" onclick="openAddModal()">
-                    <i class="fi fi-rr-plus me-2"></i> Add Category
-                </button>
+            <!-- Page Header -->
+            <div class="mb-4 animate stagger-1">
+                <h2 class="fw-bold">Manage Categories</h2>
+                <p class="text-dim">Block specific categories to prevent organizers from using them for new events.</p>
             </div>
 
-            <div class="glass-dark p-4 rounded-3 animate stagger-2">
-                <div style="overflow-x: auto;">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Category Name</th>
-                                <th>Description</th>
-                                <th>Added Date</th>
-                                <th>Status</th>
-                                <th class="text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="categoryTableBody">
-                            <% if (categories && categories.length > 0) { %>
-                                <% categories.forEach(cat => { %>
-                                    <tr id="row-<%= cat._id %>">
-                                        <td><strong class="text-white"><%= cat.name %></strong></td>
-                                        <td class="text-dim text-truncate" style="max-width: 200px;"><%= cat.description %></td>
-                                        <td class="text-dim"><%= new Date(cat.createdAt).toLocaleDateString() %></td>
-                                        <td>
-                                            <span class="status-badge <%= cat.isActive ? 'status-approved' : 'status-rejected' %>">
-                                                <%= cat.isActive ? 'Active' : 'Inactive' %>
-                                            </span>
-                                        </td>
-                                        <td class="text-end">
-                                            <div class="d-flex justify-content-end gap-2">
-                                                <button onclick="openEditModal('<%= cat._id %>', '<%= cat.name %>', '<%= cat.description %>')" class="action-btn icon-only">
-                                                    <i class="fi fi-rr-edit"></i>
-                                                </button>
-                                                <button onclick="toggleBlockCategory('<%= cat._id %>', <%= cat.isActive %>)" class="action-btn icon-only <%= cat.isActive ? 'action-btn-delete' : '' %>" <%= !cat.isActive ? 'style=color:#28a745;' : '' %>>
-                                                    <i class="fi <%= cat.isActive ? 'fi-rr-ban' : 'fi-rr-check' %>"></i>
-                                                </button>
-                                                <button onclick="confirmDeleteCategory('<%= cat._id %>')" class="action-btn action-btn-delete icon-only">
-                                                    <i class="fi fi-rr-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <% }) %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="5" class="text-center p-5">
-                                        <p class="text-muted m-0">No categories found.</p>
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="glass-premium dynamic-card p-4 rounded-3 mb-4 animate stagger-2">
+                <form id="categoriesForm" novalidate>
+                    <h5 class="fw-bold mb-3">Event Categories</h5>
+                    <p class="text-dim small mb-4">Select the categories you wish to block.</p>
+                    
+                    <div class="row g-3 mb-4">
+                        <% categories.forEach(cat => { %>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="form-check modern-checkbox">
+                                    <input class="form-check-input" type="checkbox" name="blockedCategories" value="<%= cat.id %>" id="cat_<%= cat.id %>" <%= blockedCategories.includes(cat.id) ? 'checked' : '' %>>
+                                    <label class="form-check-label d-flex align-items-center gap-2" for="cat_<%= cat.id %>" style="cursor:pointer; color:var(--text-dim);">
+                                        <i class="fi <%= cat.icon %> text-primary"></i> <%= cat.name %>
+                                    </label>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary px-5">Save Category Blocks</button>
+                    </div>
+                </form>
             </div>
         </main>
     </div>
 
-    <div id="categoryModal" class="modal-overlay">
-        <div class="glass-dark p-4 rounded-4" style="width: 400px; border: 1px solid rgba(255,255,255,0.1);">
-            <h4 id="modalTitle" class="text-white fw-bold mb-4">Add New Category</h4>
-            <form id="categoryForm">
-                <input type="hidden" id="categoryId">
-                <div class="mb-3">
-                    <label class="text-dim small d-block mb-2">Category Name</label>
-                    <input type="text" id="catName" class="input w-100" placeholder="e.g. Music Festivals" required>
-                </div>
-                <div class="mb-4">
-                    <label class="text-dim small d-block mb-2">Description</label>
-                    <textarea id="catDesc" class="input w-100" rows="3" placeholder="Brief description..."></textarea>
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="button" onclick="closeModal()" class="action-btn flex-grow-1">Cancel</button>
-                    <button type="submit" class="btn btn-primary flex-grow-1">Save Category</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        const modal = document.getElementById('categoryModal');
-        const form = document.getElementById('categoryForm');
-
-        function openAddModal() {
-            if(modal){
-                document.getElementById('modalTitle').innerText = 'Add New Category';
-                document.getElementById('categoryId').value = '';
-                form.reset();
-                modal.style.display = 'flex';
-                setTimeout(() => modal.classList.add('active'), 10);
-            }else{
-                console.error("Modal element not found!");
-            }
-            
-        }
-
-        function openEditModal(id, name, desc) {
-            document.getElementById('modalTitle').innerText = 'Edit Category';
-            document.getElementById('categoryId').value = id;
-            document.getElementById('catName').value = name;
-            document.getElementById('catDesc').value = desc;
-            modal.style.display = 'flex';
-            setTimeout(() => modal.classList.add('active'), 10);
-        }
-
-        function closeModal() { 
-            modal.classList.remove('active'); 
-            setTimeout(() => modal.style.display = 'none', 300);
-        }
-
-        form.onsubmit = async (e) => {
+        document.getElementById('categoriesForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const id = document.getElementById('categoryId').value;
-            const name = document.getElementById('catName').value.trim();
-            const description = document.getElementById('catDesc').value.trim();
-
-            if (!name) {
-                return Toast.error("Category name is required");
-            }
-            if (name.length < 2 || name.length > 50) {
-                return Toast.error("Category name must be between 2 and 50 characters");
-            }
-            if (!description) {
-                return Toast.error("Description is required");
-            }
-            if (description.length > 250) {
-                return Toast.error("Description cannot exceed 250 characters");
-            }
-
-            const data = { name, description };
-
-            Loader.show(id ? 'UPDATING...' : 'SAVING...');
-            try {
-                const url = id ? `/admin/categories/update/${id}` : '/admin/categories/add';
-                const response = await axios.post(url, data);
-                if (response.data.success) {
-                    Toast.success(response.data.message);
-                    setTimeout(() => window.location.reload(), 1000);
-                }
-            } catch (error) {
-                Toast.error(error.response?.data?.message || "Operation failed");
-            } finally { Loader.hide(); }
-        };
-
-        async function confirmDeleteCategory(id) {
-            const isConfirmed = await CustomConfirm.show({
-                title: "Delete Category?",
-                message: "Events under this category may become unclassified.",
-                confirmText: "Delete",
-                actionType: "danger",
-                icon: "fi-rr-trash"
-            });
-            if (!isConfirmed) return;
-
-            Loader.show('DELETING...');
-            try {
-                const response = await axios.delete(`/admin/categories/${id}`);
-                if (response.data.success) {
-                    Toast.success("Category deleted");
-                    document.getElementById(`row-${id}`).remove();
-                }
-            } catch (error) {
-                Toast.error("Failed to delete category");
-            } finally { Loader.hide(); }
-        }
-        async function toggleBlockCategory(id, currentStatus) {
-            const action = currentStatus ? 'block' : 'unblock';
-            const isConfirmed = await CustomConfirm.show({
-                title: `${action.charAt(0).toUpperCase() + action.slice(1)} Category?`,
-                message: `Are you sure you want to ${action} this category?`,
-                confirmText: "Yes, proceed",
-                actionType: currentStatus ? "danger" : "primary",
-                icon: currentStatus ? "fi-rr-ban" : "fi-rr-check"
-            });
+            const form = e.target;
+            const btn = form.querySelector('button[type="submit"]');
             
-            if (!isConfirmed) return;
+            const originalText = btn.innerText;
+            btn.innerText = 'Saving...';
+            btn.disabled = true;
 
-            Loader.show('PROCESSING...');
+            const formData = new FormData(form);
+            const data = {
+                blockedCategories: formData.getAll('blockedCategories')
+            };
+
             try {
-                const response = await axios.post('/admin/categories/toggle-block', { id });
+                const response = await axios.post('/admin/categories/block', data);
                 if (response.data.success) {
                     Toast.success(response.data.message);
-                    setTimeout(() => window.location.reload(), 1000);
                 }
             } catch (error) {
-                Toast.error(error.response?.data?.message || `Failed to ${action} category`);
-            } finally { Loader.hide(); }
-        }
+                Toast.error(error.response?.data?.message || 'Failed to update categories.');
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        });
     </script>
 </body>
 </html>

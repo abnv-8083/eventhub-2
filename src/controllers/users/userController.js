@@ -1,5 +1,6 @@
 import * as userServices from '../../services/users/userService.js';
 import * as userDashboardService from '../../services/users/userDashboardService.js';
+import * as userEventService from '../../services/users/userEventService.js';
 import Notification from '../../models/notifications/notification.js';
 import HTTP_STATUS from '../../constant/statusCode.js';
 
@@ -33,6 +34,15 @@ export const markNotificationsRead = async (req, res, next) => {
     }
 };
 
+export const clearNotifications = async (req, res, next) => {
+    try {
+        await Notification.deleteMany({ recipient: req.session.user._id });
+        res.json({ success: true });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // ─── Delete Individual Notification ─────────────────────────────────────────
 export const deleteNotification = async (req, res, next) => {
     try {
@@ -43,7 +53,7 @@ export const deleteNotification = async (req, res, next) => {
         });
 
         if (!deleted) {
-            return res.status(404).json({ success: false, message: 'Notification not found' });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: 'Notification not found' });
         }
 
         res.json({ success: true, message: 'Notification deleted' });
@@ -62,15 +72,35 @@ export const generateAIAvatar = async (req, res, next) => {
         res.send(buffer);
     } catch (error) {
         console.error('❌ [AI] Backend Generation Error:', error.message);
-        res.status(500).json({ success: false, message: 'Failed to generate AI image' });
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to generate AI image' });
+    }
+};
+
+// ─── AI Poster Generation ─────────────────────────────────────────────────────
+export const generatePoster = async (req, res) => {
+    try {
+        const { prompt } = req.body;
+        
+        if (!prompt) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: 'Prompt is required' });
+        }
+
+        const imageUrl = await userServices.generateAIPoster(prompt);
+        
+        res.json({ success: true, imageUrl });
+    } catch (error) {
+        console.error('Error in poster generation:', error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to generate AI image' });
     }
 };
 
 
 // ─── Homepage ─────────────────────────────────────────────────────────────────
-export const getHomepage = (req, res, next) => {
+export const getHomepage = async (req, res, next) => {
     try {
-        res.render('index');
+        const userId = req.session?.user?._id;
+        const events = await userEventService.getFeaturedEvents(userId);
+        res.render('index', { events });
     } catch (error) {
         next(error);
     }
@@ -87,10 +117,25 @@ export const getDashboard = async (req, res, next) => {
     }
 };
 
+// ─── User Calendar ────────────────────────────────────────────────────────────
+export const getCalendar = async (req, res, next) => {
+    try {
+        const data = await userDashboardService.getDashboardData(req.session.user._id);
+        res.render('users/calendar', { title: 'My Event Calendar', calendarEvents: data.calendarEvents });
+    } catch (error) {
+        next(error);
+    }
+};
+
 
 // ─── Profile Page ─────────────────────────────────────────────────────────────
-export const getUserProfile = (req, res, next) => {
-    res.render('users/profile', { title: 'My Profile' });
+export const getUserProfile = async (req, res, next) => {
+    try {
+        const data = await userDashboardService.getDashboardData(req.session.user._id);
+        res.render('users/profile', { title: 'My Profile', calendarEvents: data.calendarEvents });
+    } catch (error) {
+        next(error);
+    }
 };
 
 
@@ -146,6 +191,9 @@ export const updateUserProfile = async (req, res, next) => {
 // ─── Update Email ─────────────────────────────────────────────────────────────
 export const updateUserEmail = async (req, res, next) => {
     try {
+        if (req.session.user.googleId) {
+            return res.status(HTTP_STATUS.FORBIDDEN).json({ success: false, message: 'Google users cannot change their email address.' });
+        }
         const { newEmail } = req.body;
         req.session.tempData = { email: newEmail };
 
@@ -170,7 +218,11 @@ export const updateUserEmail = async (req, res, next) => {
 // ─── Update Password ──────────────────────────────────────────────────────────
 export const updatePassword = async (req, res, next) => {
     try {
-        const { currentPassword, currentUserId, newPassword, action } = req.body;
+        if (req.session.user.googleId) {
+            return res.status(HTTP_STATUS.FORBIDDEN).json({ success: false, message: 'Google users cannot change their password.' });
+        }
+        const { currentPassword, newPassword, action } = req.body;
+        const currentUserId = req.session.user._id;
         const result = await userServices.updatePassword(currentUserId, currentPassword, newPassword, action);
         if (!result)
             return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Internal Server Error' });

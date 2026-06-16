@@ -124,13 +124,20 @@ export const postOtpPage = async (req, res, next)=>{
                 })
             }
             req.session.tempEmail = email
-            return res.status(HTTP_STATUS.OK).json({
-                success: true,
-                message: 'OTP Verify Successfully',
-                redirect: '/user/reset-password'
+            req.session.save((err) => {
+                if(err) return next(err);
+                return res.status(HTTP_STATUS.OK).json({
+                    success: true,
+                    message: 'OTP Verify Successfully',
+                    redirect: '/user/reset-password'
+                });
             });
         }else if(action == 'email-update'){
-            const userId = req.session.user._id
+            const userId = req.session.user ? req.session.user._id : (req.session.organizer ? req.session.organizer._id : null);
+            if (!userId) {
+                return res.status(HTTP_STATUS.FORBIDDEN).json({ success: false, message: 'Unauthorized' });
+            }
+            
             const result = await userAuthService.verifyAndResetPassword(email, otp)
             if(!result){
                 return res.status(HTTP_STATUS.BAD_REQUEST).json({
@@ -146,13 +153,19 @@ export const postOtpPage = async (req, res, next)=>{
                 })
             }
             
-            req.session.user = saveEmail
+            const redirectUrl = req.session.organizer ? '/organizer/profile' : '/user/profile';
+            if (req.session.organizer) {
+                req.session.organizer = saveEmail;
+            } else {
+                req.session.user = saveEmail;
+            }
+            
             req.session.save((err) => {
             if (err) return next(err);
             res.status(HTTP_STATUS.OK).json({
                 success: true,
                 message: 'Email Updated Successfully',
-                redirect: '/user/profile',
+                redirect: redirectUrl,
             });
         });
         } else if (action == 'organizerReregister') {
@@ -194,7 +207,7 @@ export const postResendOtp = async (req,res, next)=>{
     try {
         const {email} = req.body
         if(!email){
-            return res.status(400).json({ 
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
                 success: false, 
                 message: "Email is required" 
             });
@@ -205,13 +218,13 @@ export const postResendOtp = async (req,res, next)=>{
 
 
         if(!result){
-            return res.status(400).json({ 
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
                 success: false, 
                 message: "Internal Server Error" 
             });
         }
 
-        return res.status(400).json({ 
+        return res.status(HTTP_STATUS.OK).json({ 
             success: true, 
             message: "OTP Resent to Email" 
         });
@@ -233,6 +246,14 @@ export const postLoginPage = async (req,res,next)=>{
                 message: 'Internal Server Error'
             });
         }
+
+        if(result.isBlocked){
+            return res.status(HTTP_STATUS.FORBIDDEN).json({ 
+                success: false, 
+                message: 'Your account is currently blocked by the administrator.' 
+            });
+        }
+
         if(result.role == 'organizer'){
             if(result.status == 'pending'){
                 return res.status(HTTP_STATUS.FORBIDDEN).json({ 
@@ -245,11 +266,6 @@ export const postLoginPage = async (req,res,next)=>{
                     success: false, 
                     status: 'rejected', 
                     message: 'Unfortunately, your application to become an organizer has been rejected.' 
-                });
-            }else if(result.isBlocked){
-                return res.status(HTTP_STATUS.FORBIDDEN).json({ 
-                    success: false, 
-                    message: 'Your Account is Currenty Blocked' 
                 });
             }
         }
@@ -315,10 +331,13 @@ export const postForgotPassword = async (req,res,next)=>{
                 message: 'Internal Server Error'
             })
         }
-        return res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'OTP Sent To Email'
-        })
+        req.session.save((err) => {
+            if (err) return next(err);
+            return res.status(HTTP_STATUS.OK).json({
+                success: true,
+                message: 'OTP Sent To Email'
+            });
+        });
         
     } catch (error) {
         next(error)
@@ -336,11 +355,15 @@ export const postResetPassword = async (req,res,next)=>{
                 message: 'Internal Server Error'
             })
         }
-        return res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Password Successfully changed',
-            redirect: '/user/login'
-        })
+        delete req.session.tempEmail;
+        req.session.save((err) => {
+            if (err) return next(err);
+            return res.status(HTTP_STATUS.OK).json({
+                success: true,
+                message: 'Password Successfully changed',
+                redirect: '/user/login'
+            });
+        });
 
     } catch (error) {
         next(error)

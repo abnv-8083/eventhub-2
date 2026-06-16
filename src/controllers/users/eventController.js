@@ -5,18 +5,18 @@ import * as userEventService from '../../services/users/userEventService.js';
 // ─── Browse Events ────────────────────────────────────────────────────────────
 export const getBrowseEvents = async (req, res, next) => {
     try {
-        const { search = '', category = 'all', sort = 'newest', page = 1 } = req.query;
+        const { search = '', category = 'all', sort = 'newest', page = 1, priceRange = 'all', dateRange = 'all' } = req.query;
         const userId = req.session.user?._id || null;
 
         const { events, categories, total, totalPages } = await userEventService.browseEvents(
-            userId, { search, category, sort, page }
+            userId, { search, category, sort, page, priceRange, dateRange }
         );
 
         res.render('users/events/browse', {
             title: 'Browse Events',
             events,
             categories,
-            filters: { search, category, sort },
+            filters: { search, category, sort, priceRange, dateRange },
             totalPages,
             currentPage: parseInt(page),
             total,
@@ -75,3 +75,4 @@ export const getWishlistPage = async (req, res, next) => {
         next(error);
     }
 };
+

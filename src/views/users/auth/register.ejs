@@ -34,17 +34,17 @@
                     
                     <div id="step-1">
                         <div class="form-floating position-relative mb-4">
-                            <input class="form-control input" type="text" id="fullName" name="fullName" class="input" placeholder=" " required>
+                            <input class="form-control input" type="text" id="fullName" name="fullName" placeholder=" " data-rule="required, name">
                             <label for="fullName">Full Name</label>
                         </div>
 
                         <div class="form-floating position-relative mb-4">
-                            <input class="form-control input" type="email" id="email" name="email" class="input" placeholder=" " required>
+                            <input class="form-control input" type="email" id="email" name="email" placeholder=" " data-rule="required, email">
                             <label for="email">Email Address</label>
                         </div>
 
                         <div class="form-group animate stagger-2" style="margin-bottom: 1.5rem;">
-                            <select id="role" name="role" class="input" style="height: 3.8rem;" required>
+                            <select id="role" name="role" class="input" style="height: 3.8rem;" data-rule="required">
                                 <option value="user">I want to Attend Events (User)</option>
                                 <option value="organizer">I want to Host Events (Organizer)</option>
                             </select>
@@ -52,7 +52,7 @@
 
                         <div class="d-flex gap-2 animate stagger-3">
                             <div class="form-floating position-relative mb-4">
-                                <input type="password" class="form-control input" name="password" id="password" placeholder=" " required>
+                                <input type="password" class="form-control input" name="password" id="password" placeholder=" " data-rule="required, password, min8">
                                 <label for="password">Password</label>
                                 <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
                                     <i class="fi fi-rr-eye"></i>
@@ -60,13 +60,25 @@
                             </div>
                             
                             <div class="form-floating position-relative mb-4">
-                                <input type="password" class="form-control input" name="confirmPassword" id="confirmPassword" placeholder=" " required>
+                                <input type="password" class="form-control input" name="confirmPassword" id="confirmPassword" placeholder=" " data-rule="required, password, match:password">
                                 <label for="confirmPassword">Confirm Password</label>
                                 <!-- Notice the ID in the onclick matches the input ID -->
                                 <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
                                     <i class="fi fi-rr-eye"></i>
                                 </button>
                             </div>
+                        </div>
+
+                        <!-- Referral Code (Optional) -- only for users -->
+                        <div id="referralRow" class="form-floating position-relative mb-4" style="display: none;" title="Have a friend's referral code? Enter it to earn ₹50 wallet bonus!">
+                            <div class="d-flex gap-2 align-items-center">
+                                <div class="form-floating flex-grow-1 position-relative">
+                                    <input type="text" class="form-control input" name="referralCode" id="referralCode" placeholder=" " maxlength="10" style="text-transform: uppercase;">
+                                    <label for="referralCode"><i class="fi fi-rr-gift me-1"></i> Referral Code (Optional)</label>
+                                </div>
+                                <button type="button" id="validateRefBtn" class="btn btn-outline btn-sm px-3" style="height: 3.5rem; white-space: nowrap;">Apply</button>
+                            </div>
+                            <p id="refCodeMsg" class="mt-1 mb-0" style="font-size: 0.82rem; display: none;"></p>
                         </div>
 
                         <button type="submit" id="step1-btn" class="btn btn-primary mt-2 animate stagger-4" style="width: 100%; height: 3.5rem; font-size: 1rem;">
@@ -106,17 +118,17 @@
                         </div>
 
                         <div class="form-floating animate stagger-1">
-                            <input type="text" id="organizationName" name="organizationName" class="input" placeholder=" ">
+                            <input type="text" id="organizationName" name="organizationName" class="input" placeholder=" " data-rule="">
                             <label for="organizationName">Organization / Company Name</label>
                         </div>
 
                         <div class="form-floating animate stagger-2">
-                            <input type="text" id="city" name="city" class="input" placeholder=" ">
+                            <input type="text" id="city" name="city" class="input" placeholder=" " data-rule="">
                             <label for="city">Headquarters City</label>
                         </div>
 
                         <div class="form-floating animate stagger-3">
-                            <input type="tel" id="phone" name="phone" class="input" placeholder=" ">
+                            <input type="tel" id="phone" name="phone" class="input" placeholder=" " data-rule="">
                             <label for="phone">Business Phone Number</label>
                         </div>
 
@@ -145,13 +157,67 @@
             
             if (input.type === 'password') {
                 input.type = 'text';
-                icon.classList.replace('fi-rr-eye', 'fi-rr-eye-crossed'); // Changes to the crossed-out eye
+                icon.classList.replace('fi-rr-eye', 'fi-rr-eye-crossed');
             } else {
                 input.type = 'password';
-                icon.classList.replace('fi-rr-eye-crossed', 'fi-rr-eye'); // Changes back to normal eye
+                icon.classList.replace('fi-rr-eye-crossed', 'fi-rr-eye');
             }
         }
 
+        // ── Referral Code Logic ────────────────────────────────────────────────────
+        const referralRow = document.getElementById('referralRow');
+        const referralInput = document.getElementById('referralCode');
+        const refCodeMsg = document.getElementById('refCodeMsg');
+        const validateRefBtn = document.getElementById('validateRefBtn');
+
+        // Show referral row only when role is 'user'
+        document.getElementById('role').addEventListener('change', (e) => {
+            referralRow.style.display = e.target.value === 'user' ? 'block' : 'none';
+        });
+        // Show by default (default role is user)
+        referralRow.style.display = 'block';
+
+        // Auto-fill from ?ref= URL param
+        const urlParams = new URLSearchParams(window.location.search);
+        const refParam = urlParams.get('ref');
+        if (refParam) {
+            referralInput.value = refParam.toUpperCase();
+            referralRow.style.display = 'block';
+        }
+
+        // Force uppercase as user types
+        referralInput.addEventListener('input', () => {
+            referralInput.value = referralInput.value.toUpperCase();
+            refCodeMsg.style.display = 'none';
+        });
+
+        // Validate referral code via AJAX
+        validateRefBtn.addEventListener('click', async () => {
+            const code = referralInput.value.trim();
+            if (!code) return;
+            validateRefBtn.disabled = true;
+            validateRefBtn.textContent = '...';
+            try {
+                const res = await axios.post('/user/refer/validate-code', { code });
+                refCodeMsg.style.display = 'block';
+                if (res.data.success) {
+                    refCodeMsg.style.color = '#2ECC71';
+                    refCodeMsg.innerHTML = `<i class="fi fi-rr-check me-1"></i> ${res.data.message}`;
+                    validateRefBtn.textContent = '✓';
+                } else {
+                    refCodeMsg.style.color = '#E63946';
+                    refCodeMsg.innerHTML = `<i class="fi fi-rr-cross-small me-1"></i> ${res.data.message}`;
+                    validateRefBtn.textContent = 'Apply';
+                }
+            } catch (err) {
+                refCodeMsg.style.display = 'block';
+                refCodeMsg.style.color = '#E63946';
+                refCodeMsg.textContent = err.response?.data?.message || 'Invalid code.';
+                validateRefBtn.textContent = 'Apply';
+            } finally {
+                validateRefBtn.disabled = false;
+            }
+        });
 
         // Multi-Step Form Logic
         const roleSelect = document.getElementById('role');
@@ -181,7 +247,7 @@
                 step1Btn.innerHTML = 'Create Account';
                 
                 // Remove required from Step 2 fields if they switch back to User
-                orgInputs.forEach(input => input.removeAttribute('required'));
+                orgInputs.forEach(input => input.setAttribute('data-rule', ''));
             }
         });
 
@@ -191,32 +257,13 @@
                 
                 // --- NEW CUSTOM VALIDATION LOGIC ---
                 let isStep1Valid = true;
-                const step1Inputs = step1.querySelectorAll('input[required], select[required]');
+                const step1Inputs = step1.querySelectorAll('[data-rule]');
                 
                 step1Inputs.forEach(input => {
-                    // Check if the input is valid behind the scenes
-                    if (!input.checkValidity()) {
+                    if (!EV.validateField(input)) {
                         isStep1Valid = false;
                     }
-                    // This triggers your validation.js file to show the custom red text!
-                    input.dispatchEvent(new Event('blur')); 
                 });
-
-                // Check password match manually for step 1
-                const pwd = document.getElementById('password');
-                const confirmPwd = document.getElementById('confirmPassword');
-                if (pwd.value !== confirmPwd.value) {
-                    isStep1Valid = false;
-                    confirmPwd.classList.add('input-error');
-                    // Add your custom error text manually if they don't match
-                    let err = confirmPwd.parentElement.parentElement.querySelector('.error-text');
-                    if (!err) {
-                        err = document.createElement('span');
-                        err.className = 'error-text';
-                        confirmPwd.parentElement.parentElement.appendChild(err);
-                    }
-                    err.innerText = 'Passwords do not match.';
-                }
 
                 // If anything is invalid, stop here!
                 if (!isStep1Valid) {
@@ -230,7 +277,10 @@
                 step2.style.display = 'block';
                 
                 // NOW make Step 2 fields required so the final submit catches them
-                orgInputs.forEach(input => input.setAttribute('required', 'true'));
+                orgInputs.forEach(input => {
+                    if (input.name === 'phone') input.setAttribute('data-rule', 'required, phone');
+                    else input.setAttribute('data-rule', 'required');
+                });
                 
                 // Update Headers
                 formTitle.innerText = 'Organizer Profile';
@@ -247,7 +297,7 @@
             loginLink.style.display = 'block';
             
             // Remove required so they can edit step 1 without errors
-            orgInputs.forEach(input => input.removeAttribute('required'));
+            orgInputs.forEach(input => input.setAttribute('data-rule', ''));
 
             // Revert Headers
             formTitle.innerText = 'Join EventHub';
@@ -257,8 +307,7 @@
         registerForm.addEventListener('submit', async (e)=>{
             e.preventDefault()
 
-            if(!registerForm.checkValidity()){
-                registerForm.reportValidity()
+            if(!EV.validateForm(registerForm)){
                 return
             }
 

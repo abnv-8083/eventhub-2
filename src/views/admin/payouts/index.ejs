@@ -26,6 +26,7 @@
                         <option value="all" <%= filters?.status === 'all' || !filters?.status ? 'selected' : '' %>>All Status</option>
                         <option value="pending" <%= filters?.status === 'pending' ? 'selected' : '' %>>Pending</option>
                         <option value="paid" <%= filters?.status === 'paid' ? 'selected' : '' %>>Paid</option>
+                        <option value="rejected" <%= filters?.status === 'rejected' ? 'selected' : '' %>>Rejected</option>
                     </select>
                     <select id="paySort" class="input px-3">
                         <option value="newest" <%= filters?.sort === 'newest' || !filters?.sort ? 'selected' : '' %>>Newest First</option>
@@ -40,7 +41,7 @@
                 </div>
             </div>
 
-            <div class="glass-dark p-4 rounded-3 animate stagger-3">
+            <div class="glass-premium dynamic-card p-4 rounded-3 animate stagger-3">
                 <div style="overflow-x: auto;">
                     <table class="data-table">
                         <thead>
@@ -57,11 +58,11 @@
                                 <% payouts.forEach(payout => { %>
                                 <tr>
                                     <td>
-                                        <strong style="color: white;"><%= payout.organizer.fullName %></strong>
-                                        <p class="text-dim m-0" style="font-size: 0.8rem;"><%= payout.organizer.email %></p>
+                                        <strong style="color: white;"><%= payout.organizer ? payout.organizer.fullName : 'Deleted User' %></strong>
+                                        <p class="text-dim m-0" style="font-size: 0.8rem;"><%= payout.organizer ? payout.organizer.email : 'N/A' %></p>
                                     </td>
                                     <td>
-                                        <span style="color: white;"><%= payout.event.title %></span>
+                                        <span style="color: white;"><%= payout.event ? payout.event.title : 'Deleted Event' %></span>
                                         <p class="text-dim m-0" style="font-size: 0.8rem;">ID: #<%= payout._id.toString().slice(-6).toUpperCase() %></p>
                                     </td>
                                     <td>
@@ -76,13 +77,20 @@
                                             <span class="status-badge status-pending"><i class="fi fi-rr-clock me-1"></i>Pending</span>
                                         <% } else if(payout.status === 'paid') { %>
                                             <span class="status-badge status-approved"><i class="fi fi-rr-check me-1"></i>Paid</span>
+                                        <% } else if(payout.status === 'rejected') { %>
+                                            <span class="status-badge status-rejected"><i class="fi fi-rr-ban me-1"></i>Rejected</span>
                                         <% } %>
                                     </td>
                                     <td class="text-end">
                                         <% if(payout.status === 'pending') { %>
-                                        <button onclick="approvePayout('<%= payout._id %>')" class="btn btn-outline btn-sm px-3 text-success" title="Approve & Pay">
-                                            <i class="fi fi-rr-check me-1"></i> Approve & Pay
-                                        </button>
+                                        <div class="d-flex gap-2 justify-content-end">
+                                            <button onclick="approvePayout('<%= payout._id %>')" class="btn btn-outline btn-sm px-3 text-success" title="Approve & Pay">
+                                                <i class="fi fi-rr-check me-1"></i> Approve
+                                            </button>
+                                            <button onclick="rejectPayout('<%= payout._id %>')" class="btn btn-outline btn-sm px-3" style="color:#E63946;border-color:rgba(230,57,70,0.3);" title="Reject">
+                                                <i class="fi fi-rr-ban me-1"></i> Reject
+                                            </button>
+                                        </div>
                                         <% } else { %>
                                             <span class="text-dim" style="font-size: 0.8rem;">Processed</span>
                                         <% } %>
@@ -138,7 +146,7 @@
         async function approvePayout(payoutId) {
             const confirmed = await CustomConfirm.show({
                 title: 'Approve Payout?',
-                message: 'Are you sure you want to mark this payout as paid? The organizer will be notified.',
+                message: 'Are you sure you want to mark this payout as paid? The organizer will be notified instantly.',
                 confirmText: 'Yes, Mark Paid',
                 actionType: 'primary',
                 icon: 'fi-rr-money'
@@ -150,6 +158,24 @@
                 if (res.data.success) { Toast.success(res.data.message); setTimeout(() => location.reload(), 1000); }
             } catch (err) {
                 Toast.error(err.response?.data?.message || 'Failed to approve payout');
+            } finally { Loader.hide(); }
+        }
+        async function rejectPayout(payoutId) {
+            const confirmed = await CustomConfirm.show({
+                title: 'Reject Payout?',
+                message: 'The organizer will be notified that their payout was rejected. Optionally enter a reason below.',
+                confirmText: 'Reject',
+                actionType: 'danger',
+                icon: 'fi-rr-ban'
+            });
+            if (!confirmed) return;
+            const reason = prompt('Optional: Enter a rejection reason (leave blank to skip)');
+            Loader.show('PROCESSING...');
+            try {
+                const res = await axios.post('/admin/payouts/reject', { payoutId, reason: reason || '' });
+                if (res.data.success) { Toast.success(res.data.message); setTimeout(() => location.reload(), 1000); }
+            } catch (err) {
+                Toast.error(err.response?.data?.message || 'Failed to reject payout');
             } finally { Loader.hide(); }
         }
         document.addEventListener('DOMContentLoaded', () => {

@@ -9,6 +9,7 @@ import passport from "passport";
 import { getIO, getActiveUsers } from "../../utils/socket.js";
 import Notification from "../../models/notifications/notification.js";
 import { sendNotification, notifyAllAdmins } from '../../utils/notify.js';
+import { generateUniqueReferralCode, validateReferralCode } from './referralService.js';
 
 export const findUser = async (userdata)=>{
     if(userdata.role == 'organizer'){
@@ -31,6 +32,10 @@ export const findUser = async (userdata)=>{
             return { success: true, action: 'userSignup' }; 
         }
     }else{
+        if (userdata.referralCode) {
+            await validateReferralCode(userdata.referralCode);
+        }
+
         const existingUser = await User.findOne({email: userdata.email, role: 'user'})
         if(existingUser){
             throw new AppError('User Already Registered', HTTP_STATUS.BAD_REQUEST)
@@ -56,11 +61,25 @@ export const verifyAndCreateUser = async (email, otp, tempUserData)=>{
     const hashPassword = await argon2.hash(tempUserData.password)
 
     if(tempUserData.role == 'user'){
+        // Generate a unique referral code for the new user
+        const referralCode = await generateUniqueReferralCode();
+
+        // Validate the referral code if provided
+        let referrer = null;
+        if (tempUserData.referralCode) {
+            referrer = await validateReferralCode(tempUserData.referralCode);
+            if (referrer && referrer.email === tempUserData.email) {
+                referrer = null; // Can't refer yourself
+            }
+        }
+
         const newUser = new User({
             fullName: tempUserData.fullName,
             email: tempUserData.email,
             password: hashPassword,
-            role: tempUserData.role,    
+            role: tempUserData.role,
+            referralCode,
+            referredBy: referrer ? referrer._id : null
         })
         return await newUser.save()
     }else{

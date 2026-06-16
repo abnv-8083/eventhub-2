@@ -78,6 +78,26 @@ const userSchema = new mongoose.Schema({
             description: { type: String },
             date: { type: Date, default: Date.now }
         }]
+    },
+
+    // ==========================================
+    // Referral System
+    // ==========================================
+    referralCode: {
+        type: String,
+        unique: true,
+        sparse: true,
+        uppercase: true,
+        trim: true
+    },
+    referredBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    referralRewardGiven: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true // Automatically adds 'createdAt' and 'updatedAt' fields

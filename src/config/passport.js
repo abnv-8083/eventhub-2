@@ -17,6 +17,11 @@ passport.use(new GoogleStrategy({
             const profileImageUrl = profile.photos && profile.photos.length > 0 
                                 ? profile.photos[0].value 
                                 : '';
+            
+            if (user && user.isBlocked) {
+                return done(null, false, { message: 'Your account is blocked by the admin.' });
+            }
+
             if(!user){
                 user = await User.create({
                     fullName: profile.displayName,

@@ -17,6 +17,26 @@
                 </div>
                 
                 <div class="d-flex gap-2 align-items-center p-2 rounded-3" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <% 
+                       const now = new Date();
+                       const eventEnd = new Date(event.endDate || event.startDate);
+                       eventEnd.setHours(23, 59, 59, 999);
+                       const isFinished = now > eventEnd;
+                    %>
+
+                    <%# ── Pending Cancellation Requests Badge ── %>
+                    <% if(typeof pendingCancelCount !== 'undefined' && pendingCancelCount > 0) { %>
+                        <a href="/organizer/events/<%= event._id %>/bookings-cancellations" class="d-flex align-items-center gap-2 px-3 py-1 rounded-3 text-decoration-none" 
+                           style="background: rgba(243,156,18,0.1); border: 1px solid rgba(243,156,18,0.3); color: #f39c12;">
+                            <i class="fi fi-rr-bell-ring"></i>
+                            <span class="fw-bold small"><%= pendingCancelCount %> Cancel Request<%= pendingCancelCount > 1 ? 's' : '' %></span>
+                        </a>
+                    <% } %>
+
+                    <a href="/organizer/events/<%= event._id %>/bookings-cancellations" class="btn btn-outline btn-sm px-3 py-2 d-flex align-items-center gap-2" style="border-color: rgba(230,57,70,0.3); color: #E63946;">
+                        <i class="fi fi-rr-ban"></i> Cancellations
+                    </a>
+
                     <% if(payout) { %>
                         <div class="d-flex align-items-center px-3">
                             <span class="text-dim small me-2 text-uppercase fw-bold">Payout Status:</span>
@@ -25,9 +45,13 @@
                             </span>
                         </div>
                     <% } else if(totalRevenue > 0) { %>
-                        <button onclick="requestPayout('<%= event._id %>')" class="btn btn-primary px-4 py-2 fw-bold d-flex align-items-center">
-                            <i class="fi fi-rr-money me-2"></i> Request Payout
-                        </button>
+                        <% if(isFinished) { %>
+                            <button onclick="requestPayout('<%= event._id %>')" class="btn btn-primary px-4 py-2 fw-bold d-flex align-items-center">
+                                <i class="fi fi-rr-money me-2"></i> Request Payout
+                            </button>
+                        <% } else { %>
+                            <span class="text-warning small px-3 fw-bold" style="background: rgba(243, 156, 18, 0.1); border: 1px solid rgba(243, 156, 18, 0.2); border-radius: 8px; padding: 8px; display: inline-flex; align-items: center;"><i class="fi fi-rr-time-clock me-2"></i>Payout opens after event ends</span>
+                        <% } %>
                     <% } else { %>
                         <span class="text-dim small px-3"><i class="fi fi-rr-info me-1"></i>No revenue to payout yet</span>
                     <% } %>
@@ -44,7 +68,7 @@
             <div class="row g-3 mb-4 animate stagger-2">
                 
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-dark p-4 rounded-4 h-100 d-flex flex-column justify-content-center">
+                    <div class="glass-premium dynamic-card p-4 rounded-4 h-100 d-flex flex-column justify-content-center">
                         <div class="d-flex align-items-center gap-3 mb-2">
                             <div style="background: rgba(255,255,255,0.05); padding: 8px 10px; border-radius: 8px;">
                                 <i class="fi fi-rr-coins text-white"></i>
@@ -56,7 +80,7 @@
                 </div>
                 
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-dark p-4 rounded-4 h-100 d-flex flex-column justify-content-center">
+                    <div class="glass-premium dynamic-card p-4 rounded-4 h-100 d-flex flex-column justify-content-center">
                         <div class="d-flex align-items-center gap-3 mb-2">
                             <div style="background: rgba(230, 57, 70, 0.1); padding: 8px 10px; border-radius: 8px;">
                                 <i class="fi fi-rr-receipt text-danger"></i>
@@ -68,7 +92,7 @@
                 </div>
                 
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-dark p-4 rounded-4 h-100 d-flex flex-column justify-content-center" 
+                    <div class="glass-premium dynamic-card p-4 rounded-4 h-100 d-flex flex-column justify-content-center" 
                          style="border: 1px solid rgba(46, 204, 113, 0.2); background: linear-gradient(145deg, rgba(46, 204, 113, 0.05) 0%, rgba(0,0,0,0.2) 100%);">
                         <div class="d-flex align-items-center gap-3 mb-2">
                             <div style="background: rgba(46, 204, 113, 0.15); padding: 8px 10px; border-radius: 8px;">
@@ -81,7 +105,7 @@
                 </div>
 
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-dark p-3 rounded-4 h-100 d-flex flex-column justify-content-center">
+                    <div class="glass-premium dynamic-card p-3 rounded-4 h-100 d-flex flex-column justify-content-center">
                         <div class="d-flex justify-content-between align-items-center mb-2 pb-2" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                             <p class="text-dim small text-uppercase fw-bold m-0">Total Bookings</p>
                             <h5 class="fw-bold text-white m-0"><%= counts.all %></h5>
@@ -142,7 +166,7 @@
             </div>
 
             <%# ── Bookings Table ── %>
-            <div class="glass-dark p-4 rounded-3 animate stagger-4">
+            <div class="glass-premium dynamic-card p-4 rounded-3 animate stagger-4">
                 <h6 class="fw-bold mb-4">Bookings (<%= total %>)</h6>
                 <div style="overflow-x:auto;">
                     <table class="data-table">
@@ -229,6 +253,20 @@
                                                     <i class="fi fi-rr-eye"></i>
                                                 </button>
 
+                                                <%# Pending Cancellation Request — Approve/Reject quick buttons %>
+                                                <% if(booking.cancellationRequest && booking.cancellationRequest.status === 'pending') { %>
+                                                    <button class="org-action-btn" onclick="quickApproveCancelRequest('<%= booking._id %>')" 
+                                                            title="Approve Cancellation Request"
+                                                            style="color:#2ecc71;background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.2);">
+                                                        <i class="fi fi-rr-check"></i>
+                                                    </button>
+                                                    <button class="org-action-btn" onclick="openOrgRejectModal('<%= booking._id %>')" 
+                                                            title="Reject Cancellation Request"
+                                                            style="color:#f39c12;background:rgba(243,156,18,0.1);border-color:rgba(243,156,18,0.2);">
+                                                        <i class="fi fi-rr-cross"></i>
+                                                    </button>
+                                                <% } %>
+
                                                 <% if(booking.status === 'active') { %>
                                                     <button class="org-action-btn org-hold" onclick="toggleHold('<%= event._id %>', '<%= booking._id %>', false)" title="Put on Hold">
                                                         <i class="fi fi-rr-pause"></i>
@@ -311,6 +349,28 @@
                 <div class="d-flex justify-content-end gap-2 mt-4 pt-2">
                     <button class="btn px-4 py-2" style="background: rgba(255,255,255,0.05); color: white; border: none;" onclick="closeHoldModal()">Cancel</button>
                     <button class="btn btn-warning px-4 py-2 fw-bold" id="confirmHoldBtn">Confirm Hold</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%# ── Organizer Reject Reason Modal ── %>
+    <div class="modal-overlay" id="orgRejectModal" style="z-index: 999999;">
+        <div class="modal-container" style="max-width: 450px;">
+            <div class="modal-header">
+                <h5 class="fw-bold m-0"><i class="fi fi-rr-cross-circle me-2 text-warning"></i>Reject Cancellation Request</h5>
+                <span class="modal-close" onclick="closeOrgRejectModal()" style="cursor: pointer;"><i class="fi fi-rr-cross-small"></i></span>
+            </div>
+            <div class="modal-body p-4 text-start">
+                <p class="text-dim mb-3" style="font-size: 0.9rem;">Provide a reason for rejecting this request. The user will be notified.</p>
+                <textarea id="orgRejectNoteInput" rows="3" placeholder="e.g., Event is non-refundable per terms..." 
+                          style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; padding: 12px; outline: none;"
+                          onfocus="this.style.borderColor='rgba(255,255,255,0.4)'"
+                          onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
+                <p id="orgRejectNoteError" class="text-danger mt-1 small" style="display: none;"><i class="fi fi-rr-info me-1"></i>Please provide a rejection note.</p>
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <button class="btn px-4 py-2" style="background: rgba(255,255,255,0.05); color: white; border: none;" onclick="closeOrgRejectModal()">Cancel</button>
+                    <button class="btn btn-warning px-4 py-2 fw-bold" id="confirmOrgRejectBtn">Reject Request</button>
                 </div>
             </div>
         </div>
@@ -533,7 +593,14 @@
                 return; 
             }
 
-            if (!confirm("Are you sure you want to resume this booking?")) return;
+            const ok = await CustomConfirm.show({
+                title: 'Resume Booking?',
+                message: 'Are you sure you want to resume this booking? The hold status will be removed.',
+                confirmText: 'Yes, Resume',
+                actionType: 'primary',
+                icon: 'fi-rr-play'
+            });
+            if (!ok) return;
             try {
                 const res = await axios.post(`/organizer/events/${eventId}/bookings/${bookingId}/unhold`);
                 if (res.data.success) { 
@@ -621,6 +688,77 @@
             } catch(err) { Toast.error(err.response?.data?.message || 'Failed to delete booking.'); }
             finally { Loader.hide(); }
         }
+
+        // ── Cancellation Request: Approve & Reject ────────────────────────────
+        async function quickApproveCancelRequest(bookingId) {
+            const ok = await CustomConfirm.show({
+                title: 'Approve Cancellation?',
+                message: 'This will cancel the booking, release inventory, and process the refund (wallet payments are instant). The user will be notified.',
+                confirmText: 'Approve & Refund',
+                actionType: 'primary',
+                icon: 'fi-rr-check-circle'
+            });
+            if (!ok) return;
+
+            Loader.show('PROCESSING CANCELLATION...');
+            try {
+                const res = await axios.post(`/organizer/bookings/${bookingId}/approve-cancel`);
+                if (res.data.success) {
+                    Toast.success(res.data.message);
+                    setTimeout(() => location.reload(), 1500);
+                }
+            } catch (err) {
+                Toast.error(err.response?.data?.message || 'Failed to approve cancellation.');
+            } finally {
+                Loader.hide();
+            }
+        }
+
+        let orgRejectBookingId = null;
+
+        function openOrgRejectModal(bookingId) {
+            orgRejectBookingId = bookingId;
+            document.getElementById('orgRejectNoteInput').value = '';
+            document.getElementById('orgRejectNoteError').style.display = 'none';
+            document.getElementById('orgRejectModal').classList.add('active');
+            setTimeout(() => document.getElementById('orgRejectNoteInput').focus(), 150);
+        }
+
+        function closeOrgRejectModal() {
+            document.getElementById('orgRejectModal').classList.remove('active');
+            orgRejectBookingId = null;
+        }
+
+        document.getElementById('confirmOrgRejectBtn')?.addEventListener('click', async () => {
+            const noteInput = document.getElementById('orgRejectNoteInput');
+            const errorEl   = document.getElementById('orgRejectNoteError');
+            const btn       = document.getElementById('confirmOrgRejectBtn');
+            const note      = noteInput.value.trim();
+
+            if (!note) {
+                errorEl.style.display = 'block';
+                noteInput.focus();
+                return;
+            }
+            errorEl.style.display = 'none';
+
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fi fi-rr-spinner" style="animation:spin 1s linear infinite;"></i> Processing...';
+            btn.disabled  = true;
+
+            try {
+                const res = await axios.post(`/organizer/bookings/${orgRejectBookingId}/reject-cancel`, { rejectionNote: note });
+                if (res.data.success) {
+                    closeOrgRejectModal();
+                    Toast.success(res.data.message);
+                    setTimeout(() => location.reload(), 1500);
+                }
+            } catch (err) {
+                Toast.error(err.response?.data?.message || 'Failed to reject request.');
+                btn.innerHTML = originalHtml;
+                btn.disabled  = false;
+            }
+        });
 
         let orgQtyResolve = null;
 

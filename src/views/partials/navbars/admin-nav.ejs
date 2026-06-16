@@ -1,41 +1,60 @@
-<header class="navbar-sticky glass-dark">
-    <div class="container nav-container">
-        <a href="/admin/dashboard" class="logo">Event<span class="text-gradient">Hub Admin</span></a>
-        <nav class="admin-nav d-flex align-center gap-3">
-            <a href="/admin/dashboard">Command Center</a>
-            <button class="profile-avatar-btn" id="userMenuBtn">
-                <span><%= admin.fullName.charAt(0).toUpperCase() %></span>
-            </button>
-            <div class="dropdown me-3" id="notificationDropdown">
-                <button class="nav-bell-btn" type="button">
-                    <div class="position-relative">
-                        <i class="fi fi-rr-bell custom-nav-bell"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" id="notificationDot" style="display: none; border-color: #0A0A0A !important;"></span>
-                    </div>
+<header class="navbar-sticky">
+    <div class="nav-container container">
+        <a href="/admin/dashboard" class="logo" style="text-decoration:none;">Event<span>Hub</span>
+            <span style="font-size:0.6rem;font-family:var(--font-body);font-weight:600;color:rgba(241,196,15,0.7);letter-spacing:0.12em;text-transform:uppercase;margin-left:6px;background:rgba(241,196,15,0.08);border:1px solid rgba(241,196,15,0.2);border-radius:4px;padding:2px 6px;-webkit-text-fill-color:rgba(241,196,15,0.7);">Admin</span>
+        </a>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-left:auto;">
+            <!-- Bell -->
+            <div class="dropdown" id="notificationDropdown" style="position:relative;">
+                <button class="nav-bell-btn" id="notificationBell" type="button" style="position:relative;">
+                    <svg class="custom-nav-bell" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width:20px;height:20px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
+                    </svg>
+                    <span id="notificationDot" style="display:none;position:absolute;top:2px;right:0px;width:7px;height:7px;border-radius:50%;background:#E63946;box-shadow:0 0 8px rgba(230,57,70,0.7);"></span>
                 </button>
-                
-                <div class="dropdown-menu dropdown-menu-end shadow">
-                    <div class="notif-header">
-                        <h6 class="m-0 text-white fw-bold"><i class="fi fi-rr-bell-ring me-2 text-primary"></i>System Alerts</h6>
-                        <button class="btn btn-link p-0 text-decoration-none text-dim small" style="font-size: 0.75rem;" id="clearAllNotifications">Mark all read</button>
+                <div class="dropdown-menu" style="position:absolute;top:calc(100% + 12px);right:0;flex-direction:column;">
+                    <div class="notif-header" style="display:flex;align-items:center;justify-content:space-between;">
+                        <h6 style="margin:0;font-size:0.88rem;font-weight:700;color:white;"><i class="fi fi-rr-shield" style="margin-right:6px;color:#f1c40f;font-size:0.85rem;"></i>System Alerts</h6>
+                        <button id="clearAllNotifications" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:0.75rem;cursor:pointer;padding:0;">Mark all read</button>
                     </div>
-                    
                     <div id="notificationList">
-                        <div class="p-5 text-center text-dim" id="emptyNotificationMsg">
-                            <i class="fi fi-rr-envelope-open d-block mb-2 opacity-50" style="font-size: 2rem;"></i>
-                            <p class="small m-0">All caught up!</p>
+                        <div class="p-4 text-center" id="emptyNotificationMsg" style="color:rgba(255,255,255,0.35);">
+                            <i class="fi fi-rr-shield-check" style="display:block;font-size:1.6rem;margin-bottom:8px;opacity:0.4;"></i>
+                            <p style="margin:0;font-size:0.82rem;">No system alerts.</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </nav>
+
+            <!-- Avatar -->
+            <button class="profile-avatar-btn" id="userMenuBtn" style="border-color:rgba(241,196,15,0.35) !important;background:rgba(241,196,15,0.06) !important;">
+                <span style="font-family:var(--font-display);font-size:0.85rem;font-weight:800;color:#f1c40f;"><%= admin.fullName.charAt(0).toUpperCase() %></span>
+            </button>
+        </div>
     </div>
 </header>
 
-<div class="dropdown-menu glass-dark" id="userDropdown" style="position: fixed; display: none; z-index: 9999;">
+<!-- Admin Dropdown -->
+<div id="userDropdown" class="dropdown-menu" style="position:fixed;display:none;z-index:9999;flex-direction:column;">
     <div class="dropdown-header">
-        <small class="text-dim d-block">System Admin</small>
-        <strong style="color: white;"><%= admin.fullName %></strong>
+        <small class="text-dim">System Administrator</small>
+        <strong style="color:white;font-size:0.92rem;"><%= admin.fullName %></strong>
     </div>
-    <a id="adminLogoutButton" class="dropdown-item text-danger" style="cursor: pointer;">Logout</a>
+    <a href="/admin/dashboard" class="dropdown-item"><i class="fi fi-rr-apps" style="width:16px;opacity:0.6;"></i>Dashboard</a>
+    <a href="/admin/users" class="dropdown-item"><i class="fi fi-rr-users" style="width:16px;opacity:0.6;"></i>Users</a>
+    <a href="/admin/settings" class="dropdown-item"><i class="fi fi-rr-settings" style="width:16px;opacity:0.6;"></i>Platform Settings</a>
+    
+    <% if (locals.user) { %>
+    <div style="height:1px;background:rgba(255,255,255,0.06);margin:4px 0;"></div>
+    <a href="/" class="dropdown-item"><i class="fi fi-rr-user" style="width:16px;color:#f1c40f;"></i>User Portal</a>
+    <% } %>
+
+    <% if (locals.organizer) { %>
+    <div style="height:1px;background:rgba(255,255,255,0.06);margin:4px 0;"></div>
+    <a href="/organizer/dashboard" class="dropdown-item"><i class="fi fi-rr-building" style="width:16px;color:#3498db;"></i>Organizer Dashboard</a>
+    <% } %>
+
+    <div style="height:1px;background:rgba(255,255,255,0.06);margin:4px 0;"></div>
+    <a id="adminLogoutButton" class="dropdown-item text-danger" style="cursor:pointer;"><i class="fi fi-rr-exit" style="width:16px;"></i>Sign Out</a>
 </div>

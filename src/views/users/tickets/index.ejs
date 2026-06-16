@@ -10,35 +10,47 @@
         <%- include('../../partials/user-sidebar', { active: 'tickets' }) %>
         
         <main class="dashboard-main">
-            <h2 class="fw-bold mb-1">My Tickets</h2>
-            <p class="text-dim mb-4">Manage your upcoming and past event bookings.</p>
+            <div class="mb-5 animate stagger-1">
+                <p class="page-label">Bookings</p>
+                <h2 class="fw-bold mb-1">My Tickets</h2>
+                <p class="text-dim m-0">Manage your upcoming and past event bookings.</p>
+            </div>
 
-            <div class="filter-tabs mb-4">
+            <div class="filter-tabs mb-5 animate stagger-2">
                 <a href="?filter=all" class="filter-tab <%= filter === 'all' ? 'active' : '' %>">All</a>
                 <a href="?filter=upcoming" class="filter-tab <%= filter === 'upcoming' ? 'active' : '' %>">Upcoming</a>
                 <a href="?filter=past" class="filter-tab <%= filter === 'past' ? 'active' : '' %>">Past</a>
                 <a href="?filter=cancelled" class="filter-tab <%= filter === 'cancelled' ? 'active' : '' %>">Cancelled</a>
             </div>
 
-            <div class="row g-4">
+            <div class="row g-4 animate stagger-3">
                 <% if(bookings && bookings.length > 0) { %>
                     <% bookings.forEach(booking => { %>
                         <div class="col-md-6 col-lg-4">
-                            <div class="glass-dark rounded-4 overflow-hidden h-100 d-flex flex-column position-relative">
+                            <div class="glass-premium dynamic-card rounded-4 overflow-hidden h-100 d-flex flex-column position-relative">
                                 
                                 <div class="position-absolute top-0 end-0 m-3 z-1">
                                     <% if(booking.status === 'active') { %>
-                                        <span class="badge bg-success">Active</span>
+                                        <span class="status-badge status-active">Active</span>
                                     <% } else if(booking.status === 'on_hold') { %>
-                                        <span class="badge bg-warning text-dark">On Hold</span>
+                                        <span class="status-badge status-on-hold">On Hold</span>
                                     <% } else { %>
-                                        <span class="badge bg-danger">Cancelled</span>
+                                        <span class="status-badge status-cancelled">Cancelled</span>
                                     <% } %>
                                 </div>
 
                                 <div class="p-4 d-flex flex-column flex-grow-1">
-                                    <p class="text-primary small fw-bold mb-1"><%= new Date(booking.event.startDate).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) %></p>
-                                    <h5 class="fw-bold text-white mb-3 text-truncate"><%= booking.event.title %></h5>
+                                    <% if (booking.event) { %>
+                                        <p style="font-size:0.78rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">
+                                            <%= new Date(booking.event.startDate).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) %>
+                                        </p>
+                                        <h5 class="fw-bold text-white mb-3 text-truncate"><%= booking.event.title %></h5>
+                                    <% } else { %>
+                                        <p style="font-size:0.78rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">
+                                            Event Removed
+                                        </p>
+                                        <h5 class="fw-bold text-white mb-3 text-truncate" style="opacity: 0.5;">Event Unavailable</h5>
+                                    <% } %>
                                     
                                     <div class="mb-3">
                                         <% if(booking.tickets && booking.tickets.length > 0) { %>
@@ -87,5 +99,36 @@
 
         </main>
     </div>
+    <style>
+        .page-label { color: var(--primary); text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+        
+        .filter-tabs { display: flex; gap: 0.5rem; margin-bottom: 2.5rem; flex-wrap: wrap; background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 100px; border: 1px solid rgba(255,255,255,0.05); width: fit-content; }
+        .filter-tab { padding: 0.5rem 1.25rem; border-radius: 100px; color: rgba(255,255,255,0.6); font-weight: 600; font-size: 0.85rem; transition: all 0.2s; text-decoration: none; border: none; }
+        .filter-tab:hover { color: white; background: rgba(255,255,255,0.05); }
+        .filter-tab.active { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(230,57,70,0.4); }
+
+        .glass-premium { background: rgba(20,20,20,0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s; }
+        .dynamic-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.15); }
+        
+        .status-badge { padding: 0.4rem 0.85rem; border-radius: 100px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; backdrop-filter: blur(4px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .status-active { background: rgba(46,204,113,0.15); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+        .status-on-hold { background: rgba(241,196,15,0.15); color: #f1c40f; border: 1px solid rgba(241,196,15,0.3); }
+        .status-cancelled { background: rgba(231,76,60,0.15); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
+
+        .action-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.05); color: white; text-decoration: none; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+        .action-btn:hover { background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.2); }
+        .action-btn.active-page { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 15px rgba(230,57,70,0.4); }
+        
+        .btn-outline { border: 1px solid rgba(255,255,255,0.2); color: white; transition: all 0.2s; background: transparent; }
+        .btn-outline:hover { background: var(--primary); border-color: var(--primary); color: white; }
+    </style>
+    <script>
+        if (window.socket) {
+            window.socket.on('bookingStatusUpdate', () => {
+                // Wait 2 seconds to let the toast show, then refresh for updated status
+                setTimeout(() => window.location.reload(), 2000);
+            });
+        }
+    </script>
 </body>
 </html>

@@ -22,14 +22,14 @@
                     <p class="text-dim">Enter your secure credentials to continue</p>
                 </div>
 
-                <form id="adminLoginForm">
+                <form id="adminLoginForm" novalidate>
                     <div class="form-floating">
-                        <input type="email" name="email" class="form-control input" id="adminEmail" placeholder=" " required>
+                        <input type="email" name="email" class="form-control input" id="adminEmail" placeholder=" " data-rule="required, email">
                         <label for="adminEmail">Admin Email</label>
                     </div>
 
                     <div class="form-floating password-group">
-                        <input type="password" name="password" class="form-control input" id="adminPass" placeholder="Password" required>
+                        <input type="password" name="password" class="form-control input" id="adminPass" placeholder="Password" data-rule="required">
                         <label for="adminPass">Security Key</label>
                         <!-- Updated onclick and icon class -->
                         <button type="button" class="password-toggle" onclick="togglePassword('adminPass', this)">
@@ -63,8 +63,7 @@
 
         adminLoginForm.addEventListener('submit', async (e)=>{
             e.preventDefault()
-
-
+            if (!EV.validateForm(adminLoginForm)) return;
             Loader.show()
 
             const formData = new FormData(adminLoginForm)

@@ -5,108 +5,231 @@
 </head>
 <body class="bg-mesh">
     <%- include('../../partials/navbars/user-nav') %>
+    
+    <style>
+        .premium-ticket-wrapper { display: flex; flex-direction: row; background: rgba(18, 20, 28, 0.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.4); min-height: 500px; }
+        .ticket-visual-side { width: 35%; padding: 2.5rem; background: rgba(0,0,0,0.3); border-right: 1px dashed rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .ticket-visual-side::after { content: ''; position: absolute; right: -15px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; background: var(--bg-body); border-radius: 50%; box-shadow: inset 1px 0 0 rgba(255,255,255,0.1); z-index: 2; }
+        .ticket-banner-img { width: 100%; border-radius: 16px; object-fit: cover; aspect-ratio: 4/3; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+        .qr-code-wrapper { background: white; padding: 1rem; border-radius: 16px; display: inline-block; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .qr-code-wrapper img { width: 180px; height: 180px; display: block; }
+        
+        .ticket-data-side { width: 65%; padding: 3rem; display: flex; flex-direction: column; position: relative; }
+        .ticket-header-meta { font-size: 0.9rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.5rem; }
+        .ticket-event-title { font-size: 2.5rem; font-weight: 800; color: white; margin-bottom: 2rem; letter-spacing: -1px; line-height: 1.2; }
+        
+        .status-badge { padding: 0.4rem 1rem; border-radius: 50px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; text-transform: uppercase; letter-spacing: 1px; }
+        .status-badge.active { background: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.3); }
+        .status-badge.on-hold { background: rgba(243, 156, 18, 0.15); color: #f39c12; border: 1px solid rgba(243, 156, 18, 0.3); }
+        .status-badge.cancelled { background: rgba(230, 57, 70, 0.15); color: #E63946; border: 1px solid rgba(230, 57, 70, 0.3); }
+        
+        .ticket-info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; padding-bottom: 2.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .ticket-info-item .label { color: rgba(255,255,255,0.4); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+        .ticket-info-item .val { color: white; font-weight: 600; font-size: 1.1rem; margin: 0; }
+        
+        .ticket-table-modern { width: 100%; border-collapse: separate; border-spacing: 0 0.5rem; }
+        .ticket-table-modern th { color: rgba(255,255,255,0.4); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding: 0.5rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .ticket-table-modern td { padding: 1rem; background: rgba(255,255,255,0.02); }
+        .ticket-table-modern td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+        .ticket-table-modern td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+        
+        .ticket-total-box { margin-top: 1.5rem; background: rgba(230,57,70,0.05); border: 1px solid rgba(230,57,70,0.15); padding: 1.5rem; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .ticket-total-label { color: rgba(255,255,255,0.7); font-size: 1.1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .ticket-total-val { color: var(--primary); font-size: 2rem; font-weight: 800; letter-spacing: -1px; }
+        
+        .ticket-enter { animation: ticketSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(40px); }
+        @keyframes ticketSlideUp { to { opacity: 1; transform: translateY(0); } }
+        
+        @media (max-width: 992px) {
+            .premium-ticket-wrapper { flex-direction: column; }
+            .ticket-visual-side { width: 100%; border-right: none; border-bottom: 1px dashed rgba(255,255,255,0.1); padding: 2rem; }
+            .ticket-visual-side::after { display: none; }
+            .ticket-data-side { width: 100%; padding: 2rem; }
+            .ticket-info-grid { grid-template-columns: 1fr; gap: 1rem; }
+        }
+    </style>
 
     <div class="container py-5" style="margin-top: 60px;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-5">
             <a href="/user/tickets" class="btn btn-outline btn-sm"><i class="fi fi-rr-arrow-left me-2"></i>Back to Tickets</a>
-            
-            <% if(booking.status === 'active') { %>
-                <span class="badge bg-success px-3 py-2" style="font-size: 0.9rem;">● Active Booking</span>
-            <% } else if(booking.status === 'on_hold') { %>
-                <span class="badge bg-warning text-dark px-3 py-2" style="font-size: 0.9rem;">⏸ On Hold</span>
-            <% } else { %>
-                <span class="badge bg-danger px-3 py-2" style="font-size: 0.9rem;">✗ Cancelled</span>
-            <% } %>
         </div>
 
-        <div class="row g-4">
-            <div class="col-lg-4">
-                <div class="glass-dark p-4 rounded-4 text-center">
-                    <img src="<%= booking.event.banners[0] %>" class="img-fluid rounded-3 mb-3" alt="Event Banner" style="object-fit: cover; height: 180px; width: 100%;">
-                    <h5 class="fw-bold text-white mb-1"><%= booking.event.title %></h5>
-                    <p class="text-primary small mb-4"><%= new Date(booking.event.startDate).toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short', year:'numeric'}) %></p>
-                    
-                    <% if(booking.status === 'active') { %>
-                        <div class="bg-white p-3 rounded-3 d-inline-block mb-3">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=<%= booking._id %>" alt="QR Code">
-                        </div>
-                        <p class="text-dim small mb-0">Booking ID: <span class="text-white" style="font-family: monospace;">#<%= booking._id.toString().slice(-8).toUpperCase() %></span></p>
-                    <% } else { %>
-                        <div class="alert alert-danger" style="background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.2); color: #E63946;">
-                            Ticket void due to cancellation.
-                        </div>
-                    <% } %>
-                </div>
+        <div class="premium-ticket-wrapper ticket-enter">
+            <!-- Left Side: Visuals & QR -->
+            <div class="ticket-visual-side">
+                <img src="<%= booking.event.banners[0] %>" class="ticket-banner-img" alt="Event Banner">
+                
+                <% if(booking.status === 'active') { %>
+                    <div class="qr-code-wrapper">
+                        <img src="<%= qrCodeDataUrl %>" alt="QR Code">
+                    </div>
+                    <p class="text-dim small mt-4 text-uppercase fw-bold" style="letter-spacing: 2px;">
+                        Booking ID: <span class="text-white">#<%= booking._id.toString().slice(-8).toUpperCase() %></span>
+                    </p>
+                <% } else if (booking.status === 'on_hold') { %>
+                    <div class="alert alert-warning text-center" style="background: rgba(243,156,18,0.1); border: 1px solid rgba(243,156,18,0.2); color: #f39c12; border-radius: 12px; width: 100%;">
+                        <i class="fi fi-rr-pause-circle fs-2 d-block mb-2"></i>
+                        Booking is on hold by the organizer.
+                    </div>
+                <% } else { %>
+                    <div class="alert alert-danger text-center" style="background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.2); color: #E63946; border-radius: 12px; width: 100%;">
+                        <i class="fi fi-rr-cross-circle fs-2 d-block mb-2"></i>
+                        Ticket void due to cancellation.
+                    </div>
+                <% } %>
             </div>
 
-            <div class="col-lg-8">
-                <div class="booking-details-card p-4 glass-dark rounded-4 h-100">
-                    <h5 class="fw-bold text-white mb-4"><i class="fi fi-rr-receipt me-2"></i>Purchase Details</h5>
-                    
-                    <div class="table-responsive">
-                        <table class="table table-dark table-borderless align-middle mb-0">
-                            <thead style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                <tr>
-                                    <th class="text-dim pb-2" style="background: transparent;">Ticket Type</th>
-                                    <th class="text-dim pb-2 text-center" style="background: transparent;">Qty</th>
-                                    <th class="text-dim pb-2 text-end" style="background: transparent;">Price</th>
-                                    <th class="text-dim pb-2 text-end" style="background: transparent;">Subtotal</th>
-                                    <th class="text-dim pb-2 text-end" style="background: transparent;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% booking.tickets.forEach(t => { %>
-                                    <% const isCancelled = t.status === 'cancelled'; %>
-                                    <tr>
-                                        <td class="text-white py-3" style="background: transparent;">
-                                            <span class="<%= isCancelled ? 'text-decoration-line-through text-dim' : 'fw-bold' %>"><%= t.ticketName %></span>
-                                            <% if(isCancelled) { %>
-                                                <span class="badge bg-danger ms-2" style="font-size: 0.65rem;">Refunded</span>
-                                            <% } %>
-                                        </td>
-                                        <td class="text-center text-white py-3" style="background: transparent;"><%= t.quantity %></td>
-                                        <td class="text-end py-3 <%= isCancelled ? 'text-dim text-decoration-line-through' : 'text-white' %>" style="background: transparent;">₹<%= t.ticketPrice.toLocaleString('en-IN') %></td>
-                                        <td class="text-end py-3 <%= isCancelled ? 'text-dim text-decoration-line-through' : 'text-white' %>" style="background: transparent;">₹<%= (t.ticketPrice * t.quantity).toLocaleString('en-IN') %></td>
-                                        <td class="text-end py-3" style="background: transparent;">
-                                            <% if(!isCancelled && booking.status === 'active') { %>
-                                                <button class="btn btn-outline-danger btn-sm px-2 py-1" style="font-size: 0.75rem;" onclick="cancelSingleTicket('<%= booking._id %>', '<%= t._id %>', <%= t.quantity %>)">Cancel Ticket</button>
-                                            <% } %>
-                                        </td>
-                                    </tr>
-                                <% }) %>
-                            </tbody>
-                            <tfoot style="border-top: 1px solid rgba(255,255,255,0.1);">
-                                <tr>
-                                    <td colspan="4" class="text-end text-dim pt-3 pb-0" style="background: transparent;"><strong>Active Total:</strong></td>
-                                    <td class="text-end pt-3 pb-0" style="background: transparent;"><strong style="color: #2ecc71; font-size: 1.2rem;">₹<%= booking.totalAmount.toLocaleString('en-IN') %></strong></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+            <!-- Right Side: Details & Actions -->
+            <div class="ticket-data-side">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <p class="ticket-header-meta">Premium Event Pass</p>
+                    <% if(booking.status === 'active') { %>
+                        <span class="status-badge active"><i class="fi fi-rr-check-circle"></i> Active</span>
+                    <% } else if(booking.status === 'on_hold') { %>
+                        <span class="status-badge on-hold"><i class="fi fi-rr-pause"></i> On Hold</span>
+                    <% } else { %>
+                        <span class="status-badge cancelled"><i class="fi fi-rr-cross"></i> Cancelled</span>
+                    <% } %>
+                </div>
 
-                    <div class="mt-4 pt-3" style="border-top: 1px dashed rgba(255,255,255,0.1);">
-                        <div class="row g-3">
-                            <div class="col-sm-6">
-                                <p class="text-dim small mb-1">Payment Method</p>
-                                <p class="text-white fw-bold"><%= booking.paymentMethod === 'wallet' ? 'Wallet' : 'Razorpay' %></p>
-                            </div>
-                            <div class="col-sm-6 text-sm-end">
-                                <p class="text-dim small mb-1">Transaction ID</p>
-                                <p class="text-white" style="font-family: monospace; font-size: 0.9rem;"><%= booking.paymentId %></p>
+                <h2 class="ticket-event-title"><%= booking.event.title %></h2>
+
+                <div class="ticket-info-grid">
+                    <div class="ticket-info-item">
+                        <p class="label"><i class="fi fi-rr-calendar-lines"></i> Date</p>
+                        <p class="val"><%= new Date(booking.event.startDate).toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short', year:'numeric'}) %></p>
+                    </div>
+                    <div class="ticket-info-item">
+                        <p class="label"><i class="fi fi-rr-map-marker"></i> Payment</p>
+                        <p class="val"><%= booking.paymentMethod === 'wallet' ? 'Wallet' : 'Razorpay' %></p>
+                    </div>
+                    <div class="ticket-info-item">
+                        <p class="label"><i class="fi fi-rr-hashtag"></i> Transaction</p>
+                        <p class="val" style="font-family: monospace; font-size: 0.95rem;"><%= booking.paymentId %></p>
+                    </div>
+                </div>
+
+                <!-- Purchase Table -->
+                <div class="table-responsive">
+                    <table class="ticket-table-modern">
+                        <thead>
+                            <tr>
+                                <th>Ticket Type</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-end">Price</th>
+                                <th class="text-end">Subtotal</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% booking.tickets.forEach(t => { %>
+                                <% const isCancelled = t.status === 'cancelled'; %>
+                                <tr>
+                                    <td>
+                                        <span class="<%= isCancelled ? 'text-decoration-line-through text-dim' : 'fw-bold text-white' %>" style="font-size: 1.1rem;"><%= t.ticketName %></span>
+                                        <% if(isCancelled) { %>
+                                            <span class="badge bg-danger ms-2" style="font-size: 0.65rem;">Refunded</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="text-center <%= isCancelled ? 'text-dim text-decoration-line-through' : 'text-white' %>"><%= t.quantity %></td>
+                                    <td class="text-end <%= isCancelled ? 'text-dim text-decoration-line-through' : 'text-white' %>">₹<%= t.ticketPrice.toLocaleString('en-IN') %></td>
+                                    <td class="text-end <%= isCancelled ? 'text-dim text-decoration-line-through' : 'text-white' %> fw-bold">₹<%= (t.ticketPrice * t.quantity).toLocaleString('en-IN') %></td>
+                                    <td class="text-end">
+                                        <% if(!isCancelled && booking.status === 'active') { %>
+                                            <button class="btn btn-outline-danger btn-sm px-3 py-1" style="font-size: 0.75rem; border-radius: 6px;" onclick="cancelSingleTicket('<%= booking._id %>', '<%= t._id %>', <%= t.quantity %>)">Cancel</button>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="ticket-total-box">
+                    <span class="ticket-total-label">Active Total</span>
+                    <span class="ticket-total-val">₹<%= booking.totalAmount.toLocaleString('en-IN') %></span>
+                </div>
+
+                <%
+                    const hasAnyCancelledTicket = booking.tickets.some(t => t.status === 'cancelled');
+                    const isFullyCancelled = booking.status === 'cancelled';
+                    const cancelReqStatus  = booking.cancellationRequest?.status || 'none';
+                    let pdfBtnLabel, pdfBtnIcon, pdfBtnClass;
+                    if (isFullyCancelled) {
+                        pdfBtnLabel = 'Download Cancelled Ticket';
+                        pdfBtnIcon  = 'fi-rr-ban';
+                        pdfBtnClass = 'btn-outline-danger';
+                    } else if (hasAnyCancelledTicket) {
+                        pdfBtnLabel = 'Download Updated Ticket';
+                        pdfBtnIcon  = 'fi-rr-refresh';
+                        pdfBtnClass = 'btn-outline-warning';
+                    } else {
+                        pdfBtnLabel = 'Download Pass';
+                        pdfBtnIcon  = 'fi-rr-download';
+                        pdfBtnClass = 'btn-primary';
+                    }
+                %>
+
+                <div class="mt-5 pt-4" style="border-top: 1px solid rgba(255,255,255,0.05);">
+                    <%# ── Cancellation Request Status Banner ── %>
+                    <% if(cancelReqStatus === 'pending') { %>
+                        <div class="d-flex align-items-center gap-3 mb-4 p-3 rounded-3" style="background: rgba(243,156,18,0.08); border: 1px solid rgba(243,156,18,0.25);">
+                            <i class="fi fi-rr-time-past" style="color:#f39c12;font-size:1.5rem;"></i>
+                            <div>
+                                <p class="text-white fw-bold mb-0" style="font-size:0.95rem;">Cancellation Requested</p>
+                                <p class="text-dim mb-0" style="font-size:0.85rem;">Reason: "<%= booking.cancellationRequest.reason %>" — Awaiting review.</p>
                             </div>
                         </div>
-                    </div>
-
-                    <% if(booking.status !== 'cancelled') { %>
-                        <div class="mt-5 pt-3 d-flex gap-2 justify-content-end" style="border-top: 1px solid rgba(255,255,255,0.05);">
-                            <button onclick="cancelBooking('<%= booking._id %>')" class="btn btn-outline-danger">Cancel Booking</button>
+                    <% } else if(cancelReqStatus === 'rejected') { %>
+                        <div class="d-flex align-items-start gap-3 mb-4 p-3 rounded-3" style="background: rgba(230,57,70,0.08); border: 1px solid rgba(230,57,70,0.25);">
+                            <i class="fi fi-rr-ban" style="color:#E63946;font-size:1.5rem;margin-top:2px;"></i>
+                            <div>
+                                <p class="fw-bold mb-1" style="color:#E63946;font-size:0.95rem;">Request Rejected</p>
+                                <p class="text-dim mb-0" style="font-size:0.85rem;">Organizer note: "<%= booking.cancellationRequest.rejectionNote || 'No note provided.' %>".</p>
+                            </div>
                         </div>
                     <% } %>
 
+                    <div class="d-flex gap-3 justify-content-end flex-wrap">
+                        <a href="/user/tickets/<%= booking._id %>/download-pdf"
+                           id="downloadPdfBtn"
+                           class="btn <%= pdfBtnClass %>"
+                           style="border-radius: 12px; font-weight: 600; padding: 0.8rem 1.8rem !important; display: inline-flex; align-items: center; gap: 8px;"
+                           onclick="handlePdfDownload(event, this)">
+                            <i class="fi <%= pdfBtnIcon %>"></i> <%= pdfBtnLabel %>
+                        </a>
+
+                        <% if (!isFullyCancelled && cancelReqStatus !== 'pending' && booking.status !== 'on_hold') { %>
+                            <button onclick="openCancelRequestModal()" class="btn btn-outline" style="border-radius: 12px; font-weight: 600; padding: 0.8rem 1.8rem !important; display:inline-flex;align-items:center;gap:8px;">
+                                <i class="fi fi-rr-ban text-danger"></i> Request Cancellation
+                            </button>
+                        <% } %>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- ── Cancel Request Modal ── -->
+    <div class="modal-overlay" id="cancelRequestModal" style="z-index: 9999;">
+        <div class="modal-container" style="max-width: 460px;">
+            <div class="modal-header">
+                <h5 class="fw-bold m-0"><i class="fi fi-rr-ban me-2 text-danger"></i>Request Cancellation</h5>
+                <span class="modal-close" onclick="closeCancelRequestModal()" style="cursor:pointer;"><i class="fi fi-rr-cross-small"></i></span>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-dim mb-3" style="font-size:0.9rem;">Your request will be sent to the event organizer for review. Please provide a reason to help them process your request faster.</p>
+                <label class="text-dim small text-uppercase fw-bold mb-2" style="letter-spacing:0.06em;">Reason <span class="text-danger">*</span></label>
+                <textarea id="cancelReasonInput" rows="3" placeholder="e.g., Can't attend due to travel plans..." class="input w-100" style="resize:vertical;min-height:80px;"></textarea>
+                <p id="cancelReasonError" class="text-danger mt-1 small" style="display:none;"><i class="fi fi-rr-info me-1"></i>Please enter at least 5 characters.</p>
+                <div class="d-flex gap-3 mt-4 justify-content-end">
+                    <button class="btn" style="background:rgba(255,255,255,0.05);color:white;border:none;" onclick="closeCancelRequestModal()">Go Back</button>
+                    <button class="btn btn-danger fw-bold px-4" id="submitCancelRequestBtn" onclick="submitCancelRequest('<%= booking._id %>')"><i class="fi fi-rr-paper-plane me-2"></i>Submit Request</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="quantityConfirmModal" style="z-index: 9999;">
         <div class="modal-container" style="max-width: 400px; padding: 0;">
             <div class="modal-body text-center p-5">
@@ -141,6 +264,88 @@
                 }
             } catch (err) {
                 alert(err.response?.data?.message || 'Failed to cancel booking');
+            }
+        }
+
+        // ── PDF Download with loading feedback ────────────────────────────────
+        function handlePdfDownload(e, btn) {
+            if (typeof Toast !== 'undefined') {
+                Toast.success('Generating your PDF ticket — download will start shortly\u2026');
+            }
+            if (btn) {
+                btn.style.pointerEvents = 'none';
+                btn.style.opacity = '0.6';
+                setTimeout(() => {
+                    btn.style.pointerEvents = '';
+                    btn.style.opacity = '';
+                }, 6000);
+            }
+        }
+
+        // ── Cancellation Request Modal ─────────────────────────────────────────
+        let activePartialCancel = null;
+
+        function openCancelRequestModal(ticketId = null, qty = null) {
+            activePartialCancel = ticketId ? { ticketId, qty } : null;
+            document.getElementById('cancelReasonInput').value = '';
+            document.getElementById('cancelReasonError').style.display = 'none';
+            document.getElementById('cancelRequestModal').classList.add('active');
+            
+            // Adjust title based on type
+            const title = document.querySelector('#cancelRequestModal .modal-header h5');
+            if (activePartialCancel) {
+                title.innerHTML = '<i class="fi fi-rr-ban me-2 text-danger"></i>Request Partial Cancellation';
+            } else {
+                title.innerHTML = '<i class="fi fi-rr-ban me-2 text-danger"></i>Request Cancellation';
+            }
+
+            setTimeout(() => document.getElementById('cancelReasonInput').focus(), 150);
+        }
+
+        function closeCancelRequestModal() {
+            activePartialCancel = null;
+            document.getElementById('cancelRequestModal').classList.remove('active');
+        }
+
+        async function submitCancelRequest(bookingId) {
+            const reasonInput = document.getElementById('cancelReasonInput');
+            const errorEl     = document.getElementById('cancelReasonError');
+            const btn         = document.getElementById('submitCancelRequestBtn');
+            const reason      = reasonInput.value.trim();
+
+            if (reason.length < 5) {
+                errorEl.style.display = 'block';
+                reasonInput.focus();
+                return;
+            }
+            errorEl.style.display = 'none';
+
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML  = '<i class="fi fi-rr-spinner" style="animation:spin 1s linear infinite;"></i> Submitting\u2026';
+            btn.disabled   = true;
+
+            try {
+                let res;
+                if (activePartialCancel) {
+                    // Partial cancellation request
+                    res = await axios.post(`/user/tickets/${bookingId}/tickets/${activePartialCancel.ticketId}/cancel`, { 
+                        reason, 
+                        quantity: activePartialCancel.qty 
+                    });
+                } else {
+                    // Full booking cancellation request
+                    res = await axios.post(`/user/tickets/${bookingId}/request-cancel`, { reason });
+                }
+
+                if (res.data.success) {
+                    closeCancelRequestModal();
+                    Toast.success(res.data.message);
+                    setTimeout(() => location.reload(), 1800);
+                }
+            } catch (err) {
+                Toast.error(err.response?.data?.message || 'Failed to submit request.');
+                btn.innerHTML = originalHtml;
+                btn.disabled  = false;
             }
         }
 
@@ -184,34 +389,17 @@
             if (maxQty > 1) {
                 cancelQty = await openQtyModal(maxQty);
                 if (!cancelQty) return; // User closed the modal
-            } else {
-                // Fallback to standard Yes/No confirmation if quantity is only 1
-                const ok = await CustomConfirm.show({
-                    title: 'Cancel this Ticket?',
-                    message: 'Are you sure you want to cancel this specific ticket? Wallet payments will be refunded immediately.',
-                    confirmText: 'Yes, Cancel',
-                    actionType: 'danger',
-                    icon: 'fi-rr-ban'
-                });
-                if (!ok) return;
             }
-
-            Loader.show('CANCELLING TICKET...');
-            try {
-                // We now send the quantity in the payload
-                const res = await axios.post(`/user/tickets/${bookingId}/tickets/${ticketId}/cancel`, {
-                    quantity: cancelQty
-                });
-
-                if(res.data.success) {
-                    Toast.success(res.data.message);
-                    setTimeout(() => location.reload(), 1500);
-                }
-            } catch (err) {
-                Toast.error(err.response?.data?.message || 'Failed to cancel ticket');
-            } finally {
-                Loader.hide();
-            }
+            
+            // Instead of confirming and hitting API directly, open the request modal
+            openCancelRequestModal(ticketId, cancelQty);
+        }
+        
+        // Listen for Real-Time Status Updates
+        if (window.socket) {
+            window.socket.on('bookingStatusUpdate', () => {
+                setTimeout(() => window.location.reload(), 2000);
+            });
         }
     </script>
 </body>

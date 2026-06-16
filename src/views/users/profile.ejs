@@ -19,7 +19,7 @@
             </div>
 
             <!-- 1. Profile Banner -->
-            <div class="glass-dark p-4 rounded-3 mb-4 animate stagger-2 d-flex flex-wrap align-center gap-4 border-red" style="position: relative; overflow: hidden;">
+            <div class="glass-premium dynamic-card p-4 rounded-3 mb-4 animate stagger-2 d-flex flex-wrap align-center gap-4 border-red" style="position: relative; overflow: hidden;">
                 <div style="position: absolute; right: 0; top: 0; width: 300px; height: 100%; background: linear-gradient(90deg, transparent, rgba(230, 57, 70, 0.05)); z-index: 0;"></div>
                 
                 <div class="profile-avatar-btn" style="width: 100px; height: 100px; font-size: 2.5rem; z-index: 1;">
@@ -55,7 +55,7 @@
             <div class="row g-4">
                 <!-- 2. Main Details Form -->
                 <div class="col-lg-7 animate stagger-3">
-                    <form id="profileUpdateForm" novalidate class="glass-dark p-4 rounded-3 d-flex flex-column h-100">
+                    <form id="profileUpdateForm" novalidate class="glass-premium dynamic-card p-4 rounded-3 d-flex flex-column h-100">
                         <div class="d-flex justify-between align-center mb-4">
                             <h4 class="fw-bold m-0">Account Details</h4>
                         </div>
@@ -63,7 +63,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-floating mb-4">
-                                <input type="text" id="fullName" name="fullName" class="form-control input" placeholder=" " value="<%= user.fullName %>" required minlength="3" maxlength="50" pattern="^[a-zA-Z\s]+$">
+                                <input type="text" id="fullName" name="fullName" class="form-control input" placeholder=" " value="<%= user.fullName %>" data-rule="required, name, min3, max50">
                                 <label for="fullName">Full Name</label>
                             </div>
 
@@ -127,7 +127,7 @@
                             <div id="mapAddress" class="address-section animate" style="display: none;">
                                 
                                 <!-- The Actual Map Container -->
-                                <div class="glass-dark rounded-3 mb-3" style="height: 250px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; position: relative;">
+                                <div class="glass-premium dynamic-card rounded-3 mb-3" style="height: 250px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; position: relative;">
                                     <!-- Leaflet Map Div -->
                                     <div id="leafletMapContainer" style="width: 100%; height: 100%; z-index: 1;"></div>
                                 </div>
@@ -158,7 +158,7 @@
                 <!-- 3. Security & Actions -->
                 <div class="col-lg-5 animate stagger-4">
                     <!-- Security Card -->
-                    <div class="glass-dark p-4 rounded-3 mb-4">
+                    <div class="glass-premium dynamic-card p-4 rounded-3 mb-4">
                         <h4 class="mb-4 fw-bold">Security</h4>
                         
                         <!-- Show Google Alert if they linked Google -->
@@ -185,10 +185,13 @@
                                 <h6 class="fw-bold mb-1" style="font-size: 0.95rem;">Email Address</h6>
                                 <p class="text-dim m-0" style="font-size: 0.85rem;"><%= user.email %></p>
                             </div>
+                            <% if(!user.googleId) { %>
                             <button type="button" class="btn btn-outline btn-sm px-3" onclick="openModal('emailModal')">Edit</button>
+                            <% } %>
                         </div>
 
-                        <!-- Password Row (Dynamic based on hasPassword) -->
+                        <!-- Password Row (Dynamic based on hasPassword, Hidden for Google users) -->
+                        <% if(!user.googleId) { %>
                         <div class="d-flex justify-between align-center p-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border);">
                             <div>
                                 <h6 class="fw-bold mb-1" style="font-size: 0.95rem;">Password</h6>
@@ -202,15 +205,25 @@
                                 <%= user.password ? 'Edit' : 'Add' %>
                             </button>
                         </div>
+                        <% } %>
                     </div>
 
                     <!-- Calender Card -->
-                    <div class="glass-dark p-4 rounded-3" style="border-color: rgba(230, 57, 70, 0.2);">
-                        <h4 class="mb-2 fw-bold text-danger">Calender Comming Soon</h4>
-                        <!-- <p class="text-dim mb-4" style="font-size: 0.85rem;">Once you delete your account, there is no going back. Please be certain.</p>
-                        <button type="button" class="btn w-100" style="background: rgba(230, 57, 70, 0.1); color: var(--primary); border: 1px solid rgba(230, 57, 70, 0.3);">
-                            Delete Account
-                        </button> -->
+                    <div class="glass-premium dynamic-card p-4 rounded-3 mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="m-0 fw-bold">My Event Calendar</h4>
+                            <a href="/user/calendar" class="btn btn-sm btn-outline text-dim" style="font-size: 0.8rem;"><i class="fi fi-rr-expand-arrows-alt"></i> Full View</a>
+                        </div>
+                        <div id="miniCalendar" style="min-height: 350px; color: white;"></div>
+                        <style>
+                            .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 700; color: white; }
+                            .fc-button-primary { background: rgba(255,255,255,0.1) !important; border: none !important; color: white !important; font-size: 0.8rem !important; }
+                            .fc-button-primary:hover { background: var(--primary) !important; }
+                            .fc-theme-standard th { border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); font-weight: 600; padding: 0.5rem 0; font-size: 0.8rem; }
+                            .fc-theme-standard td, .fc-theme-standard th { border-color: rgba(255,255,255,0.05); }
+                            .fc-daygrid-day-number { color: white; font-size: 0.85rem; }
+                            .fc-event { border-radius: 4px; border: none; font-size: 0.75rem; padding: 2px 4px; }
+                        </style>
                     </div>
                 </div>
             </div>
@@ -236,7 +249,7 @@
                     <input type="hidden" name="currentEmail" value="<%= user.email %>">
                     
                     <div class="form-floating mb-2">
-                        <input type="email" name="newEmail" class="form-control input" id="newEmail" placeholder=" " required>
+                        <input type="email" name="newEmail" class="form-control input" id="newEmail" placeholder=" " data-rule="required, email">
                         <label for="newEmail">New Email Address</label>
                     </div>
                 </div>
@@ -264,7 +277,7 @@
                     <!-- Only render Current Password if they have a password to verify -->
                     <% if(user.password) { %>
                     <div class="form-floating password-group mb-4">
-                        <input type="password" name="currentPassword" class="form-control input" id="currentPassword" placeholder=" " required>
+                        <input type="password" name="currentPassword" class="form-control input" id="currentPassword" placeholder=" " data-rule="required">
                         <label for="currentPassword">Current Password</label>
                         <button type="button" class="password-toggle" onclick="togglePassword('currentPassword', this)">
                             <i class="fi fi-rr-eye"></i>
@@ -274,7 +287,7 @@
                     
                     <input type="hidden" name="currentUserId" value="<%= user._id %>">
                     <div class="form-floating password-group mb-4">
-                        <input type="password" name="newPassword" class="form-control input" id="newPassword" placeholder=" " required minlength="8">
+                        <input type="password" name="newPassword" class="form-control input" id="newPassword" placeholder=" " data-rule="required, password, min8">
                         <label for="newPassword">New Password</label>
                         <button type="button" class="password-toggle" onclick="togglePassword('newPassword', this)">
                             <i class="fi fi-rr-eye"></i>
@@ -282,7 +295,7 @@
                     </div>
 
                     <div class="form-floating password-group mb-2">
-                        <input type="password" name="confirmPassword" class="form-control input" id="confirmPassword" placeholder=" " required minlength="8">
+                        <input type="password" name="confirmPassword" class="form-control input" id="confirmPassword" placeholder=" " data-rule="required, password, match:newPassword">
                         <label for="confirmPassword">Confirm New Password</label>
                         <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
                             <i class="fi fi-rr-eye"></i>
@@ -328,7 +341,7 @@
                 <div class="row g-3">
                     <!-- Choice A: Upload -->
                     <div class="col-6">
-                        <div class="glass-dark p-4 rounded-3 text-center" style="cursor: pointer; transition: all 0.3s ease; border: 1px solid transparent;" 
+                        <div class="glass-premium dynamic-card p-4 rounded-3 text-center" style="cursor: pointer; transition: all 0.3s ease; border: 1px solid transparent;" 
                              onmouseover="this.style.borderColor='var(--primary)'; this.style.transform='translateY(-3px)';" 
                              onmouseout="this.style.borderColor='transparent'; this.style.transform='translateY(0)';"
                              onclick="triggerUpload()">
@@ -339,7 +352,7 @@
                     </div>
                     <!-- Choice B: AI Generate -->
                     <div class="col-6">
-                        <div class="glass-dark p-4 rounded-3 text-center" style="cursor: pointer; transition: all 0.3s ease; border: 1px solid transparent;"
+                        <div class="glass-premium dynamic-card p-4 rounded-3 text-center" style="cursor: pointer; transition: all 0.3s ease; border: 1px solid transparent;"
                              onmouseover="this.style.borderColor='var(--primary)'; this.style.transform='translateY(-3px)';" 
                              onmouseout="this.style.borderColor='transparent'; this.style.transform='translateY(0)';"
                              onclick="openAiModal()">
@@ -364,12 +377,12 @@
             </div>
             <div class="modal-body">
                 <div class="form-floating mb-3">
-                    <input type="text" id="aiPrompt" class="form-control input" placeholder=" " required>
+                    <input type="text" id="aiPrompt" class="form-control input" placeholder=" " data-rule="required">
                     <label for="aiPrompt">Describe your avatar (e.g., A cyberpunk hacker)</label>
                 </div>
                 
                 <!-- Preview Area -->
-                <div id="aiPreviewArea" class="glass-dark rounded-3 d-flex align-center justify-center mb-1" style="height: 250px; border: 1px dashed rgba(255,255,255,0.2); position: relative; overflow: hidden; background: #000;">
+                <div id="aiPreviewArea" class="glass-premium dynamic-card rounded-3 d-flex align-center justify-center mb-1" style="height: 250px; border: 1px dashed rgba(255,255,255,0.2); position: relative; overflow: hidden; background: #000;">
                     
                     <div class="text-center" id="aiPlaceholderText">
                         <i class="fi fi-rr-sparkles text-dim" style="font-size: 2rem;"></i>
@@ -1030,6 +1043,35 @@
                 }
             });
         }
+    </script>
+
+    <!-- FullCalendar JS -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('miniCalendar');
+            if (calendarEl) {
+                var eventsData = <%- JSON.stringify(calendarEvents || []) %>;
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next',
+                        center: 'title',
+                        right: 'dayGridMonth'
+                    },
+                    height: 'auto',
+                    themeSystem: 'standard',
+                    events: eventsData,
+                    eventClick: function(info) {
+                        if (info.event.url) {
+                            window.location.href = info.event.url;
+                            info.jsEvent.preventDefault();
+                        }
+                    }
+                });
+                calendar.render();
+            }
+        });
     </script>
 </body>
 </html>
