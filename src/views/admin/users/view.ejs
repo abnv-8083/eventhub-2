@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+    <title>User Details: <%= user.fullName %> | EventHub Admin</title>
+</head>
+<body class="bg-mesh">
+    
+    <%- include('../../partials/navbars/admin-nav') %>
+
+    <div class="dashboard-layout">
+        <%- include('../../partials/admin-sidebar', { title: 'Manage Users' }) %>
+        
+        <main class="dashboard-main">
+            <div class="d-flex justify-between align-center mb-4 animate stagger-1">
+                <div>
+                    <a href="/admin/users" class="text-dim text-decoration-none small fw-bold text-uppercase mb-2 d-inline-block">
+                        <i class="fi fi-rr-arrow-left me-1"></i> Back to Users
+                    </a>
+                    <h2 class="fw-bold m-0"><%= user.fullName %></h2>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-4 animate stagger-2">
+                    <div class="glass-premium p-4 rounded-3 h-100 text-center">
+                        <div style="width: 100px; height: 100px; border-radius: 50%; background: rgba(230, 57, 70, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 3rem; font-weight: bold; margin: 0 auto 1rem; overflow: hidden; border: 2px solid rgba(255,255,255,0.1);">
+                            <% if(user.avatar) { %>
+                                <img src="<%= user.avatar %>" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                            <% } else { %>
+                                <%= user.fullName.charAt(0).toUpperCase() %>
+                            <% } %>
+                        </div>
+                        <h4 class="fw-bold mb-1"><%= user.fullName %></h4>
+                        <p class="text-dim mb-3"><%= user.email %></p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <% if (!user.isBlocked) { %>
+                                <span class="status-badge status-approved px-3 py-2" style="border-radius: 20px;">
+                                    <i class="fi fi-rr-check-circle"></i> Active
+                                </span>
+                            <% } else { %>
+                                <span class="status-badge status-rejected px-3 py-2" style="border-radius: 20px;">
+                                    <i class="fi fi-rr-ban"></i> Banned
+                                </span>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8 animate stagger-3">
+                    <div class="glass-premium p-4 rounded-3 h-100">
+                        <h5 class="fw-bold mb-4 border-bottom border-secondary pb-2">Account Overview</h5>
+                        <div class="row g-4">
+                            <div class="col-sm-6">
+                                <p class="text-dim small text-uppercase mb-1">Joined Date</p>
+                                <p class="fw-bold m-0"><%= new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="text-dim small text-uppercase mb-1">User ID</p>
+                                <p class="fw-bold m-0" style="font-family: monospace;"><%= user._id %></p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="text-dim small text-uppercase mb-1">Wallet Balance</p>
+                                <p class="fw-bold text-primary m-0 fs-5">₹<%= user.wallet?.balance || 0 %></p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="text-dim small text-uppercase mb-1">Total Bookings</p>
+                                <p class="fw-bold m-0"><%= bookings.length %></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-premium p-4 rounded-3 animate stagger-4">
+                <h5 class="fw-bold mb-4">Recent Bookings</h5>
+                <% if (bookings && bookings.length > 0) { %>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Event</th>
+                                    <th>Booking ID</th>
+                                    <th>Date</th>
+                                    <th>Total Price</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% bookings.forEach(booking => { %>
+                                    <tr>
+                                        <td>
+                                            <% if (booking.event) { %>
+                                                <strong class="text-white"><%= booking.event.title %></strong><br>
+                                                <small class="text-dim"><%= new Date(booking.event.startDate).toLocaleDateString() %></small>
+                                            <% } else { %>
+                                                <span class="text-dim">Event Removed</span>
+                                            <% } %>
+                                        </td>
+                                        <td class="text-dim" style="font-family: monospace;"><%= booking.bookingId || booking._id %></td>
+                                        <td class="text-dim"><%= new Date(booking.createdAt).toLocaleDateString() %></td>
+                                        <td class="fw-bold">₹<%= booking.totalPrice %></td>
+                                        <td>
+                                            <% if (booking.status === 'confirmed') { %>
+                                                <span class="status-badge status-approved"><i class="fi fi-rr-check"></i> Confirmed</span>
+                                            <% } else if (booking.status === 'cancelled') { %>
+                                                <span class="status-badge status-rejected"><i class="fi fi-rr-cross"></i> Cancelled</span>
+                                            <% } else { %>
+                                                <span class="status-badge status-pending"><i class="fi fi-rr-time-fast"></i> <%= booking.status %></span>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="text-center p-5">
+                        <div style="font-size: 3rem; color: rgba(255,255,255,0.1); margin-bottom: 1rem;">
+                            <i class="fi fi-rr-ticket"></i>
+                        </div>
+                        <p class="text-dim m-0">This user hasn't made any bookings yet.</p>
+                    </div>
+                <% } %>
+            </div>
+            
+        </main>
+    </div>
+</body>
+</html>

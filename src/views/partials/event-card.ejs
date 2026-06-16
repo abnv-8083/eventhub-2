@@ -1,0 +1,45 @@
+<div class="event-card animate" onclick="window.location.href='/user/events/<%= event._id %>'">
+    <div style="position:relative;">
+        <% if(event.isFeatured) { %><span class="featured-badge">&#11088; Featured</span><% } %>
+        <% if(!event.hasAvailability) { %><span class="soldout-badge">Sold Out</span><% } %>
+
+        <!-- Wishlist Heart Button -->
+        <button
+            class="wish-btn <%= event.isWishlisted ? 'wishlisted' : '' %>"
+            id="wish-<%= event._id %>"
+            onclick="toggleWishlist(event, '<%= event._id %>', this)"
+            title="<%= event.isWishlisted ? 'Remove from wishlist' : 'Add to wishlist' %>"
+        >
+            <i class="fi fi-<%= event.isWishlisted ? 'sr' : 'rr' %>-heart"></i>
+        </button>
+
+        <% if(event.banners && event.banners.length > 0) { %>
+            <img src="<%= event.banners[0] %>" class="event-card-img" alt="<%= event.title %>">
+        <% } else { %>
+            <div class="event-card-img-ph"><i class="fi fi-rr-picture" style="font-size:2.5rem;color:rgba(255,255,255,0.12);"></i></div>
+        <% } %>
+    </div>
+    <div class="event-card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="event-cat-tag"><%= event.category?.name || 'Event' %></span>
+            <% if(event.hasAvailability) { %><span style="width:7px;height:7px;border-radius:50%;background:#2ecc71;display:inline-block;" title="Available"></span><% } %>
+        </div>
+        <h6 class="fw-bold text-white mb-2" style="font-size:0.96rem;line-height:1.35;flex:1;"><%= event.title %></h6>
+        <div class="event-meta-row mb-1">
+            <i class="fi fi-rr-calendar"></i>
+            <span><%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %></span>
+            <span style="opacity:0.4;">&middot;</span>
+            <span><%= event.startTime %></span>
+        </div>
+        <div class="event-meta-row mb-3" style="overflow:hidden;">
+            <i class="fi fi-rr-marker" style="flex-shrink:0;"></i>
+            <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= event.location.address %></span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-auto pt-2" style="border-top:1px solid rgba(255,255,255,0.06);">
+            <span class="event-price-badge">
+                <% if(event.minPrice === 0) { %><span style="color:#2ecc71;">Free</span><% } else { %>From &#8377;<%= event.minPrice.toLocaleString('en-IN') %><% } %>
+            </span>
+            <span style="color:rgba(255,255,255,0.3);font-size:0.78rem;">View &rarr;</span>
+        </div>
+    </div>
+</div>

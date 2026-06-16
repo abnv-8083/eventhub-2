@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+    <title>Organizer Details: <%= organizer.organizationName || organizer.fullName %> | EventHub Admin</title>
+</head>
+<body class="bg-mesh">
+    
+    <%- include('../../partials/navbars/admin-nav') %>
+
+    <div class="dashboard-layout">
+        <%- include('../../partials/admin-sidebar', { title: 'Manage Organizers' }) %>
+        
+        <main class="dashboard-main">
+            <div class="d-flex justify-between align-center mb-4 animate stagger-1">
+                <div>
+                    <a href="/admin/organizers" class="text-dim text-decoration-none small fw-bold text-uppercase mb-2 d-inline-block">
+                        <i class="fi fi-rr-arrow-left me-1"></i> Back to Organizers
+                    </a>
+                    <h2 class="fw-bold m-0"><%= organizer.organizationName || organizer.fullName %></h2>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-4 animate stagger-2">
+                    <div class="glass-premium p-4 rounded-3 h-100 text-center">
+                        <div style="width: 100px; height: 100px; border-radius: 50%; background: rgba(230, 57, 70, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 3rem; font-weight: bold; margin: 0 auto 1rem; overflow: hidden; border: 2px solid rgba(255,255,255,0.1);">
+                            <% if(organizer.avatar) { %>
+                                <img src="<%= organizer.avatar %>" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                            <% } else { %>
+                                <%= (organizer.organizationName || organizer.fullName || 'O').charAt(0).toUpperCase() %>
+                            <% } %>
+                        </div>
+                        <h4 class="fw-bold mb-1"><%= organizer.organizationName || organizer.fullName %></h4>
+                        <p class="text-dim mb-3"><%= organizer.email %></p>
+                        
+                        <div class="d-flex justify-content-center gap-2 mb-3">
+                            <% if(organizer.status === 'approved') { %>
+                                <span class="status-badge status-approved px-3 py-2" style="border-radius: 20px;">
+                                    <i class="fi fi-rr-badge-check"></i> Approved
+                                </span>
+                            <% } else if(organizer.status === 'pending') { %>
+                                <span class="status-badge status-pending px-3 py-2" style="border-radius: 20px;">
+                                    <i class="fi fi-rr-time-fast"></i> Pending
+                                </span>
+                            <% } else { %>
+                                <span class="status-badge status-rejected px-3 py-2" style="border-radius: 20px;">
+                                    <i class="fi fi-rr-cross-circle"></i> Rejected
+                                </span>
+                            <% } %>
+
+                            <% if (organizer.isBlocked) { %>
+                                <span class="status-badge status-rejected px-3 py-2" style="border-radius: 20px;">
+                                    <i class="fi fi-rr-ban"></i> Banned
+                                </span>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8 animate stagger-3">
+                    <div class="glass-premium p-4 rounded-3 h-100">
+                        <h5 class="fw-bold mb-4 border-bottom border-secondary pb-2">Business Information</h5>
+                        <div class="row g-4">
+                            <div class="col-sm-6">
+                                <p class="text-dim small text-uppercase mb-1">Owner Name</p>
+                                <p class="fw-bold m-0"><%= organizer.fullName %></p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="text-dim small text-uppercase mb-1">Phone</p>
+                                <p class="fw-bold m-0"><%= organizer.phone || 'Not provided' %></p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="text-dim small text-uppercase mb-1">City</p>
+                                <p class="fw-bold m-0"><%= organizer.city || 'Not provided' %></p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="text-dim small text-uppercase mb-1">Total Events Created</p>
+                                <p class="fw-bold text-primary m-0 fs-5"><%= totalEvents %></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-premium p-4 rounded-3 animate stagger-4">
+                <h5 class="fw-bold mb-4">Recent Events Created</h5>
+                <% if (events && events.length > 0) { %>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Event Title</th>
+                                    <th>Date & Time</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% events.forEach(event => { %>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <% if(event.banners && event.banners.length > 0) { %>
+                                                    <img src="<%= event.banners[0] %>" alt="Banner" style="width: 50px; height: 35px; border-radius: 4px; object-fit: cover;">
+                                                <% } %>
+                                                <strong class="text-white"><%= event.title %></strong>
+                                            </div>
+                                        </td>
+                                        <td class="text-dim">
+                                            <%= new Date(event.startDate).toLocaleDateString() %><br>
+                                            <small><%= event.startTime %></small>
+                                        </td>
+                                        <td class="text-dim"><%= event.location.address %></td>
+                                        <td>
+                                            <% if (event.isBlocked) { %>
+                                                <span class="status-badge status-rejected"><i class="fi fi-rr-ban"></i> Blocked</span>
+                                            <% } else if (event.status === 'approved') { %>
+                                                <span class="status-badge status-approved"><i class="fi fi-rr-check"></i> Approved</span>
+                                            <% } else if (event.status === 'rejected') { %>
+                                                <span class="status-badge status-rejected"><i class="fi fi-rr-cross"></i> Rejected</span>
+                                            <% } else { %>
+                                                <span class="status-badge status-pending"><i class="fi fi-rr-time-fast"></i> Pending</span>
+                                            <% } %>
+                                        </td>
+                                        <td class="text-end">
+                                            <a href="/admin/events/<%= event._id %>" class="action-btn icon-only" title="Review Event">
+                                                <i class="fi fi-rr-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="text-center p-5">
+                        <div style="font-size: 3rem; color: rgba(255,255,255,0.1); margin-bottom: 1rem;">
+                            <i class="fi fi-rr-calendar-star"></i>
+                        </div>
+                        <p class="text-dim m-0">This organizer hasn't created any events yet.</p>
+                    </div>
+                <% } %>
+            </div>
+            
+        </main>
+    </div>
+</body>
+</html>
