@@ -20,8 +20,8 @@
  */
 
 // ─── Forbidden Characters ────────────────────────────────────────────────────
-const FORBIDDEN_RE   = /[#!<>?\/\\*&\^%\$]/;
-const FORBIDDEN_KEYS = new Set(['#', '!', '<', '>', '?', '/', '.', ',', '*', '&', '^', '%', '$']);
+const FORBIDDEN_RE   = /[<>\\*^%]/;
+const FORBIDDEN_KEYS = new Set(['<', '>', '\\', '*', '^', '%']);
 const EXEMPT_TYPES   = new Set(['email', 'password', 'date', 'time', 'number', 'hidden', 'file', 'checkbox', 'radio', 'submit', 'button', 'select-one', 'select-multiple']);
 const EXEMPT_NAMES   = new Set(['email', 'password', 'newPassword', 'confirmPassword', 'currentPassword', 'lat', 'lng', 'referralCode']);
 
