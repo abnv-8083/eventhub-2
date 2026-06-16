@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head') %>
+    <title>Refer & Earn | EventHub</title>
+</head>
+<body class="bg-mesh">
+    <%- include('../partials/navbars/user-nav') %>
+
+    <div class="dashboard-layout">
+        <%- include('../partials/user-sidebar', { title: 'Refer & Earn' }) %>
+
+        <main class="dashboard-main">
+
+            <%# ── Page Header ── %>
+            <div class="mb-4 animate stagger-1">
+                <p class="page-label">Rewards</p>
+                <h2 class="fw-bold mb-1">Refer &amp; Earn</h2>
+                <p class="text-dim m-0">Invite friends to EventHub and earn wallet credits when they book their first event.</p>
+            </div>
+
+            <%# ── Hero Reward Banner ── %>
+            <div class="referral-hero-card animate stagger-2 mb-4">
+                <div class="referral-hero-orb referral-orb-1"></div>
+                <div class="referral-hero-orb referral-orb-2"></div>
+                <div class="referral-hero-content">
+                    <div class="row g-4 align-items-center">
+                        <div class="col-md-7">
+                            <p class="page-label" style="opacity: 0.7;">HOW IT WORKS</p>
+                            <h3 class="fw-bold text-white mb-3" style="font-size: 1.7rem;">Invite. Book. Earn.</h3>
+                            <div class="referral-steps">
+                                <div class="referral-step">
+                                    <div class="ref-step-num">1</div>
+                                    <div>
+                                        <p class="ref-step-title">Share your code</p>
+                                        <p class="ref-step-desc">Send your unique referral link or code to friends.</p>
+                                    </div>
+                                </div>
+                                <div class="referral-step">
+                                    <div class="ref-step-num">2</div>
+                                    <div>
+                                        <p class="ref-step-title">Friend signs up &amp; books</p>
+                                        <p class="ref-step-desc">They register using your code and make their first booking.</p>
+                                    </div>
+                                </div>
+                                <div class="referral-step">
+                                    <div class="ref-step-num">3</div>
+                                    <div>
+                                        <p class="ref-step-title">Both of you earn!</p>
+                                        <p class="ref-step-desc">You get <strong>&#8377;<%= referrerReward %></strong> and your friend gets <strong>&#8377;<%= refereeReward %></strong> in wallet credits.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="referral-reward-cards">
+                                <div class="referral-reward-pill you-earn">
+                                    <i class="fi fi-rr-sack-dollar"></i>
+                                    <div>
+                                        <p class="reward-label">You Earn</p>
+                                        <p class="reward-amount">&#8377;<%= referrerReward %></p>
+                                    </div>
+                                </div>
+                                <div class="referral-reward-pill friend-earns">
+                                    <i class="fi fi-rr-gift"></i>
+                                    <div>
+                                        <p class="reward-label">Friend Earns</p>
+                                        <p class="reward-amount">&#8377;<%= refereeReward %></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <%# ── Your Code Card ── %>
+                <div class="col-lg-6 animate stagger-3">
+                    <div class="glass-premium dynamic-card p-4 rounded-3 h-100">
+                        <p class="page-label mb-2">YOUR REFERRAL CODE</p>
+                        <div class="referral-code-display mb-3" id="refCodeDisplay">
+                            <span class="referral-code-text" id="refCodeText"><%= referralCode || 'Loading...' %></span>
+                            <button class="ref-copy-btn" id="copyCodeBtn" onclick="copyCode()" title="Copy Code">
+                                <i class="fi fi-rr-copy" id="copyCodeIcon"></i>
+                            </button>
+                        </div>
+                        <p class="text-dim mb-3" style="font-size: 0.85rem;">Or share your unique invite link:</p>
+                        <div class="referral-link-wrap mb-3">
+                            <input type="text" class="referral-link-input" id="refLinkInput" value="<%= referralLink %>" readonly>
+                            <button class="ref-link-copy-btn" onclick="copyLink()">
+                                <i class="fi fi-rr-link me-1"></i> Copy Link
+                            </button>
+                        </div>
+                        <div class="d-flex gap-3 mt-3">
+                            <a href="https://wa.me/?text=<%= encodeURIComponent('Join me on EventHub! Use my referral code ' + referralCode + ' when signing up to earn ₹' + refereeReward + ' wallet bonus. Sign up here: ' + referralLink) %>" target="_blank" class="ref-share-btn whatsapp">
+                                <i class="fi fi-brands-whatsapp me-1"></i> WhatsApp
+                            </a>
+                            <button onclick="copyLink()" class="ref-share-btn copy-all">
+                                <i class="fi fi-rr-share me-1"></i> Copy &amp; Share
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <%# ── Stats Card ── %>
+                <div class="col-lg-6 animate stagger-4">
+                    <div class="glass-premium dynamic-card p-4 rounded-3 h-100">
+                        <p class="page-label mb-3">YOUR REFERRAL STATS</p>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="referral-stat-box">
+                                    <i class="fi fi-rr-users referral-stat-icon"></i>
+                                    <p class="referral-stat-value"><%= totalReferrals %></p>
+                                    <p class="referral-stat-label">Total Invited</p>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="referral-stat-box">
+                                    <i class="fi fi-rr-check-circle referral-stat-icon" style="color: #2ECC71;"></i>
+                                    <p class="referral-stat-value" style="color: #2ECC71;"><%= rewardedReferrals %></p>
+                                    <p class="referral-stat-label">Successful</p>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="referral-stat-box referral-earnings-box">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <p class="referral-stat-label mb-1">Total Earned from Referrals</p>
+                                            <p class="referral-total-earned">&#8377;<%= totalEarned.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></p>
+                                        </div>
+                                        <i class="fi fi-rr-sack-dollar" style="font-size: 2.5rem; color: rgba(230,57,70,0.3);"></i>
+                                    </div>
+                                    <div class="referral-progress-bar mt-3">
+                                        <div class="referral-progress-fill" style="width: <%= Math.min((rewardedReferrals / Math.max(totalReferrals, 1)) * 100, 100) %>%"></div>
+                                    </div>
+                                    <p class="text-dim mt-1 mb-0" style="font-size: 0.78rem;"><%= rewardedReferrals %> of <%= totalReferrals %> referrals completed</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <%# ── Terms & Conditions ── %>
+            <div class="glass-premium dynamic-card p-4 rounded-3 animate stagger-5">
+                <p class="page-label mb-2">TERMS & CONDITIONS</p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="ref-term-item">
+                            <i class="fi fi-rr-check text-success me-2"></i>
+                            Referral rewards are credited to wallet after the invited user makes their <strong>first booking</strong>.
+                        </div>
+                        <div class="ref-term-item">
+                            <i class="fi fi-rr-check text-success me-2"></i>
+                            You earn <strong>&#8377;<%= referrerReward %></strong> per successful referral, with no limit on the number of referrals.
+                        </div>
+                        <div class="ref-term-item">
+                            <i class="fi fi-rr-check text-success me-2"></i>
+                            The invited friend earns <strong>&#8377;<%= refereeReward %></strong> as a welcome wallet bonus after their first booking.
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="ref-term-item">
+                            <i class="fi fi-rr-info me-2" style="color: #f1c40f;"></i>
+                            Self-referrals (using your own code) are not allowed.
+                        </div>
+                        <div class="ref-term-item">
+                            <i class="fi fi-rr-info me-2" style="color: #f1c40f;"></i>
+                            Wallet credits can be used for future bookings on EventHub.
+                        </div>
+                        <div class="ref-term-item">
+                            <i class="fi fi-rr-info me-2" style="color: #f1c40f;"></i>
+                            EventHub reserves the right to modify or terminate the referral program at any time.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+    <style>
+        .page-label { color: var(--primary); text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .glass-premium { background: rgba(20,20,20,0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s; }
+        .dynamic-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.15); }
+        
+        .referral-hero-card { position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(30,30,30,0.8), rgba(15,15,15,0.9)); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); padding: 3rem; box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
+        .referral-hero-orb { position: absolute; border-radius: 50%; filter: blur(50px); opacity: 0.3; z-index: 0; pointer-events: none; }
+        .referral-orb-1 { width: 200px; height: 200px; background: var(--primary); top: -50px; right: 10%; }
+        .referral-orb-2 { width: 150px; height: 150px; background: rgba(241,196,15,0.5); bottom: -30px; left: 20%; }
+        .referral-hero-content { position: relative; z-index: 2; }
+        
+        .referral-steps { display: flex; flex-direction: column; gap: 1.5rem; margin-top: 2rem; }
+        .referral-step { display: flex; gap: 1.5rem; align-items: flex-start; }
+        .ref-step-num { width: 36px; height: 36px; border-radius: 50%; background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.3); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; font-size: 1.1rem; }
+        .ref-step-title { color: white; font-weight: 600; font-size: 1.1rem; margin-bottom: 0.2rem; }
+        .ref-step-desc { color: rgba(255,255,255,0.5); font-size: 0.9rem; margin: 0; }
+        
+        .referral-reward-cards { display: flex; flex-direction: column; gap: 1rem; }
+        .referral-reward-pill { display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); }
+        .referral-reward-pill i { font-size: 2.5rem; opacity: 0.8; }
+        .you-earn i { color: #4ECDC4; }
+        .friend-earns i { color: #FFE66D; }
+        .reward-label { color: rgba(255,255,255,0.5); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; margin-bottom: 0.2rem; }
+        .reward-amount { font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: white; margin: 0; line-height: 1; }
+        
+        .referral-code-display { display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem 1.5rem; transition: border-color 0.3s; }
+        .referral-code-text { font-family: monospace; font-size: 1.8rem; font-weight: 700; color: white; letter-spacing: 2px; }
+        .ref-copy-btn { background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.2rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; padding: 0.5rem; border-radius: 8px; }
+        .ref-copy-btn:hover { color: var(--primary); background: rgba(230,57,70,0.1); }
+        
+        .referral-link-wrap { display: flex; gap: 0.5rem; }
+        .referral-link-input { flex: 1; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.8rem 1rem; color: rgba(255,255,255,0.7); font-size: 0.9rem; font-family: monospace; outline: none; }
+        .referral-link-input:focus { border-color: rgba(255,255,255,0.3); }
+        .ref-link-copy-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 0 1rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .ref-link-copy-btn:hover { background: rgba(255,255,255,0.1); }
+        
+        .ref-share-btn { flex: 1; display: flex; justify-content: center; align-items: center; padding: 0.8rem; border-radius: 8px; font-weight: 600; text-decoration: none; transition: transform 0.2s; border: none; cursor: pointer; }
+        .ref-share-btn:hover { transform: translateY(-2px); color: white; }
+        .whatsapp { background: rgba(37,211,102,0.15); color: #25D366; border: 1px solid rgba(37,211,102,0.3); }
+        .copy-all { background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); }
+        
+        .referral-stat-box { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; text-align: center; border: 1px solid rgba(255,255,255,0.05); height: 100%; }
+        .referral-stat-icon { font-size: 2rem; color: rgba(255,255,255,0.3); margin-bottom: 1rem; }
+        .referral-stat-value { font-size: 2rem; font-weight: 800; font-family: var(--font-display); color: white; margin-bottom: 0.2rem; line-height: 1; }
+        .referral-stat-label { color: rgba(255,255,255,0.5); font-size: 0.85rem; margin: 0; }
+        
+        .referral-earnings-box { align-items: flex-start; text-align: left; padding: 2rem; }
+        .referral-total-earned { font-size: 3rem; font-weight: 800; color: #4ECDC4; font-family: var(--font-display); margin: 0; line-height: 1; }
+        .referral-progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 100px; overflow: hidden; }
+        .referral-progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #FF6B6B); border-radius: 100px; transition: width 1s ease-out; }
+        
+        .ref-term-item { display: flex; align-items: flex-start; font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-bottom: 1rem; line-height: 1.6; }
+        .ref-term-item i { margin-top: 3px; }
+        .ref-term-item strong { color: white; }
+    </style>
+
+    <script>
+        const REFERRAL_CODE = '<%= referralCode %>';
+        const REFERRAL_LINK = '<%= referralLink %>';
+
+        function copyCode() {
+            navigator.clipboard.writeText(REFERRAL_CODE).then(() => {
+                const icon = document.getElementById('copyCodeIcon');
+                icon.classList.replace('fi-rr-copy', 'fi-rr-check');
+                document.getElementById('refCodeDisplay').style.borderColor = 'rgba(46,204,113,0.5)';
+                Toast.success('Code copied!');
+                setTimeout(() => {
+                    icon.classList.replace('fi-rr-check', 'fi-rr-copy');
+                    document.getElementById('refCodeDisplay').style.borderColor = '';
+                }, 2000);
+            });
+        }
+
+        function copyLink() {
+            navigator.clipboard.writeText(REFERRAL_LINK).then(() => {
+                Toast.success('Referral link copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>
