@@ -14,8 +14,8 @@
             overflow-x: hidden;
         }
 
-        /* Responsive wrapper for the glass-dark table panel */
-        .glass-dark {
+        /* Responsive wrapper for the glass-premium table panel */
+        .glass-premium {
             max-width: 100%;
             overflow: hidden; 
         }
@@ -79,7 +79,7 @@
                     </div>
                 </div>
             </div>
-            <div class="glass-dark p-3 p-md-4 rounded-3 animate stagger-3">
+            <div class="glass-premium dynamic-card p-3 p-md-4 rounded-3 animate stagger-3">
                 <div class="table-responsive">
                     <table class="data-table w-100">
                         <thead>
@@ -120,7 +120,7 @@
                                     </td>
                                     <td>
                                         <div style="min-width: 150px;">
-                                            <span style="color: white; font-size: 0.9rem;"><%= new Date(event.startDate).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) %> &bull; <%= event.startTime %></span>
+                                            <span style="color: white; font-size: 0.9rem;"><%= new Date(event.startDate).toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric'}) %> &bull; <%= event.startTime %></span>
                                             <p class="text-dim m-0 text-truncate" style="font-size: 0.8rem; max-width: 200px;" title="<%= event.location.address %>"><%= event.location.address %></p>
                                         </div>
                                     </td>
@@ -134,18 +134,24 @@
                                         <% } %>
                                     </td>
                                     <td class="text-end">
-                                        <% if(event.status === 'pending') { %>
                                         <div class="d-flex justify-content-end gap-2">
+                                            <a href="/admin/events/<%= event._id %>" class="action-btn" title="View Details" style="text-decoration: none;">
+                                                <i class="fi fi-rr-eye"></i>
+                                            </a>
+                                            <% if(event.status === 'pending') { %>
                                             <button onclick="updateEventStatus('<%= event._id %>', 'approved')" class="btn btn-outline btn-sm px-3 text-success flex-shrink-0" style="border-radius: 8px;">
                                                 <i class="fi fi-rr-check me-1"></i> Approve
                                             </button>
                                             <button onclick="updateEventStatus('<%= event._id %>', 'rejected')" class="action-icon-btn danger flex-shrink-0" title="Reject">
                                                 <i class="fi fi-rr-cross"></i>
                                             </button>
+                                            <% } else if(event.status === 'approved') { %>
+                                                <button onclick="toggleEventBlock('<%= event._id %>', '<%= event.isBlocked ? 'unblock' : 'block' %>', this)" 
+                                                        class="action-btn <%= event.isBlocked ? 'action-btn-unblock' : 'action-btn-block' %>" title="<%= event.isBlocked ? 'Unblock Event' : 'Block Event' %>">
+                                                    <i class="fi <%= event.isBlocked ? 'fi-rr-check' : 'fi-rr-ban' %>"></i>
+                                                </button>
+                                            <% } %>
                                         </div>
-                                        <% } else { %>
-                                            <span class="text-dim" style="font-size: 0.8rem;">Processed</span>
-                                        <% } %>
                                     </td>
                                 </tr>
                                 <% }) %>
@@ -212,6 +218,33 @@
                 Toast.error(err.response?.data?.message || 'Failed to update event status');
             } finally { Loader.hide(); }
         }
+
+        async function toggleEventBlock(eventId, action, btnElement) {
+            if (action === 'block') {
+                const isConfirmed = await CustomConfirm.show({
+                    title: "Block Event?",
+                    message: "This event will be removed from public view and users will not be able to book it.",
+                    confirmText: "Block Event",
+                    actionType: "danger",
+                    icon: "fi-rr-ban"
+                });
+                if (!isConfirmed) return;
+            }
+
+            Loader.show(action === 'block' ? 'BLOCKING EVENT...' : 'UNBLOCKING EVENT...');
+            try {
+                const response = await axios.post('/admin/events/toggle-block', { eventId });
+                if (response.data.success) {
+                    Toast.success(response.data.message);
+                    setTimeout(() => location.reload(), 1000);
+                }
+            } catch (error) {
+                Toast.error(error.response?.data?.message || `Failed to ${action} event.`);
+            } finally {
+                Loader.hide();
+            }
+        }
+        
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('evtApply')?.addEventListener('click', applyFilters);
             document.getElementById('evtClear')?.addEventListener('click', () => window.location.href = window.location.pathname);

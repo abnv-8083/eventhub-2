@@ -1,19 +1,30 @@
-<header class="navbar-sticky">
+<header class="navbar-sticky glass-premium">
     <div class="container nav-container">
         <!-- Brand -->
-        <a href="/" class="logo">
+        <a href="/" class="logo" style="text-decoration: none;">
             Event<span class="text-gradient">Hub</span>
         </a>
-        
-        <!-- Links and Actions -->
-        <div class="nav-links">
-            <!-- <a href="/events">Browse Events</a>
-            <a href="/organizer/apply">Host an Event</a> -->
-            
-            <div class="d-flex align-center gap-2">
-                <a href="/user/login" class="btn btn-outline">Sign In</a>
-                <a href="/user/signup" class="btn btn-primary">Sign Up</a>
-            </div>
+
+        <!-- Nav links (center) -->
+        <nav class="nav-links d-flex align-items-center gap-4">
+            <a href="/events" style="font-size: 0.9rem; font-weight: 500; color: rgba(255,255,255,0.6); transition: color 0.2s;"
+               onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+                Browse Events
+            </a>
+            <a href="/organizer/apply" style="font-size: 0.9rem; font-weight: 500; color: rgba(255,255,255,0.6); transition: color 0.2s;"
+               onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+                Host an Event
+            </a>
+        </nav>
+
+        <!-- Auth Actions -->
+        <div class="d-flex align-items-center gap-2">
+            <a href="/user/login" class="btn btn-outline" style="height: 38px; padding: 0 1.2rem; font-size: 0.88rem; border-radius: 10px;">
+                Sign In
+            </a>
+            <a href="/user/signup" class="btn btn-primary" style="height: 38px; padding: 0 1.2rem; font-size: 0.88rem; border-radius: 10px;">
+                Get Started
+            </a>
         </div>
     </div>
 </header>

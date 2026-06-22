@@ -109,12 +109,17 @@ app.use(checkBlocked)
 
 
 
+import initCronJobs from './src/utils/cronJobs.js';
+
 app.get('/', userController.getHomepage);
 app.use('/user', userAuthRouter)
 app.use('/user', userRouter)
 app.use('/organizer', organizerRouter)
 app.use('/admin', adminAuthRoutes)
 app.use('/admin', adminRoutes)
+
+// Initialize cron jobs
+initCronJobs();
 
 // Public shortcut: /events → /user/events (for direct navigation)
 app.get('/events', (req, res) => res.redirect('/user/events' + (req.search || '')));
@@ -137,3 +142,5 @@ server.listen(PORT, () => {
     console.log(`🚀 EventHub Server is running on http://localhost:${PORT} or https://justly-mocha-preorder.ngrok-free.dev`);
     console.log(`⏳  Environment: ${process.env.NODE_ENV || 'development'}`);
 });
+
+// trigger restart

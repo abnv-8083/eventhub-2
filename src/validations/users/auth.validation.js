@@ -21,9 +21,9 @@ export const registerSchema = Joi.object({
 
     role: Joi.string().valid('user', 'organizer').default('user'),
 
-    password: Joi.string().min(8).required().messages({
+    password: Joi.string().pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$')).required().messages({
         'string.empty': 'Password is required.',
-        'string.min': 'Password must be at least 8 characters long.'
+        'string.pattern.base': 'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, a number, and a special character.'
     }),
 
     confirmPassword: Joi.string().valid(Joi.ref('password')).required().messages({
@@ -54,6 +54,10 @@ export const registerSchema = Joi.object({
             'string.pattern.base': 'Enter a valid phone number (digits only, 7–15 chars).'
         }),
         otherwise: Joi.optional().allow('', null)
+    }),
+
+    referralCode: Joi.string().trim().uppercase().max(10).optional().allow('', null).messages({
+        'string.max': 'Referral code cannot exceed 10 characters.'
     })
 });
 
@@ -103,6 +107,33 @@ export const updateProfileSchema = Joi.object({
     })
 });
 
+export const updateOrganizerProfileSchema = Joi.object({
+    organizationName: safeStr(Joi.string().trim().min(3).max(50)).required().messages({
+        'string.empty': 'Organization Name is required.',
+        'string.min': 'Organization Name must be at least 3 characters long.',
+        'string.max': 'Organization Name cannot exceed 50 characters.'
+    }),
+
+    fullName: Joi.string().trim().pattern(/^[a-zA-Z\s]+$/).min(3).max(50).required().messages({
+        'string.empty': 'Representative Name is required.',
+        'string.pattern.base': 'Name can only contain letters and spaces. No numbers or special characters.',
+        'string.min': 'Representative Name must be at least 3 characters long.',
+        'string.max': 'Representative Name cannot exceed 50 characters.'
+    }),
+
+    phone: Joi.string().trim().pattern(/^[0-9]{10,15}$/).allow('', null).messages({
+        'string.pattern.base': 'Phone number must contain ONLY numbers (10-15 digits). No spaces or symbols.'
+    }),
+
+    address: safeStr(Joi.string().trim().max(250)).allow('', null).messages({
+        'string.max': 'Address cannot exceed 250 characters.'
+    }),
+
+    bio: safeStr(Joi.string().trim().max(500)).allow('', null).messages({
+        'string.max': 'Bio cannot exceed 500 characters.'
+    })
+});
+
 export const updatePasswordSchema = Joi.object({
     action: Joi.string().valid('add', 'update').required(),
 
@@ -114,9 +145,9 @@ export const updatePasswordSchema = Joi.object({
         otherwise: Joi.optional().allow('', null)
     }),
 
-    newPassword: Joi.string().min(8).invalid(Joi.ref('currentPassword')).required().messages({
+    newPassword: Joi.string().pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$')).invalid(Joi.ref('currentPassword')).required().messages({
         'string.empty': 'New password is required.',
-        'string.min': 'New password must be at least 8 characters long.',
+        'string.pattern.base': 'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, a number, and a special character.',
         'any.invalid': 'New password cannot be the same as your current password.'
     }),
 

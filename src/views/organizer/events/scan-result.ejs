@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head', { title: 'Scan Result' }) %>
+    <style>
+        .result-container {
+            max-width: 500px;
+            margin: 4rem auto;
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(15, 15, 15, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .pulse-ring {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: #fff;
+        }
+
+        .success .pulse-ring {
+            background: #2ecc71;
+            box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4);
+            animation: pulse-success 2s infinite;
+        }
+
+        .error .pulse-ring {
+            background: #e63946;
+            box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.4);
+            animation: pulse-error 2s infinite;
+        }
+
+        @keyframes pulse-success {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(46, 204, 113, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+        }
+
+        @keyframes pulse-error {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(230, 57, 70, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); }
+        }
+        
+        .ticket-details {
+            text-align: left;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            border: 1px dashed rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body class="bg-mesh" style="background: #000; min-height: 100vh;">
+    
+    <div class="result-container glass-premium <%= success ? 'success' : 'error' %>">
+        <% if (success) { %>
+            <div class="pulse-ring">
+                <i class="fi fi-rr-check"></i>
+            </div>
+            <h2 class="fw-bold text-white mb-2" style="color: #2ecc71 !important;">VALID TICKET</h2>
+            <p class="text-dim mb-0">Access Granted.</p>
+            
+            <div class="ticket-details">
+                <p class="text-white mb-2"><strong>Attendee:</strong> <%= booking.user.fullName %></p>
+                <p class="text-white mb-2"><strong>Phone:</strong> <%= booking.user.phone || 'N/A' %></p>
+                <p class="text-white mb-3"><strong>Event:</strong> <%= booking.event.title %></p>
+                
+                <h6 class="text-dim text-uppercase small fw-bold mb-2">Tickets Included:</h6>
+                <% booking.tickets.forEach(t => { %>
+                    <div class="d-flex justify-content-between text-white mb-1">
+                        <span><%= t.quantity %>x <%= t.ticketName %></span>
+                        <span class="badge <%= t.status === 'cancelled' ? 'bg-danger' : 'bg-success' %>"><%= t.status %></span>
+                    </div>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <div class="pulse-ring">
+                <i class="fi fi-rr-cross"></i>
+            </div>
+            <h2 class="fw-bold text-white mb-2" style="color: #e63946 !important;">INVALID TICKET</h2>
+            <p class="text-dim mb-4"><%= message %></p>
+        <% } %>
+
+        <div class="mt-4">
+            <a href="/organizer/scanner" class="btn btn-primary w-100 py-3 fw-bold">
+                <i class="fi fi-rr-camera me-2"></i> Scan Another Ticket
+            </a>
+            <a href="/organizer/dashboard" class="btn btn-link text-dim mt-3">Back to Dashboard</a>
+        </div>
+    </div>
+
+</body>
+</html>

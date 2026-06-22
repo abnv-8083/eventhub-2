@@ -1,34 +1,280 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <%- include('../../partials/head') %>
+    <%- include('../../partials/head', { title: 'Booking Failed' }) %>
+    <style>
+        /* Premium Aesthetic Error Design */
+        .failed-page-wrapper {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 1rem;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Ambient background error glow */
+        .failed-page-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(230, 57, 70, 0.15) 0%, transparent 70%);
+            z-index: 0;
+            animation: pulseErrorGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseErrorGlow {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+            100% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+        }
+
+        /* The Error Card */
+        .error-card {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 480px;
+            background: rgba(15, 10, 10, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(230, 57, 70, 0.15);
+            border-radius: 24px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            animation: shakeFadeIn 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+            opacity: 0;
+            transform: translateY(20px);
+            padding: 3rem 2.5rem;
+            text-align: center;
+        }
+
+        @keyframes shakeFadeIn {
+            0% { opacity: 0; transform: translateY(40px); }
+            50% { opacity: 1; transform: translateY(-5px); }
+            70% { transform: translateY(5px) rotate(1deg); }
+            80% { transform: translateY(-2px) rotate(-1deg); }
+            100% { opacity: 1; transform: translateY(0) rotate(0); }
+        }
+
+        /* Animated Error Badge */
+        .error-badge {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e63946, #c12a36);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(230, 57, 70, 0.4), inset 0 2px 0 rgba(255,255,255,0.3);
+            animation: popInError 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
+            opacity: 0;
+            transform: scale(0.5);
+            position: relative;
+        }
+
+        /* Glitch rings behind the badge */
+        .error-badge::before {
+            content: '';
+            position: absolute;
+            inset: -10px;
+            border: 1px solid rgba(230, 57, 70, 0.5);
+            border-radius: 50%;
+            animation: rippleError 2s linear infinite;
+        }
+
+        @keyframes rippleError {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        .error-badge i {
+            font-size: 2.5rem;
+            color: #fff;
+            animation: dropIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.7s forwards;
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        @keyframes popInError {
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes dropIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .error-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+            letter-spacing: -1px;
+            animation: fadeIn 0.5s ease 0.6s forwards;
+            opacity: 0;
+        }
+
+        .error-subtitle {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 2rem;
+            animation: fadeIn 0.5s ease 0.7s forwards;
+            opacity: 0;
+        }
+
+        /* Stylized Reason Terminal */
+        .reason-box {
+            background: rgba(230, 57, 70, 0.05);
+            border: 1px dashed rgba(230, 57, 70, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            text-align: left;
+            animation: slideUp 0.5s ease 0.8s forwards;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .reason-box i {
+            color: #e63946;
+            font-size: 1.2rem;
+            margin-top: 2px;
+        }
+
+        .reason-text {
+            color: rgba(255, 255, 255, 0.9);
+            font-family: monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .reason-label {
+            display: block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(230, 57, 70, 0.8);
+            margin-bottom: 4px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+        }
+
+        /* Actions Section */
+        .error-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            animation: fadeIn 0.5s ease 1s forwards;
+            opacity: 0;
+        }
+
+        .btn-premium {
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.05rem;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-decoration: none;
+            gap: 10px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-danger-glow {
+            background: linear-gradient(135deg, #e63946, #c12a36);
+            color: #fff;
+            box-shadow: 0 10px 20px rgba(230, 57, 70, 0.3), inset 0 2px 0 rgba(255,255,255,0.2);
+            border: none;
+        }
+
+        .btn-danger-glow:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(230, 57, 70, 0.5), inset 0 2px 0 rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+        .btn-glass {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .btn-glass:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+            color: #fff;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .action-row .btn-premium {
+            flex: 1;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
-<body class="bg-mesh">
+<body style="background: #000; min-height: 100vh;">
     <%- include('../../partials/navbars/user-nav') %>
 
-    <div style="min-height: calc(100vh - 70px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;">
-            <div class="failed-wrap animate stagger-1">
-                <div class="failed-top">
-                    <div class="failed-icon-ring">
-                        <i class="fi fi-rr-cross-circle"></i>
-                    </div>
-                    <h3 class="fw-bold text-white mb-1">Booking Failed</h3>
-                    <p class="text-dim mb-0" style="font-size:0.9rem;">We couldn't complete your booking.</p>
-                </div>
+    <div class="failed-page-wrapper">
+        <div class="error-card">
+            
+            <div class="error-badge">
+                <i class="fi fi-rr-cross"></i>
+            </div>
+            
+            <h1 class="error-title">Booking Failed</h1>
+            <p class="error-subtitle">We couldn't process your payment and<br>secure your tickets at this time.</p>
 
-                <div class="reason-box">
-                    <i class="fi fi-rr-info me-2"></i><%= reason %>
+            <div class="reason-box">
+                <i class="fi fi-rr-engine-warning"></i>
+                <div>
+                    <span class="reason-label">System Diagnostic</span>
+                    <span class="reason-text"><%= reason || 'Unknown processing error.' %></span>
                 </div>
+            </div>
 
+            <div class="error-actions">
+                <button onclick="history.back()" class="btn-premium btn-danger-glow">
+                    <i class="fi fi-rr-rotate-right"></i> Try Again
+                </button>
+                
                 <div class="action-row">
-                    <button onclick="history.back()" class="btn btn-primary px-4">
-                        <i class="fi fi-rr-redo me-2"></i> Try Again
-                    </button>
-                    <a href="/user/wallet" class="btn btn-outline px-4">
-                        <i class="fi fi-rr-wallet me-2"></i> Top Up Wallet
+                    <a href="/user/wallet" class="btn-premium btn-glass">
+                        <i class="fi fi-rr-wallet"></i> Top Up Wallet
                     </a>
-                    <a href="/user/events" class="btn btn-outline px-3">Browse Events</a>
+                    <a href="/user/events" class="btn-premium btn-glass">
+                        <i class="fi fi-rr-apps"></i> Browse Events
+                    </a>
                 </div>
+            </div>
+
+        </div>
     </div>
 </body>
 </html>

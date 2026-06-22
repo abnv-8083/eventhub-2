@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head') %>
+</head>
+<body class="bg-mesh">
+    <%- include('../partials/navbars/user-nav') %>
+
+    <div class="dashboard-layout">
+        <%- include('../partials/user-sidebar', { title: 'Calendar' }) %>
+
+        <main class="dashboard-main">
+
+            <div class="d-flex justify-content-between align-items-center mb-4 animate stagger-1">
+                <div>
+                    <h2 class="fw-bold mb-1">My Event Calendar 📅</h2>
+                    <p class="text-dim m-0">Track all your booked and upcoming events.</p>
+                </div>
+                <a href="/user/events" class="btn btn-primary px-4">
+                    <i class="fi fi-rr-search me-2"></i>Browse Events
+                </a>
+            </div>
+
+            <!-- Calendar Section -->
+            <section class="animate stagger-2">
+                <div class="glass-premium dynamic-card p-4 rounded-4">
+                    <div id="fullCalendar" style="min-height: 600px; color: white;"></div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('fullCalendar');
+            
+            // Pass the calendar events directly from EJS
+            var eventsData = <%- JSON.stringify(calendarEvents || []) %>;
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                },
+                themeSystem: 'standard',
+                events: eventsData,
+                eventClick: function(info) {
+                    if (info.event.url) {
+                        window.location.href = info.event.url;
+                        info.jsEvent.preventDefault(); // prevents browser from following link in current tab.
+                    }
+                }
+            });
+            calendar.render();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../partials/head') %>
+    <title>Review Event | EventHub Admin</title>
+</head>
+<body class="bg-mesh">
+    <%- include('../../partials/navbars/admin-nav') %>
+    <div class="dashboard-layout">
+        <%
+          function formatTime12(time24) {
+              if (!time24) return '';
+              let [h, m] = time24.split(':');
+              h = parseInt(h);
+              const ampm = h >= 12 ? 'PM' : 'AM';
+              h = h % 12 || 12;
+              return `${h}:${m} ${ampm}`;
+          }
+        %>
+        <style>
+            /* Admin Event View Styles */
+            .ev-review-hero { position: relative; height: 320px; border-radius: 20px; overflow: hidden; margin-bottom: 1.5rem; background: #111; border: 1px solid rgba(255,255,255,0.05); }
+            .ev-review-hero-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
+            .ev-review-hero-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at center, #1a1a1a, #0a0a0a); }
+            .ev-review-hero-overlay { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.1) 100%); padding: 2.5rem; display: flex; flex-direction: column; justify-content: flex-end; }
+            
+            .ev-detail-card { background: linear-gradient(145deg, rgba(30,30,30,0.6), rgba(20,20,20,0.8)); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 1.5rem; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+            .ev-detail-card-title { font-size: 1.1rem; font-weight: 700; color: white; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+            .ev-detail-card-title i { color: var(--primary); }
+            
+            .ev-detail-row { display: flex; flex-direction: column; gap: 1rem; }
+            .ev-detail-item { display: flex; align-items: flex-start; gap: 1rem; }
+            .ev-detail-item-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0; }
+            .ev-detail-label { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: rgba(255,255,255,0.4); margin-bottom: 2px; }
+            .ev-detail-value { font-size: 0.95rem; color: white; }
+            
+            .ev-map-preview { height: 200px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-top: 1.5rem; background: #000; overflow: hidden; z-index: 1; }
+            
+            .ev-org-avatar { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; }
+            .ev-org-avatar-fallback { width: 48px; height: 48px; border-radius: 12px; background: rgba(var(--primary-rgb), 0.15); border: 1px solid rgba(var(--primary-rgb), 0.3); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+            
+            .ev-description-text { color: rgba(255,255,255,0.7); font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; }
+            
+            .ev-ticket-card { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px; padding: 1rem; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s; }
+            .ev-ticket-card:hover { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.1); }
+            .ev-ticket-badge { width: 40px; height: 40px; border-radius: 8px; background: rgba(var(--primary-rgb), 0.15); color: var(--primary); font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+            .ev-ticket-name { font-weight: 700; color: white; margin-bottom: 2px; }
+            .ev-ticket-meta { font-size: 0.8rem; color: rgba(255,255,255,0.5); }
+            .ev-ticket-price { font-weight: 800; font-size: 1.1rem; color: #2ecc71; }
+            .ev-ticket-price.free { color: #f39c12; }
+            
+            .ev-banner-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; }
+            .ev-banner-thumb { aspect-ratio: 16/9; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; position: relative; }
+            .ev-banner-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+            .ev-banner-thumb:hover img { transform: scale(1.05); }
+            .ev-banner-thumb::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.3s; }
+            .ev-banner-thumb:hover::after { opacity: 1; }
+            
+            .ev-action-bar { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); width: 90%; max-width: 800px; background: rgba(20,20,20,0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset; padding: 1.25rem 2rem; z-index: 1000; animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards; animation-delay: 0.4s; }
+            @keyframes slideUp { from { transform: translate(-50%, 100px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+            .ev-action-bar-inner { display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
+            
+            .ev-lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 99999; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+            .ev-lightbox.active { display: flex; }
+            .ev-lightbox-img { max-width: 90vw; max-height: 85vh; border-radius: 12px; box-shadow: 0 30px 60px rgba(0,0,0,0.5); object-fit: contain; }
+            .ev-lightbox-close { position: absolute; top: 2rem; right: 2rem; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; font-size: 1.2rem; transition: background 0.3s; }
+            .ev-lightbox-close:hover { background: rgba(255,255,255,0.2); }
+        </style>
+        <%- include('../../partials/admin-sidebar', { title: 'Manage Events' }) %>
+
+        <main class="dashboard-main">
+
+            <!-- ── Page Header ──────────────────────────────────────────── -->
+            <div class="d-flex align-items-center gap-3 mb-4 animate stagger-1" style="flex-wrap: wrap;">
+                <a href="/admin/events" class="btn btn-outline btn-sm px-3 flex-shrink-0" style="border-radius: 10px; height: 38px; line-height: 38px; padding-top: 0; padding-bottom: 0;">
+                    <i class="fi fi-rr-arrow-left me-1"></i> Back
+                </a>
+                <div style="min-width: 0;">
+                    <h2 class="fw-bold m-0" style="letter-spacing: -0.5px; font-size: clamp(1.1rem, 3.5vw, 1.55rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        Event Review
+                    </h2>
+                    <p class="text-dim m-0 small">Inspect all details before making a decision.</p>
+                </div>
+                <div class="ms-auto flex-shrink-0">
+                    <% if(event.status === 'pending') { %>
+                        <span class="status-badge status-pending"><i class="fi fi-rr-clock me-1"></i>Awaiting Review</span>
+                    <% } else if(event.status === 'approved') { %>
+                        <span class="status-badge status-approved"><i class="fi fi-rr-check me-1"></i>Approved</span>
+                    <% } else { %>
+                        <span class="status-badge status-rejected"><i class="fi fi-rr-cross me-1"></i>Rejected</span>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- ── Hero Banner ──────────────────────────────────────────── -->
+            <div class="ev-review-hero animate stagger-2">
+                <% if(event.banners && event.banners.length > 0) { %>
+                    <img class="ev-review-hero-img" src="<%= event.banners[0] %>" alt="<%= event.title %>">
+                <% } else { %>
+                    <div class="ev-review-hero-fallback">
+                        <i class="fi fi-rr-picture" style="font-size: 4rem; color: rgba(255,255,255,0.08);"></i>
+                    </div>
+                <% } %>
+                <div class="ev-review-hero-overlay">
+                    <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--primary); margin-bottom: 6px;">
+                        <%= event.category ? event.category.name : 'Uncategorised' %>
+                    </div>
+                    <h1 class="fw-bold m-0" style="font-size: clamp(1.3rem, 4vw, 2rem); color: white; line-height: 1.25;">
+                        <%= event.title %>
+                    </h1>
+                    <% if(event.isFeatured) { %>
+                    <div class="mt-2">
+                        <span style="background: rgba(243,156,18,0.15); border: 1px solid rgba(243,156,18,0.35); color: #f39c12; border-radius: 100px; padding: 3px 12px; font-size: 0.73rem; font-weight: 700;">
+                            <i class="fi fi-rr-star me-1"></i>Featured Event
+                        </span>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- ── Schedule & Venue + Organizer ────────────────────────── -->
+            <div class="row g-4 mb-4 animate stagger-3">
+
+                <!-- Schedule & Venue -->
+                <div class="col-lg-6 d-flex flex-column">
+                    <div class="ev-detail-card flex-grow-1">
+                        <div class="ev-detail-card-title">
+                            <i class="fi fi-rr-calendar"></i> Schedule &amp; Venue
+                        </div>
+                        <div class="ev-detail-row">
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-play"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Starts</div>
+                                    <div class="ev-detail-value">
+                                        <%= new Date(event.startDate).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'long', year:'numeric' }) %>
+                                        &nbsp;·&nbsp;<strong><%= formatTime12(event.startTime) %></strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-flag-checkered"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Ends</div>
+                                    <div class="ev-detail-value">
+                                        <%= new Date(event.endDate).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'long', year:'numeric' }) %>
+                                        &nbsp;·&nbsp;<strong><%= formatTime12(event.endTime) %></strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-marker"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Venue</div>
+                                    <div class="ev-detail-value"><%= event.location.address %></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Mini Map -->
+                        <div class="ev-map-preview" id="adminEventMap"></div>
+                    </div>
+                </div>
+
+                <!-- Organizer -->
+                <div class="col-lg-6 d-flex flex-column">
+                    <div class="ev-detail-card flex-grow-1">
+                        <div class="ev-detail-card-title">
+                            <i class="fi fi-rr-building"></i> Organizer
+                        </div>
+                        <!-- Organizer identity -->
+                        <div class="d-flex align-items-center gap-3 mb-4 pb-4" style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                            <% if(event.organizer.avatar) { %>
+                                <img class="ev-org-avatar" src="<%= event.organizer.avatar %>" alt="<%= event.organizer.fullName %>">
+                            <% } else { %>
+                                <div class="ev-org-avatar-fallback"><i class="fi fi-rr-user"></i></div>
+                            <% } %>
+                            <div style="min-width: 0;">
+                                <div class="fw-bold text-truncate" style="color: white; font-size: 0.98rem;"><%= event.organizer.fullName %></div>
+                                <% if(event.organizer.organizationName) { %>
+                                    <div class="text-dim small text-truncate"><%= event.organizer.organizationName %></div>
+                                <% } %>
+                            </div>
+                        </div>
+                        <div class="ev-detail-row">
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-envelope"></i></div>
+                                <div style="min-width: 0;">
+                                    <div class="ev-detail-label">Email</div>
+                                    <div class="ev-detail-value" style="word-break: break-all;"><%= event.organizer.email %></div>
+                                </div>
+                            </div>
+                            <% if(event.organizer.phone) { %>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-phone-call"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Phone</div>
+                                    <div class="ev-detail-value"><%= event.organizer.phone %></div>
+                                </div>
+                            </div>
+                            <% } %>
+                            <% if(event.organizer.city) { %>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-city"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">City</div>
+                                    <div class="ev-detail-value"><%= event.organizer.city %></div>
+                                </div>
+                            </div>
+                            <% } %>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-time-add"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Submitted</div>
+                                    <div class="ev-detail-value">
+                                        <%= new Date(event.createdAt).toLocaleString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Description ─────────────────────────────────────────── -->
+            <div class="ev-detail-card mb-4 animate stagger-3">
+                <div class="ev-detail-card-title"><i class="fi fi-rr-document"></i> Event Description</div>
+                <p class="ev-description-text m-0"><%= event.description %></p>
+            </div>
+
+            <!-- ── Ticket Tiers ─────────────────────────────────────────── -->
+            <div class="ev-detail-card mb-4 animate stagger-4">
+                <div class="d-flex align-items-center justify-content-between mb-4" style="flex-wrap: wrap; gap: 0.5rem;">
+                    <div class="ev-detail-card-title m-0">
+                        <i class="fi fi-rr-ticket"></i> Ticket Tiers (<%= event.tickets.length %>)
+                    </div>
+                    <span class="text-dim" style="font-size: 0.78rem;">
+                        Total capacity: <strong style="color: rgba(255,255,255,0.6);"><%= event.tickets.reduce((s, t) => s + t.capacity, 0).toLocaleString('en-IN') %></strong> seats
+                    </span>
+                </div>
+                <% if(event.tickets && event.tickets.length > 0) { %>
+                <div class="d-flex flex-column gap-3">
+                    <% event.tickets.forEach((ticket, i) => { %>
+                    <div class="ev-ticket-card">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="ev-ticket-badge">T<%= i + 1 %></div>
+                            <div>
+                                <div class="ev-ticket-name"><%= ticket.name %></div>
+                                <div class="ev-ticket-meta">
+                                    <i class="fi fi-rr-users me-1"></i>Capacity: <%= ticket.capacity.toLocaleString('en-IN') %>
+                                    &nbsp;&bull;&nbsp;
+                                    <i class="fi fi-rr-user me-1"></i>Max/user: <%= ticket.maxPerUser %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ev-ticket-price <%= ticket.price === 0 ? 'free' : '' %>">
+                            <%= ticket.price === 0 ? 'FREE' : '₹' + ticket.price.toLocaleString('en-IN') %>
+                        </div>
+                    </div>
+                    <% }) %>
+                </div>
+                <% } else { %>
+                <p class="text-dim m-0 small">No ticket tiers defined.</p>
+                <% } %>
+            </div>
+
+            <!-- ── Banner Gallery ───────────────────────────────────────── -->
+            <% if(event.banners && event.banners.length > 0) { %>
+            <div class="ev-detail-card mb-4 animate stagger-4">
+                <div class="ev-detail-card-title"><i class="fi fi-rr-picture"></i> Event Banners</div>
+                <div class="ev-banner-grid">
+                    <% event.banners.forEach((banner, i) => { %>
+                    <div class="ev-banner-thumb" onclick="openLightbox('<%= banner %>')" title="Click to enlarge">
+                        <img src="<%= banner %>" alt="Banner <%= i + 1 %>">
+                    </div>
+                    <% }) %>
+                </div>
+                <p class="text-dim small mt-3 mb-0"><i class="fi fi-rr-zoom-in me-1"></i>Click a banner to view full size.</p>
+            </div>
+            <% } %>
+
+            <!-- ── Sticky Action Bar ────────────────────────────────────── -->
+            <div class="ev-action-bar animate stagger-4">
+                <div class="ev-action-bar-inner">
+                    <div>
+                        <% if(event.status === 'pending') { %>
+                            <p class="fw-bold m-0" style="color: white; font-size: 0.95rem;">Ready to decide?</p>
+                            <p class="text-dim m-0 small">The organizer will be notified immediately after your decision.</p>
+                        <% } else { %>
+                            <p class="fw-bold m-0" style="color: white; font-size: 0.95rem;">Event already processed</p>
+                            <p class="text-dim m-0 small">
+                                Current status:
+                                <strong style="color: <%= event.status === 'approved' ? '#2ecc71' : '#E63946' %>;">
+                                    <%= event.status.charAt(0).toUpperCase() + event.status.slice(1) %>
+                                </strong>. You can still change this decision.
+                            </p>
+                        <% } %>
+                    </div>
+                    <div class="d-flex gap-2 flex-shrink-0">
+                        <% if(event.status !== 'rejected') { %>
+                        <button id="rejectBtn" class="btn btn-outline px-4" style="border-radius: 10px; height: 42px; border-color: rgba(230,57,70,0.45) !important; color: #E63946 !important; font-weight: 600;">
+                            <i class="fi fi-rr-cross me-2"></i><%= event.status === 'approved' ? 'Revoke & Reject' : 'Reject' %>
+                        </button>
+                        <% } %>
+                        <% if(event.status !== 'approved') { %>
+                        <button id="approveBtn" class="btn btn-primary px-4" style="border-radius: 10px; height: 42px; font-weight: 700;">
+                            <i class="fi fi-rr-check me-2"></i><%= event.status === 'rejected' ? 'Re-approve' : 'Approve Event' %>
+                        </button>
+                        <% } %>
+                        <% if(event.status === 'approved') { %>
+                        <button onclick="toggleEventBlock('<%= event._id %>', '<%= event.isBlocked ? 'unblock' : 'block' %>')" class="btn <%= event.isBlocked ? 'btn-outline' : 'btn-outline border-danger text-danger' %> px-4" style="border-radius: 10px; height: 42px; font-weight: 700;">
+                            <i class="fi <%= event.isBlocked ? 'fi-rr-check' : 'fi-rr-ban' %> me-2"></i><%= event.isBlocked ? 'Unblock Event' : 'Block Event' %>
+                        </button>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom spacer so sticky bar doesn't clip content -->
+            <div style="height: 4rem;"></div>
+
+        </main>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="ev-lightbox" id="evLightbox" onclick="closeLightbox()">
+        <div class="ev-lightbox-close" onclick="closeLightbox()">
+            <i class="fi fi-rr-cross-small"></i>
+        </div>
+        <img class="ev-lightbox-img" id="evLightboxImg" src="" alt="Banner preview">
+    </div>
+
+    <script>
+        // ── Mini Map (read-only) ────────────────────────────────────────────────
+        const eventLat = <%= event.location.lat %>;
+        const eventLng = <%= event.location.lng %>;
+
+        const map = L.map('adminEventMap', {
+            zoomControl: false,
+            scrollWheelZoom: false,
+            dragging: false,
+            doubleClickZoom: false,
+            boxZoom: false,
+            keyboard: false,
+            touchZoom: false
+        }).setView([eventLat, eventLng], 15);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        const pinIcon = L.divIcon({
+            className: '',
+            html: `<div style="
+                width: 28px; height: 28px;
+                border-radius: 50% 50% 50% 0;
+                background: var(--primary);
+                transform: rotate(-45deg);
+                border: 2px solid rgba(255,255,255,0.9);
+                box-shadow: 0 4px 14px rgba(230,57,70,0.55);
+            "></div>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 28]
+        });
+        L.marker([eventLat, eventLng], { icon: pinIcon }).addTo(map);
+
+        // Fix Leaflet sizing after layout render
+        setTimeout(() => map.invalidateSize(), 250);
+
+        // ── Lightbox ───────────────────────────────────────────────────────────
+        function openLightbox(src) {
+            const lb  = document.getElementById('evLightbox');
+            const img = document.getElementById('evLightboxImg');
+            img.src = src;
+            lb.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeLightbox() {
+            const lb  = document.getElementById('evLightbox');
+            const img = document.getElementById('evLightboxImg');
+            lb.classList.remove('active');
+            img.src = '';
+            document.body.style.overflow = '';
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+        // ── Approve / Reject ───────────────────────────────────────────────────
+        const eventId = '<%= event._id %>';
+
+        async function updateStatus(status) {
+            const label = status === 'approved' ? 'Approve' : 'Reject';
+            const confirmed = await CustomConfirm.show({
+                title: `${label} Event?`,
+                message: `Are you sure you want to ${status} "<%= event.title %>"? The organizer will be notified right away.`,
+                confirmText: `Yes, ${label}`,
+                actionType: status === 'approved' ? 'primary' : 'danger',
+                icon: status === 'approved' ? 'fi-rr-check' : 'fi-rr-cross'
+            });
+            if (!confirmed) return;
+
+            Loader.show('PROCESSING...');
+            try {
+                const res = await axios.post('/admin/events/update-status', { eventId, status });
+                if (res.data.success) {
+                    Toast.success(res.data.message);
+                    setTimeout(() => window.location.reload(), 1200);
+                }
+            } catch (err) {
+                Toast.error(err.response?.data?.message || 'Failed to update event status');
+            } finally {
+                Loader.hide();
+            }
+        }
+
+        async function toggleEventBlock(eventId, action) {
+            if (action === 'block') {
+                const isConfirmed = await CustomConfirm.show({
+                    title: "Block Event?",
+                    message: "This event will be removed from public view and users will not be able to book it.",
+                    confirmText: "Block Event",
+                    actionType: "danger",
+                    icon: "fi-rr-ban"
+                });
+                if (!isConfirmed) return;
+            }
+
+            Loader.show(action === 'block' ? 'BLOCKING EVENT...' : 'UNBLOCKING EVENT...');
+            try {
+                const response = await axios.post('/admin/events/toggle-block', { eventId });
+                if (response.data.success) {
+                    Toast.success(response.data.message);
+                    setTimeout(() => location.reload(), 1000);
+                }
+            } catch (error) {
+                Toast.error(error.response?.data?.message || `Failed to ${action} event.`);
+            } finally {
+                Loader.hide();
+            }
+        }
+
+        document.getElementById('approveBtn')?.addEventListener('click', () => updateStatus('approved'));
+        document.getElementById('rejectBtn')?.addEventListener('click',  () => updateStatus('rejected'));
+    </script>
+</body>
+</html>

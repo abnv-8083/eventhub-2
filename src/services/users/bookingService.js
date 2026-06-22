@@ -7,7 +7,11 @@ import AppError from '../../utils/AppError.js';
 import HTTP_STATUS from '../../constant/statusCode.js';
 import * as socketUtil from '../../utils/socket.js';
 import { sendNotification } from '../../utils/notify.js';
-
+import Coupon from '../../models/payments/coupon.js';
+import { PAYMENT_STATUS } from '../../constant/paymentConstants.js';
+import { grantReferralRewards } from './referralService.js';
+import puppeteer from 'puppeteer';
+import QRCodeLib from 'qrcode';
 
 // Razorpay instance
 const razorpay = new Razorpay({
@@ -19,59 +23,35 @@ const razorpay = new Razorpay({
 // ─── HELPER: Emit Live Booking to Organizer ─────────────────────────────────
 async function emitNewBookingToOrganizer(bookingId) {
     try {
-        const booking = await Booking.findById(bookingId).populate('user', 'fullName email');
+        const booking = await Booking.findById(bookingId)
+            .populate('user', 'fullName email')
+            .populate('event', 'organizer');
+            
         if (booking && booking.status === 'active') {
-            // Dynamically import socket to prevent circular dependency crashes
             const socketUtil = await import('../../utils/socket.js');
             const io = socketUtil.getIO();
             
-            const eventRoomId = String(booking.event).trim();
+            const eventRoomId = String(booking.event._id).trim();
+            const organizerId = String(booking.event.organizer).trim();
             
-            // ✨ DEBUG LOG: Check your terminal when you buy a ticket!
-            console.log(`📢 LIVE BOOKING: Emitting to Event Room [${eventRoomId}]`);
+            console.log(`📢 LIVE BOOKING: Emitting to Event Room [${eventRoomId}] & Organizer [${organizerId}]`);
             
+            // Emit to event-specific room
             io.to(eventRoomId).emit('newBooking', { booking });
+            // Emit to organizer's personal room for dashboard updates
+            io.to(organizerId).emit('dashboardUpdate', { booking });
         }
     } catch (err) {
         console.error('❌ Socket emit error for new booking:', err.message);
     }
 }
 
-// ─── Shared Multi-Cart Validation Helper ────────────────────────────────────
-// Loads the event once and resolves each cart item against event.tickets[].
-// Returns the event doc itself so callers can use it for atomic $inc updates.
-export const validateCartRequest = async (eventId, cart, userId) => {
-    const event = await Event.findOne({ _id: eventId, status: 'approved', isBlocked: false });
-    if (!event) throw new AppError('Event not found or not available', HTTP_STATUS.NOT_FOUND);
-
-    const user = await User.findById(userId).select('wallet fullName email');
-    let totalAmount = 0;
-    let validatedItems = [];
-
-    for (const item of cart) {
-        // Find the ticket inside event.tickets array by subdoc _id
-        const ticket = event.tickets.id(item.ticketId);
-        if (!ticket) throw new AppError('A selected ticket type was not found', HTTP_STATUS.NOT_FOUND);
-
-        const remaining = ticket.capacity - ticket.sold;
-        if (item.quantity > remaining)    throw new AppError(`Only ${remaining} ${ticket.name} tickets remaining`, HTTP_STATUS.BAD_REQUEST);
-        if (item.quantity > ticket.maxPerUser) throw new AppError(`Max ${ticket.maxPerUser} ${ticket.name} tickets per person`, HTTP_STATUS.BAD_REQUEST);
-
-        totalAmount += ticket.price * item.quantity;
-        validatedItems.push({ ticket, quantity: item.quantity });
-    }
-
-    return { event, user, totalAmount, validatedItems };
-};
-
 
 // ─── Get Checkout Page Data ──────────────────────────────────────────────────
 export const getCheckoutData = async (eventId, cart, userId) => {
     const { event, user, totalAmount, validatedItems } = await validateCartRequest(eventId, cart, userId);
-
     return {
         event,
-        // Shape each item so the checkout view can use item.ticket.name / item.ticket.price
         cartItems: validatedItems.map(i => ({
             ticket:   { _id: i.ticket._id, name: i.ticket.name, price: i.ticket.price },
             quantity: i.quantity
@@ -86,18 +66,17 @@ export const getCheckoutData = async (eventId, cart, userId) => {
 
 
 // ─── Create Razorpay Order ───────────────────────────────────────────────────
-export const createOrder = async (eventId, cart, userId) => {
-    const { totalAmount } = await validateCartRequest(eventId, cart, userId);
+export const createOrder = async (eventId, cart, userId, couponId, expectedTotal = null) => {
+    const { totalAmount } = await validateCartRequest(eventId, cart, userId, couponId, expectedTotal); // Pass couponId
 
     const order = await razorpay.orders.create({
-        amount:   totalAmount * 100,
+        amount:   totalAmount === 0 ? 100 : totalAmount * 100, // Razorpay fails on 0 amount
         currency: 'INR',
         receipt:  `cart_${Date.now()}`
     });
 
     return { order, amount: totalAmount };
 };
-
 
 // ─── Atomically Increment sold on an embedded ticket ────────────────────────
 // Uses MongoDB's arrayFilters to $inc the correct subdoc in event.tickets.
@@ -116,124 +95,53 @@ const incrementTicketSold = async (eventId, ticketId, quantity) => {
 
 
 // ─── Verify Razorpay Payment & Create Bookings ───────────────────────────────
-export const verifyAndBook = async (eventId, userId, { razorpay_order_id, razorpay_payment_id, razorpay_signature, cart }) => {
+export const verifyAndBook = async (eventId, userId, { razorpay_order_id, razorpay_payment_id, razorpay_signature, cart, couponId, expectedTotal }) => {
     // 1. Verify Razorpay signature
     const expectedSignature = crypto
         .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
         .update(razorpay_order_id + '|' + razorpay_payment_id)
         .digest('hex');
 
-    if (expectedSignature !== razorpay_signature) {
-        throw new AppError('Payment verification failed.', HTTP_STATUS.BAD_REQUEST);
-    }
+    if (expectedSignature !== razorpay_signature) throw new AppError('Payment verification failed.', HTTP_STATUS.BAD_REQUEST);
 
-    // 2. Re-validate cart against current DB state
-    const { validatedItems, totalAmount } = await validateCartRequest(eventId, cart, userId);
+    // 2. Re-validate cart and get applied coupon
+    const { validatedItems, totalAmount, appliedCoupon, event } = await validateCartRequest(eventId, cart, userId, couponId, expectedTotal);
 
     // 3. Build the tickets array and increment stock
     let ticketsArray = [];
     let updatedTickets = [];
 
     for (const item of validatedItems) {
-        // Add to our new tickets array format
         ticketsArray.push({
             ticket:      item.ticket._id,
             ticketName:  item.ticket.name,
             ticketPrice: item.ticket.price,
             quantity:    item.quantity
         });
-
-        // Atomic $inc on the embedded ticket subdoc
         const updatedEvent = await incrementTicketSold(eventId, item.ticket._id, item.quantity);
         updatedTickets.push(updatedEvent.tickets.id(item.ticket._id));
     }
 
-    // 4. Create ONE single booking document for the entire cart
-    const newBooking = await Booking.create({
-        event:         eventId,
-        user:          userId,
-        tickets:       ticketsArray, // Pass the array here
-        totalAmount:   totalAmount,
-        paymentStatus: 'completed',
-        paymentMethod: 'razorpay',
-        paymentId:     razorpay_payment_id
-    });
-
-
-    await emitNewBookingToOrganizer(newBooking._id)
-
-    // 5. Emit real-time stock update
-    const io = socketUtil.getIO();
-    io.to(eventId.toString()).emit('ticketStockUpdate', {
-        tickets: updatedTickets.map(t => ({
-            ticketId:    t._id.toString(),
-            newCapacity: t.capacity - t.sold
-        }))
-    });
-
-    // Notify the User:
-    await sendNotification(newBooking.user._id, `Your tickets for "${event.title}" are confirmed!`, 'success');
-
-    // Notify the Organizer:
-    await sendNotification(
-        event.organizer, // The Organizer's ID!
-        `New Sale! ${newBooking.user.fullName} just bought tickets for "${event.title}".`, 
-        'success'
-    );
-
-    // Return a single booking ID
-    return { bookingId: newBooking._id };
-};
-
-
-// ─── Process Wallet Booking ──────────────────────────────────────────────────
-export const bookWithWallet = async (eventId, userId, cart) => {
-    const { event, user, totalAmount, validatedItems } = await validateCartRequest(eventId, cart, userId);
-
-    const walletBalance = user.wallet?.balance || 0;
-    if (walletBalance < totalAmount) {
-        throw new AppError('Insufficient wallet balance.', HTTP_STATUS.BAD_REQUEST);
-    }
-
-    // Deduct wallet once for the whole cart
-    user.wallet.balance -= totalAmount;
-    user.wallet.transactions.push({
-        type:        'debit',
-        amount:      totalAmount,
-        description: `Cart Booking: ${event.title}`
-    });
-    await user.save();
-
-    const paymentId = `WALLET-${Date.now()}`;
-
-    let ticketsArray = [];
-    let updatedTickets = [];
-
-    // Build tickets array and update stock
-    for (const item of validatedItems) {
-        ticketsArray.push({
-            ticket:      item.ticket._id,
-            ticketName:  item.ticket.name,
-            ticketPrice: item.ticket.price,
-            quantity:    item.quantity
-        });
-
-        const updatedEvent = await incrementTicketSold(eventId, item.ticket._id, item.quantity);
-        updatedTickets.push(updatedEvent.tickets.id(item.ticket._id));
-    }
-
-    // Create ONE booking document
+    // 4. Create Booking
     const newBooking = await Booking.create({
         event:         eventId,
         user:          userId,
         tickets:       ticketsArray,
         totalAmount:   totalAmount,
-        paymentStatus: 'completed',
-        paymentMethod: 'wallet',
-        paymentId
+        paymentStatus: PAYMENT_STATUS.COMPLETED,
+        paymentMethod: 'razorpay',
+        paymentId:     razorpay_payment_id,
+        coupon:        appliedCoupon ? appliedCoupon._id : undefined
     });
 
-    await emitNewBookingToOrganizer(newBooking._id)
+    // ✨ INCREMENT THE COUPON USAGE COUNT ✨
+    if (appliedCoupon) {
+        appliedCoupon.usedCount += 1;
+        await appliedCoupon.save();
+    }
+
+    await emitNewBookingToOrganizer(newBooking._id);
+
     // Emit real-time stock update
     const io = socketUtil.getIO();
     io.to(eventId.toString()).emit('ticketStockUpdate', {
@@ -243,16 +151,84 @@ export const bookWithWallet = async (eventId, userId, cart) => {
         }))
     });
 
-    // Notify the User:
     await sendNotification(newBooking.user._id, `Your tickets for "${event.title}" are confirmed!`, 'success');
+    await sendNotification(event.organizer, `New Sale! ${newBooking.user.fullName} just bought tickets for "${event.title}".`, 'success');
 
-    // Notify the Organizer:
-    await sendNotification(
-        event.organizer, // The Organizer's ID!
-        `New Sale! ${newBooking.user.fullName} just bought tickets for "${event.title}".`, 
-        'success'
-    );
+    // Grant referral rewards on first booking (non-blocking)
+    grantReferralRewards(userId).catch(err => console.error('[Referral] Reward error:', err));
 
+    return { bookingId: newBooking._id };
+};
+
+
+// ─── Process Wallet Booking ──────────────────────────────────────────────────
+export const bookWithWallet = async (eventId, userId, cart, couponId, expectedTotal = null) => {
+    // Re-validate and calculate final discount
+    const { event, user, totalAmount, validatedItems, appliedCoupon } = await validateCartRequest(eventId, cart, userId, couponId, expectedTotal);
+
+    const walletBalance = user.wallet?.balance || 0;
+    if (walletBalance < totalAmount) {
+        throw new AppError('Insufficient wallet balance.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // Deduct wallet atomically
+    const updatedUser = await User.findByIdAndUpdate(userId, {
+        $inc: { 'wallet.balance': -totalAmount },
+        $push: {
+            'wallet.transactions': {
+                type: 'debit',
+                amount: totalAmount,
+                description: `Cart Booking: ${event.title}`
+            }
+        }
+    }, { new: true });
+
+    let ticketsArray = [];
+    let updatedTickets = [];
+
+    for (const item of validatedItems) {
+        ticketsArray.push({
+            ticket:      item.ticket._id,
+            ticketName:  item.ticket.name,
+            ticketPrice: item.ticket.price,
+            quantity:    item.quantity
+        });
+        const updatedEvent = await incrementTicketSold(eventId, item.ticket._id, item.quantity);
+        updatedTickets.push(updatedEvent.tickets.id(item.ticket._id));
+    }
+
+    const newBooking = await Booking.create({
+        event:         eventId,
+        user:          userId,
+        tickets:       ticketsArray,
+        totalAmount:   totalAmount,
+        paymentStatus: PAYMENT_STATUS.COMPLETED,
+        paymentMethod: 'wallet',
+        paymentId:     `WALLET-${Date.now()}`,
+        coupon:        appliedCoupon ? appliedCoupon._id : undefined
+    });
+
+    // ✨ INCREMENT THE COUPON USAGE COUNT ✨
+    if (appliedCoupon) {
+        appliedCoupon.usedCount += 1;
+        await appliedCoupon.save();
+    }
+
+    await emitNewBookingToOrganizer(newBooking._id);
+
+    const io = socketUtil.getIO();
+    io.to(eventId.toString()).emit('ticketStockUpdate', {
+        tickets: updatedTickets.map(t => ({
+            ticketId:    t._id.toString(),
+            newCapacity: t.capacity - t.sold
+        }))
+    });
+
+    await sendNotification(newBooking.user._id, `Your tickets for "${event.title}" are confirmed!`, 'success');
+    await sendNotification(event.organizer, `New Sale! ${newBooking.user.fullName} just bought tickets for "${event.title}".`, 'success');
+
+    // Grant referral rewards on first booking (non-blocking)
+    grantReferralRewards(userId).catch(err => console.error('[Referral] Reward error:', err));
 
     return { bookingId: newBooking._id };
 };
@@ -298,7 +274,7 @@ export const getMyTickets = async (userId, filter = 'all', page = 1, limit = 10)
     else if (filter === 'past')      bookings = bookings.filter(b => b.status === 'active'  && b.event && new Date(b.event.startDate) <  now);
     else if (filter === 'on_hold')   bookings = bookings.filter(b => b.status === 'on_hold');
     else if (filter === 'cancelled') bookings = bookings.filter(b => b.status === 'cancelled');
-    else                             bookings = bookings.filter(b => b.paymentStatus === 'completed' || b.status !== 'active');
+    else                             bookings = bookings.filter(b => b.paymentStatus === PAYMENT_STATUS.COMPLETED || b.status !== 'active');
 
     const total      = bookings.length;
     const totalPages = Math.ceil(total / limit);
@@ -328,6 +304,7 @@ export const cancelBooking = async (bookingId, userId) => {
 
     if (!booking) throw new AppError('Booking not found.', HTTP_STATUS.NOT_FOUND);
     if (booking.status === 'cancelled') throw new AppError('This booking is already cancelled.', HTTP_STATUS.BAD_REQUEST);
+    if (booking.status === 'on_hold') throw new AppError('Cannot cancel a booking that is currently on hold.', HTTP_STATUS.BAD_REQUEST);
 
     // Block cancellation if event has already started
     if (booking.event) {
@@ -340,68 +317,75 @@ export const cancelBooking = async (bookingId, userId) => {
         }
     }
 
-    // Mark cancelled
-    booking.status        = 'cancelled';
-    booking.cancelledAt   = new Date();
-    booking.paymentStatus = 'refunded';
+    // Mark cancelled — paymentStatus depends on payment method
+    booking.status      = 'cancelled';
+    booking.cancelledAt = new Date();
+    // Wallet refunds are instant; Razorpay needs manual processing
+    booking.paymentStatus = booking.paymentMethod === 'wallet' ? PAYMENT_STATUS.REFUNDED : PAYMENT_STATUS.PENDING_REFUND;
     await booking.save();
 
-    // Loop through all tickets in the cart and release seats
+    // Decrement coupon usage count on full cancellation
+    if (booking.coupon) {
+        await Coupon.findByIdAndUpdate(booking.coupon, { $inc: { usedCount: -1 } });
+    }
+
+    // Release seats back to inventory for all active sub-tickets
     let updatedTicketsPayload = [];
     for (const tItem of booking.tickets) {
-        if (tItem.status === 'cancelled') continue; // Skip if already individually cancelled
-        
-        tItem.status = 'cancelled'; // Mark sub-ticket as cancelled
+        if (tItem.status === 'cancelled') continue; // Already individually cancelled
+        tItem.status = 'cancelled';
 
-        // Release seats atomically and return the updated document (new: true)
         const updatedEvent = await Event.findOneAndUpdate(
             { _id: booking.event._id, 'tickets._id': tItem.ticket },
             { $inc: { 'tickets.$[elem].sold': -tItem.quantity } },
-            {
-                arrayFilters: [{ 'elem._id': tItem.ticket }],
-                runValidators: false,
-                new: true // Important: gets the new stock
-            }
+            { arrayFilters: [{ 'elem._id': tItem.ticket }], runValidators: false, new: true }
         );
-
-        if(updatedEvent) {
+        if (updatedEvent) {
             const updatedT = updatedEvent.tickets.id(tItem.ticket);
-            updatedTicketsPayload.push({
-                ticketId: updatedT._id.toString(),
-                newCapacity: updatedT.capacity - updatedT.sold
-            });
+            updatedTicketsPayload.push({ ticketId: updatedT._id.toString(), newCapacity: updatedT.capacity - updatedT.sold });
         }
     }
-    
-    await booking.save(); // Save the sub-ticket statuses
+    await booking.save(); // Save sub-ticket statuses
 
-    // Emit real-time stock update for restocking
+    // Emit real-time stock update
     if (updatedTicketsPayload.length > 0) {
         const io = socketUtil.getIO();
-        io.to(booking.event._id.toString()).emit('ticketStockUpdate', {
-            tickets: updatedTicketsPayload
-        });
+        io.to(booking.event._id.toString()).emit('ticketStockUpdate', { tickets: updatedTicketsPayload });
     }
 
-    // Refund to wallet if payment was via wallet
-    if (booking.paymentMethod === 'wallet' || booking.paymentMethod === "razorpay") {
-        const user = await User.findById(userId);
-        user.wallet.balance += booking.totalAmount;
-        user.wallet.transactions.push({
-            type:        'credit',
-            amount:      booking.totalAmount,
-            description: `Refund: Full cancellation for ${booking.event?.title || 'Event'}`
+    // Refund to wallet ONLY if payment was via wallet
+    if (booking.paymentMethod === 'wallet') {
+        const description = `Refund: Cancelled booking for "${booking.event?.title || 'Event'}"`;
+        const updatedUser = await User.findByIdAndUpdate(userId, {
+            $inc: { 'wallet.balance': booking.totalAmount },
+            $push: {
+                'wallet.transactions': {
+                    type: 'credit',
+                    amount: booking.totalAmount,
+                    description
+                }
+            }
+        }, { new: true });
+
+        // Emit live wallet balance update
+        const io = socketUtil.getIO();
+        io.to(String(userId).trim()).emit('walletUpdate', {
+            newBalance: updatedUser.wallet.balance,
+            transaction: {
+                type: 'credit',
+                amount: booking.totalAmount,
+                description
+            }
         });
-        await user.save();
 
         return {
-            message:  `Booking cancelled. ₹${booking.totalAmount.toLocaleString('en-IN')} refunded to your wallet.`,
+            message:  `Booking cancelled. \u20b9${booking.totalAmount.toLocaleString('en-IN')} refunded to your wallet.`,
             refunded: true
         };
     }
 
     return {
-        message:  'Booking cancelled. Razorpay refunds are processed within 5–7 business days.',
+        message:  'Booking cancelled successfully. For Razorpay payments, refunds are processed within 5\u20137 business days.',
         refunded: false
     };
 };
@@ -439,9 +423,10 @@ export const unholdBooking = async (bookingId, userId) => {
 
 
 // ─── Cancel Individual Ticket by User ───────────────────────────────────────
-export const cancelSingleTicketByUser = async (bookingId, ticketItemId, userId, cancelQty = 1) => {
+export const cancelSingleTicketByUser = async (bookingId, ticketItemId, userId, cancelQty = 1, reason = "Partial Cancellation") => {
     const booking = await Booking.findById(bookingId).populate('event', 'title');
     if (!booking) throw new AppError('Booking not found', HTTP_STATUS.NOT_FOUND);
+    if (booking.status === 'on_hold') throw new AppError('Cannot cancel tickets for a booking that is currently on hold.', HTTP_STATUS.BAD_REQUEST);
     
     if (booking.user.toString() !== userId.toString()) {
         throw new AppError('Unauthorized to modify this booking', HTTP_STATUS.FORBIDDEN);
@@ -459,81 +444,664 @@ export const cancelSingleTicketByUser = async (bookingId, ticketItemId, userId, 
     if (cancelQty > ticketItem.quantity) {
         throw new AppError(`Cannot cancel more than ${ticketItem.quantity} tickets`, HTTP_STATUS.BAD_REQUEST);
     }
-
-    // 1. Calculate refund for the requested quantity
-    const refundAmount = ticketItem.ticketPrice * cancelQty;
-    booking.totalAmount = Math.max(0, booking.totalAmount - refundAmount);
-
-    // 2. Split the ticket or mark it fully cancelled
-    if (ticketItem.quantity > cancelQty) {
-        ticketItem.quantity -= cancelQty; 
-
-        const existingCancelled = booking.tickets.find(t => 
-            t.ticket.toString() === ticketItem.ticket.toString() && t.status === 'cancelled'
-        );
-        
-        if (existingCancelled) {
-            existingCancelled.quantity += cancelQty;
-        } else {
-            booking.tickets.push({
-                ticket: ticketItem.ticket,
-                ticketName: ticketItem.ticketName,
-                ticketPrice: ticketItem.ticketPrice,
-                quantity: cancelQty, 
-                status: 'cancelled'
-            });
-        }
-    } else {
-        ticketItem.status = 'cancelled';
+    // Change to append a request
+    if (!booking.cancellationRequest) {
+        booking.cancellationRequest = { requestedTickets: [] };
     }
 
-    // 3. Check if ALL tickets inside the booking are now cancelled
-    const allCancelled = booking.tickets.every(t => t.status === 'cancelled');
-    if (allCancelled) {
-        booking.status = 'cancelled';
-        booking.cancelledAt = new Date();
-        booking.paymentStatus = 'refunded';
+    if (booking.cancellationRequest.status === 'pending' && !booking.cancellationRequest.isPartial) {
+        throw new AppError('A full booking cancellation request is already pending.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // Initialize or reset if not pending
+    if (booking.cancellationRequest.status !== 'pending') {
+        booking.cancellationRequest.status = 'pending';
+        booking.cancellationRequest.isPartial = true;
+        booking.cancellationRequest.requestedAt = new Date();
+        booking.cancellationRequest.resolvedAt = undefined;
+        booking.cancellationRequest.reason = reason;
+        booking.cancellationRequest.rejectionNote = '';
+        booking.cancellationRequest.requestedTickets = [];
+    }
+
+    // Check if ticket is already in requestedTickets array
+    const existingReq = booking.cancellationRequest.requestedTickets.find(rt => rt.ticketId.toString() === ticketItem._id.toString());
+    if (existingReq) {
+        if (existingReq.quantity + cancelQty > ticketItem.quantity) {
+            throw new AppError(`Cannot request cancellation for more than ${ticketItem.quantity} tickets.`, HTTP_STATUS.BAD_REQUEST);
+        }
+        existingReq.quantity += cancelQty;
+    } else {
+        booking.cancellationRequest.requestedTickets.push({
+            ticketId: ticketItem._id,
+            quantity: cancelQty
+        });
     }
 
     await booking.save();
 
-    // 4. Release inventory seats and trigger socket update
-    const updatedEvent = await Event.findOneAndUpdate(
-        { _id: booking.event._id, 'tickets._id': ticketItem.ticket },
-        { $inc: { 'tickets.$[elem].sold': -cancelQty } },
-        { 
-            arrayFilters: [{ 'elem._id': ticketItem.ticket }], 
-            runValidators: false,
-            new: true // Required to get the updated document
-        }
-    );
+    // Notify the event organizer
+    const organizerId = booking.event?.organizer?._id || booking.event?.organizer;
+    if (organizerId) {
+        await sendNotification(
+            String(organizerId).trim(),
+            `⚠️ Partial Cancellation Request: A user has requested to cancel ${cancelQty}x "${ticketItem.ticketName}" for "${booking.event.title}". Please review it.`,
+            'warning'
+        );
+    }
 
-    // Emit Socket Update for restocking
-    if(updatedEvent) {
-        const updatedT = updatedEvent.tickets.id(ticketItem.ticket);
-        const io = socketUtil.getIO();
-        io.to(booking.event._id.toString()).emit('ticketStockUpdate', {
-            tickets: [{
-                ticketId: updatedT._id.toString(),
-                newCapacity: updatedT.capacity - updatedT.sold
-            }]
+    return { message: `Cancellation request for ${cancelQty}x ${ticketItem.ticketName} submitted. The organizer will review it shortly.` };
+};
+
+
+// ─── Request Cancellation (User → Awaits Organizer Approval) ─────────────────
+export const requestCancellation = async (bookingId, userId, reason) => {
+    const booking = await Booking.findOne({ _id: bookingId, user: userId })
+        .populate({ path: 'event', select: 'title organizer startDate', populate: { path: 'organizer', select: 'fullName organizationName' } });
+
+    if (!booking) throw new AppError('Booking not found.', HTTP_STATUS.NOT_FOUND);
+    if (booking.status === 'cancelled') throw new AppError('This booking is already cancelled.', HTTP_STATUS.BAD_REQUEST);
+    if (booking.status === 'on_hold') throw new AppError('Cannot request cancellation for a booking that is currently on hold.', HTTP_STATUS.BAD_REQUEST);
+
+    // Don't allow a new request if one is already pending
+    if (booking.cancellationRequest?.status === 'pending') {
+        throw new AppError('A cancellation request is already pending for this booking.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    if (!reason || reason.trim().length < 5) {
+        throw new AppError('Please provide a valid reason (min 5 characters) for your cancellation request.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // Update the cancellation request on the booking
+    booking.cancellationRequest = {
+        status:        'pending',
+        reason:        reason.trim(),
+        requestedAt:   new Date(),
+        resolvedAt:    undefined,
+        rejectionNote: '',
+        isPartial:     false,
+        requestedTickets: []
+    };
+    await booking.save();
+
+    // Notify the event organizer
+    const organizerId = booking.event?.organizer?._id || booking.event?.organizer;
+    if (organizerId) {
+        await sendNotification(
+            String(organizerId).trim(),
+            `\u26a0\ufe0f Cancellation Request: A user has requested cancellation for their booking at "${booking.event.title}". Reason: "${reason.trim()}". Please review and action it.`,
+            'warning'
+        );
+    }
+
+    return { message: 'Cancellation request submitted. The organizer will review it shortly.' };
+};
+
+// ─── Shared Multi-Cart Validation Helper ────────────────────────────────────
+export const validateCartRequest = async (eventId, cart, userId, couponId = null, expectedTotal = null) => {
+    const event = await Event.findOne({ _id: eventId, status: 'approved', isBlocked: false });
+    if (!event) throw new AppError('Event not found or not available', HTTP_STATUS.NOT_FOUND);
+
+    // ✨ Prevent booking if event is already finished
+    const endDateObj = new Date(event.endDate);
+    if (event.endTime) {
+        const [hours, minutes] = event.endTime.split(':');
+        endDateObj.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+    } else {
+        endDateObj.setHours(23, 59, 59, 999);
+    }
+    
+    if (new Date() > endDateObj) {
+        throw new AppError('This event has already finished. Bookings are now closed.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const user = await User.findById(userId).select('wallet fullName email');
+    let totalAmount = 0;
+    let validatedItems = [];
+
+    for (const item of cart) {
+        const ticket = event.tickets.id(item.ticketId);
+        if (!ticket) throw new AppError('A selected ticket type was not found', HTTP_STATUS.NOT_FOUND);
+
+        const remaining = ticket.capacity - ticket.sold;
+        if (item.quantity > remaining) throw new AppError(`Only ${remaining} ${ticket.name} tickets remaining`, HTTP_STATUS.BAD_REQUEST);
+        if (item.quantity > ticket.maxPerUser) throw new AppError(`Max ${ticket.maxPerUser} ${ticket.name} tickets per person`, HTTP_STATUS.BAD_REQUEST);
+
+        totalAmount += ticket.price * item.quantity;
+        validatedItems.push({ ticket, quantity: item.quantity });
+    }
+
+    let appliedCoupon = null;
+    if (couponId) {
+        const coupon = await Coupon.findById(couponId);
+        if (coupon && coupon.isActive && String(coupon.event) === String(eventId)) {
+            if (new Date(coupon.expiryDate) < new Date()) throw new AppError('This promo code has expired.', HTTP_STATUS.BAD_REQUEST);
+            if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) throw new AppError('This promo code has reached its usage limit.', HTTP_STATUS.BAD_REQUEST);
+            
+            if (coupon.maxPerUser) {
+                const userUsageCount = await Booking.countDocuments({ user: userId, coupon: coupon._id, status: { $ne: 'cancelled' } });
+                if (userUsageCount >= coupon.maxPerUser) throw new AppError(`Usage limit reached.`, HTTP_STATUS.BAD_REQUEST);
+            }
+
+            if (totalAmount < coupon.minOrderValue) throw new AppError(`Minimum order value of ₹${coupon.minOrderValue} required.`, HTTP_STATUS.BAD_REQUEST);
+
+            let eligibleTotal = 0;
+            for (const item of validatedItems) {
+                if (coupon.applicableTickets.length === 0 || coupon.applicableTickets.some(id => id.toString() === item.ticket._id.toString())) {
+                    eligibleTotal += item.ticket.price * item.quantity;
+                }
+            }
+            if (eligibleTotal === 0) throw new AppError('Coupon not applicable for selected tickets.', HTTP_STATUS.BAD_REQUEST);
+
+            let discountAmount = 0;
+            if (coupon.discountType === 'percentage') {
+                discountAmount = (eligibleTotal * coupon.discountValue) / 100;
+                if (coupon.maxDiscountAmount) discountAmount = Math.min(discountAmount, coupon.maxDiscountAmount);
+            } else if (coupon.discountType === 'flat') {
+                discountAmount = coupon.discountValue;
+            }
+            
+            discountAmount = Math.min(discountAmount, totalAmount);
+            totalAmount -= discountAmount;
+            appliedCoupon = coupon;
+        }
+    }
+
+    if (expectedTotal !== null && expectedTotal !== undefined && totalAmount !== expectedTotal) {
+        throw new AppError('Ticket prices or availability have been updated by the organizer. Please refresh the page to see the new total before proceeding.', HTTP_STATUS.CONFLICT);
+    }
+
+    return { event, user, totalAmount, validatedItems, appliedCoupon };
+};
+
+// ─── FETCH AVAILABLE PROMO CODES FOR USERS ──────────────────────────────────
+export const getAvailableCouponsService = async (eventId) => {
+    const currentDate = new Date();
+    
+    // Find active coupons that haven't expired
+    const coupons = await Coupon.find({
+        event: eventId,
+        isActive: true,
+        expiryDate: { $gt: currentDate }
+    }).select('code discountType discountValue expiryDate maxUses usedCount minOrderValue maxDiscountAmount');
+
+    // Filter out coupons that have reached their max usage limit
+    return coupons.filter(c => !c.maxUses || c.usedCount < c.maxUses);
+};
+
+export const validatePromoCodeService = async (code, eventId, currentTotal, userId, cart) => {
+    if (!code) throw new AppError('Please enter a code.', HTTP_STATUS.BAD_REQUEST);
+
+    const coupon = await Coupon.findOne({ code: code.toUpperCase(), event: eventId, isActive: true });
+    if (!coupon) throw new AppError('Invalid promo code.', HTTP_STATUS.NOT_FOUND);
+    if (new Date(coupon.expiryDate) < new Date()) throw new AppError('This promo code has expired.', HTTP_STATUS.BAD_REQUEST);
+    if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) throw new AppError('This promo code has reached its usage limit.', HTTP_STATUS.BAD_REQUEST);
+
+    if (coupon.maxPerUser) {
+        const userUsageCount = await Booking.countDocuments({
+            user: userId, coupon: coupon._id, status: { $ne: 'cancelled' }
+        });
+        if (userUsageCount >= coupon.maxPerUser) throw new AppError(`You have used this code the maximum allowed times.`, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // ✨ 1. Check Minimum Order Value (UPTO limit)
+    if (currentTotal < coupon.minOrderValue) {
+        throw new AppError(`This offer requires a minimum order value of ₹${coupon.minOrderValue}.`, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // ✨ 2. Check Applicable Tickets
+    const event = await Event.findById(eventId);
+    let eligibleTotal = 0;
+    
+    for (const item of cart) {
+        const ticket = event.tickets.id(item.ticketId);
+        if (!ticket) continue;
+        
+        // If applicableTickets is empty, it applies to all. Otherwise, check if this ticket is in the list.
+        if (coupon.applicableTickets.length === 0 || coupon.applicableTickets.some(id => id.toString() === ticket._id.toString())) {
+            eligibleTotal += ticket.price * item.quantity;
+        }
+    }
+
+    if (eligibleTotal === 0) {
+        throw new AppError('This promo code is not applicable for the selected tickets.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // ✨ 3. Calculate Discount with Cap Amount
+    let discountAmount = 0;
+    if (coupon.discountType === 'percentage') {
+        discountAmount = (eligibleTotal * coupon.discountValue) / 100;
+        // Apply Cap Amount if it exists
+        if (coupon.maxDiscountAmount) {
+            discountAmount = Math.min(discountAmount, coupon.maxDiscountAmount);
+        }
+    } else if (coupon.discountType === 'flat') {
+        discountAmount = coupon.discountValue;
+    }
+
+    discountAmount = Math.min(discountAmount, currentTotal); // Never discount more than total
+
+    return { discountAmount, newTotal: currentTotal - discountAmount, couponId: coupon._id };
+};
+
+
+// ─── Generate Ticket PDF ──────────────────────────────────────────────────────
+export const generateTicketPdf = async (bookingId, userId, hostUrl) => {
+    // 1. Fetch booking with full event + organizer details
+    const booking = await Booking.findOne({ _id: bookingId, user: userId })
+        .populate({
+            path: 'event',
+            populate: [
+                { path: 'category',  select: 'name' },
+                { path: 'organizer', select: 'fullName organizationName' }
+            ]
+        })
+        .populate('user', 'fullName email phone');
+
+    if (!booking) throw new AppError('Booking not found.', HTTP_STATUS.NOT_FOUND);
+
+    const { event, user } = booking;
+
+    // 2. Generate QR code for active bookings (scan URL for organizer to verify)
+    let qrDataUrl = '';
+    if (booking.status === 'active') {
+        const scanUrl = `${hostUrl}/organizer/verify-ticket/${booking._id}`;
+        qrDataUrl = await QRCodeLib.toDataURL(scanUrl, {
+            width:  200,
+            margin: 1,
+            color:  { dark: '#1a1a1a', light: '#ffffff' }
         });
     }
 
-    // 5. Process Wallet Refund
-    if (booking.paymentMethod === 'wallet' || booking.paymentMethod === "razorpay") {
-        const user = await User.findById(userId);
-        if (user) {
-            user.wallet.balance += refundAmount;
-            user.wallet.transactions.push({
-                type: 'credit',
-                amount: refundAmount,
-                description: `Refund: ${cancelQty}x ${ticketItem.ticketName} ticket(s) cancelled for ${booking.event.title}`
-            });
-            await user.save();
-        }
-        return { message: `${cancelQty}x ${ticketItem.ticketName} cancelled. ₹${refundAmount.toLocaleString('en-IN')} refunded to wallet.` };
+    // 3. Format helpers
+    const fmt = (n) => `₹${Number(n).toLocaleString('en-IN')}`;
+    const fmtDate = (d, opts = {}) =>
+        new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', ...opts });
+
+    const bookingIdShort = booking._id.toString().slice(-8).toUpperCase();
+    const bookedOn       = fmtDate(booking.bookingDate, { hour: '2-digit', minute: '2-digit' });
+    const eventStart     = fmtDate(event.startDate, { weekday: 'short' });
+    const eventEnd       = fmtDate(event.endDate,   { weekday: 'short' });
+
+    // Determine if any individual sub-tickets are partially cancelled
+    const hasPartialCancellation = booking.tickets.some(t => t.status === 'cancelled');
+    const allSubTicketsCancelled  = booking.tickets.every(t => t.status === 'cancelled');
+
+    // Status ribbon colour + label
+    let statusColour, statusLabel;
+    if (booking.status === 'cancelled') {
+        statusColour = '#b02020';
+        statusLabel  = 'CANCELLED';
+    } else if (booking.status === 'on_hold') {
+        statusColour = '#b07d00';
+        statusLabel  = 'ON HOLD';
+    } else if (hasPartialCancellation) {
+        statusColour = '#c05000';
+        statusLabel  = 'PARTIALLY CANCELLED';
+    } else {
+        statusColour = '#1a7a3e';
+        statusLabel  = 'ACTIVE';
     }
 
-    return { message: `${cancelQty}x ${ticketItem.ticketName} cancelled. ₹${refundAmount.toLocaleString('en-IN')} will be refunded to your original payment method.` };
+    // All tickets (active + cancelled) — mirrors the web UI table
+    const ticketRows = booking.tickets
+        .map(t => {
+            const isCancelled = t.status === 'cancelled';
+            const rowBg       = isCancelled ? '#fff5f5' : 'transparent';
+            const nameStyle   = isCancelled
+                ? 'font-weight:600;color:#aaa;text-decoration:line-through;'
+                : 'font-weight:700;color:#1a1a1a;';
+            const numStyle    = isCancelled ? 'color:#ccc;text-decoration:line-through;' : 'color:#555;';
+            const cancelBadge = isCancelled
+                ? `<span style="display:inline-block;margin-left:8px;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;background:#fde9e9;color:#b02020;letter-spacing:0.04em;">REFUNDED</span>`
+                : '';
+            return `
+            <tr style="background:${rowBg};">
+                <td style="padding:10px 14px;">
+                    <span style="${nameStyle}">${t.ticketName}</span>${cancelBadge}
+                </td>
+                <td style="padding:10px 14px;text-align:center;${numStyle}">${t.quantity}</td>
+                <td style="padding:10px 14px;text-align:right;${numStyle}">${fmt(t.ticketPrice)}</td>
+                <td style="padding:10px 14px;text-align:right;font-weight:${isCancelled ? '500' : '700'};${numStyle}">${fmt(t.ticketPrice * t.quantity)}</td>
+            </tr>`;
+        }).join('');
+
+    const totalTickets = booking.tickets
+        .filter(t => t.status === 'active')
+        .reduce((s, t) => s + t.quantity, 0);
+
+    // 4. Build the HTML
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f5f5f5; color: #1a1a1a; font-size: 13px; -webkit-print-color-adjust: exact; }
+  .page { width: 794px; min-height: 1123px; background: white; margin: 0 auto; display: flex; flex-direction: column; }
+
+  /* ── Header ── */
+  .ticket-header {
+    background: #1a1a1a;
+    padding: 28px 36px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .brand { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: #E63946; }
+  .brand span { color: white; }
+  .header-right { text-align: right; }
+  .header-right .label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+  .header-right .booking-id { font-size: 20px; font-weight: 900; color: white; letter-spacing: 1px; font-family: monospace; margin-top: 2px; }
+
+  /* ── Status ribbon ── */
+  .status-ribbon {
+    background: ${statusColour};
+    color: white;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    padding: 7px;
+  }
+
+  /* ── Event hero ── */
+  .event-hero {
+    background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+    padding: 32px 36px;
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+  }
+  .event-hero-info { flex: 1; min-width: 0; }
+  .event-category {
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.14em; color: #E63946; margin-bottom: 8px;
+  }
+  .event-title { font-size: 22px; font-weight: 900; color: white; line-height: 1.25; margin-bottom: 14px; }
+  .event-meta { display: flex; flex-direction: column; gap: 8px; }
+  .meta-row { display: flex; align-items: flex-start; gap: 10px; }
+  .meta-icon { font-size: 12px; color: #E63946; margin-top: 1px; flex-shrink: 0; width: 16px; text-align: center; }
+  .meta-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.4); }
+  .meta-value { font-size: 12px; color: rgba(255,255,255,0.85); font-weight: 500; margin-top: 1px; }
+
+  /* QR Code block */
+  .qr-block {
+    flex-shrink: 0;
+    background: white;
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    width: 160px;
+  }
+  .qr-block img { width: 130px; height: 130px; display: block; margin: 0 auto; }
+  .qr-hint { font-size: 9px; color: #999; margin-top: 8px; line-height: 1.4; text-align: center; }
+
+  /* ── Dashed divider (perforation effect) ── */
+  .perforation {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    background: #f5f5f5;
+    position: relative;
+  }
+  .perf-circle {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: white;
+    flex-shrink: 0;
+  }
+  .perf-circle.left { margin-left: -14px; }
+  .perf-circle.right { margin-right: -14px; }
+  .perf-line {
+    flex: 1;
+    border-top: 2px dashed #ddd;
+    margin: 14px 0;
+  }
+
+  /* ── Ticket body ── */
+  .ticket-body { padding: 28px 36px; flex: 1; }
+
+  /* Attendee + payment strip */
+  .info-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 18px 20px;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 10px;
+  }
+  .info-cell .cell-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #aaa; margin-bottom: 4px; }
+  .info-cell .cell-value { font-size: 13px; font-weight: 700; color: #1a1a1a; word-break: break-all; }
+
+  /* Ticket table */
+  .ticket-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  .ticket-table thead th {
+    background: #1a1a1a; color: white;
+    padding: 10px 14px; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em; text-align: left;
+  }
+  .ticket-table thead th:nth-child(2) { text-align: center; }
+  .ticket-table thead th:nth-child(3),
+  .ticket-table thead th:nth-child(4) { text-align: right; }
+  .ticket-table tbody tr:nth-child(even) td { background: #fafafa; }
+  .ticket-table tbody td { border-bottom: 1px solid #f0f0f0; }
+
+  /* Total row */
+  .total-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 24px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+    border-radius: 10px;
+    margin-bottom: 24px;
+  }
+  .total-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.5); }
+  .total-amount { font-size: 24px; font-weight: 900; color: #2ecc71; }
+
+  /* Organizer block */
+  .organizer-block {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    margin-bottom: 24px;
+    background: #fdfdfd;
+  }
+  .org-icon {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(230,57,70,0.08);
+    border: 1px solid rgba(230,57,70,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: #E63946; flex-shrink: 0;
+  }
+  .org-name { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+  .org-sub  { font-size: 11px; color: #888; margin-top: 2px; }
+
+  /* Terms */
+  .terms {
+    padding: 14px 18px;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    font-size: 10px; color: #aaa; line-height: 1.6;
+  }
+  .terms strong { color: #888; }
+
+  /* ── Footer ── */
+  .ticket-footer {
+    background: #f0f0f0;
+    padding: 14px 36px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px; color: #aaa;
+    border-top: 1px solid #e5e5e5;
+  }
+  .ticket-footer strong { color: #888; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="ticket-header">
+    <div class="brand">Event<span>Hub</span></div>
+    <div class="header-right">
+      <div class="label">Booking Reference</div>
+      <div class="booking-id">#${bookingIdShort}</div>
+    </div>
+  </div>
+
+  <!-- Status ribbon -->
+  <div class="status-ribbon">${statusLabel} TICKET</div>
+
+  <!-- Event hero -->
+  <div class="event-hero">
+    <div class="event-hero-info">
+      <div class="event-category">${event.category?.name || 'Event'}</div>
+      <div class="event-title">${event.title}</div>
+      <div class="event-meta">
+        <div class="meta-row">
+          <div class="meta-icon">◷</div>
+          <div>
+            <div class="meta-label">Starts</div>
+            <div class="meta-value">${eventStart} &nbsp;·&nbsp; ${event.startTime || ''}</div>
+          </div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-icon">⊙</div>
+          <div>
+            <div class="meta-label">Ends</div>
+            <div class="meta-value">${eventEnd} &nbsp;·&nbsp; ${event.endTime || ''}</div>
+          </div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-icon">⊕</div>
+          <div>
+            <div class="meta-label">Venue</div>
+            <div class="meta-value">${event.location?.address || 'Venue TBD'}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Code -->
+    ${qrDataUrl ? `
+    <div class="qr-block">
+      <img src="${qrDataUrl}" alt="Entry QR Code">
+      <div class="qr-hint">Show at entry for verification</div>
+    </div>` : `
+    <div class="qr-block" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+      <div style="width:130px;height:130px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;margin:0 auto;">
+        <div style="font-size:28px;color:rgba(255,255,255,0.2);">⊗</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:center;text-transform:uppercase;letter-spacing:0.08em;">QR Unavailable</div>
+      </div>
+    </div>`}
+  </div>
+
+  <!-- Perforation -->
+  <div class="perforation">
+    <div class="perf-circle left"></div>
+    <div class="perf-line"></div>
+    <div class="perf-circle right"></div>
+  </div>
+
+  <!-- Ticket body -->
+  <div class="ticket-body">
+
+    <!-- Attendee + payment strip -->
+    <div class="info-strip">
+      <div class="info-cell">
+        <div class="cell-label">Attendee</div>
+        <div class="cell-value">${user?.fullName || 'N/A'}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px;">${user?.email || ''}</div>
+      </div>
+      <div class="info-cell">
+        <div class="cell-label">Booked On</div>
+        <div class="cell-value">${bookedOn}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px;">${booking.paymentMethod === 'wallet' ? 'Wallet' : 'Razorpay'}</div>
+      </div>
+      <div class="info-cell">
+        <div class="cell-label">Tickets</div>
+        <div class="cell-value">${totalTickets} ticket${totalTickets !== 1 ? 's' : ''}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px;">${booking.paymentId || 'N/A'}</div>
+      </div>
+    </div>
+
+    <!-- Ticket table -->
+    <table class="ticket-table">
+      <thead>
+        <tr>
+          <th>Ticket Type</th>
+          <th>Qty</th>
+          <th>Price</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${ticketRows || '<tr><td colspan="4" style="text-align:center;padding:16px;color:#aaa;">All tickets have been cancelled.</td></tr>'}
+      </tbody>
+    </table>
+
+    <!-- Total -->
+    <div class="total-row">
+      <div class="total-label">Total Paid</div>
+      <div class="total-amount">${fmt(booking.totalAmount)}</div>
+    </div>
+
+    <!-- Organizer -->
+    <div class="organizer-block">
+      <div class="org-icon">🏢</div>
+      <div>
+        <div class="org-name">${event.organizer?.organizationName || event.organizer?.fullName || 'Organizer'}</div>
+        <div class="org-sub">Event Organizer</div>
+      </div>
+    </div>
+
+    <!-- Terms -->
+    <div class="terms">
+      <strong>Terms &amp; Conditions:</strong>
+      This ticket is valid for the event stated above and is non-transferable.
+      Present this ticket (digital or printed) along with a valid photo ID at the venue entry.
+      No entry without verification. Refund policy as per organizer terms.
+      EventHub is not responsible for event cancellations or rescheduling by the organizer.
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="ticket-footer">
+    <div><strong>EventHub</strong> &nbsp;·&nbsp; Official E-Ticket</div>
+    <div>Booking Ref: <strong>#${bookingIdShort}</strong></div>
+    <div>Generated on ${new Date().toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}</div>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+    // 5. Generate PDF with Puppeteer (same pattern as organizerEventService)
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    const pdfBuffer = await page.pdf({
+        width:           '794px',
+        height:          '1123px',
+        printBackground: true,
+        margin:          { top: '0', right: '0', bottom: '0', left: '0' }
+    });
+    await browser.close();
+
+    return { pdfBuffer, bookingIdShort };
 };
+
+
+

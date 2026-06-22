@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import User from '../../models/users/user.js';
 import AppError from '../../utils/AppError.js';
 import HTTP_STATUS from '../../constant/statusCode.js';
+import * as socketUtil from '../../utils/socket.js';
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -54,22 +55,34 @@ export const verifyAndCreditWallet = async (userId, { razorpay_order_id, razorpa
         throw new AppError('Payment verification failed', HTTP_STATUS.BAD_REQUEST);
 
     const parsedAmount = parseFloat(amount);
-    const user = await User.findById(userId);
-    if (!user.wallet) user.wallet = { balance: 0, transactions: [] };
+    const updatedUser = await User.findByIdAndUpdate(userId, {
+        $inc: { 'wallet.balance': parsedAmount },
+        $push: {
+            'wallet.transactions': {
+                type: 'credit',
+                amount: parsedAmount,
+                description: 'Money added to wallet'
+            }
+        }
+    }, { new: true });
 
-    user.wallet.balance += parsedAmount;
-    user.wallet.transactions.push({
-        type: 'credit',
-        amount: parsedAmount,
-        description: 'Wallet top-up via Razorpay',
-        date: new Date()
+    if (!updatedUser) {
+        throw new AppError('User not found.', HTTP_STATUS.NOT_FOUND);
+    }
+
+    const io = socketUtil.getIO();
+    io.to(String(userId).trim()).emit('walletUpdate', {
+        newBalance: updatedUser.wallet.balance,
+        transaction: {
+            type: 'credit',
+            amount: parsedAmount,
+            description: 'Money added to wallet'
+        }
     });
-
-    await user.save();
 
     return {
         message: `₹${parsedAmount.toLocaleString('en-IN')} added to wallet!`,
-        newBalance: user.wallet.balance,
+        newBalance: updatedUser.wallet.balance,
         paymentId: razorpay_payment_id
     };
 };

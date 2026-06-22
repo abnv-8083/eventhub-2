@@ -31,3 +31,15 @@ export const approvePayout = async (req, res, next) => {
         next(error);
     }
 };
+
+
+// ─── Reject Payout ────────────────────────────────────────────────────────────
+export const rejectPayout = async (req, res, next) => {
+    try {
+        const { payoutId, reason } = req.body;
+        await adminPayoutService.rejectPayout(payoutId, reason);
+        res.status(HTTP_STATUS.OK).json({ success: true, message: 'Payout rejected. Organizer has been notified.' });
+    } catch (error) {
+        next(error);
+    }
+};

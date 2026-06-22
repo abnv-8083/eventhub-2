@@ -33,13 +33,13 @@
                 <form id="loginForm" novalidate>
                     
                     <div class="form-floating animate stagger-1">
-                        <input type="email" id="email" name="email" class="input" placeholder=" " required>
+                        <input type="email" id="email" name="email" class="input" placeholder=" " data-rule="required, email">
                         <label for="email">Email Address</label>
                     </div>
 
                     <div class="form-floating position-relative mb-4">
                         <!-- 1. Make sure this input has id="password" -->
-                        <input type="password" class="form-control input" name="password" id="password" placeholder=" " required>
+                        <input type="password" class="form-control input" name="password" id="password" placeholder=" " data-rule="required">
                         <label for="password">Password</label>
                         
                         <!-- 2. Add the onclick event to the button -->
@@ -76,7 +76,7 @@
                     </div>
 
                     <a href="/user/auth/google" class="btn btn-google animate stagger-4" style="width: 100%; height: 3.5rem;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="margin-right: 10px;">
                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
@@ -89,7 +89,7 @@
         </div>
     </div>
     <div class="modal-overlay" id="statusModal">
-        <div class="modal-container glass-dark" style="max-width: 420px; text-align: center;">
+        <div class="modal-container glass-premium dynamic-card" style="max-width: 420px; text-align: center;">
             <div class="modal-header border-bottom-0 pb-0 justify-content-end">
                 <i class="fi fi-rr-cross modal-close" onclick="closeStatusModal()"></i>
             </div>
@@ -127,8 +127,7 @@
         loginForm.addEventListener('submit', async (e)=>{
             e.preventDefault()
 
-            if(!loginForm.checkValidity()){
-                loginForm.reportValidity()
+            if(!EV.validateForm(loginForm)){
                 return
             }
             Loader.show()
@@ -182,6 +181,22 @@
             modal.classList.remove('active');
             setTimeout(() => modal.style.display = 'none', 300);
         }
+
+        // Check for URL query messages (e.g., from blocked Google Auth)
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const message = urlParams.get('message');
+            if (message) {
+                // Ensure Toast exists (assumes your layout has it)
+                if (typeof Toast !== 'undefined' && Toast.error) {
+                    Toast.error(message);
+                } else {
+                    alert(message);
+                }
+                // Optional: remove the query param from URL without reloading
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
 
     </script>
 </body>

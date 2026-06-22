@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <%- include('../../partials/head') %>
@@ -6,166 +6,265 @@
 <body class="bg-mesh">
     <%- include('../../partials/navbars/user-nav') %>
 
+    <style>
+        .checkout-wrap { max-width: 1100px; margin: 0 auto; padding: 2rem; padding-top: 4rem; }
+        
+        /* Premium Stepper */
+        .premium-stepper { display: flex; align-items: center; justify-content: center; margin-bottom: 3rem; position: relative; }
+        .stepper-item { display: flex; flex-direction: column; align-items: center; gap: 0.8rem; z-index: 2; position: relative; }
+        .stepper-circle { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: #1a1c23; border: 2px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); }
+        .stepper-item.done .stepper-circle { background: rgba(46,204,113,0.15); border-color: #2ecc71; color: #2ecc71; box-shadow: 0 0 20px rgba(46,204,113,0.2); }
+        .stepper-item.active .stepper-circle { background: var(--primary); border-color: var(--primary); color: white; box-shadow: 0 0 25px rgba(230,57,70,0.4); transform: scale(1.1); }
+        .stepper-label { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.4); }
+        .stepper-item.done .stepper-label { color: #2ecc71; }
+        .stepper-item.active .stepper-label { color: white; }
+        .stepper-line { flex: 1; height: 2px; background: rgba(255,255,255,0.08); margin: 0 1rem; position: relative; top: -12px; }
+        .stepper-line.done { background: linear-gradient(90deg, #2ecc71, rgba(255,255,255,0.08)); }
+
+        /* Sleek Cards */
+        .glass-card { background: rgba(18, 20, 28, 0.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .glass-card-header { padding: 1.5rem 2rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; align-items: center; gap: 0.75rem; }
+        .glass-card-header h5 { margin: 0; font-size: 1.1rem; font-weight: 700; color: white; letter-spacing: 0.5px; }
+        .glass-card-body { padding: 2rem; }
+
+        /* Grid Layout */
+        .checkout-grid { display: grid; grid-template-columns: 1fr 420px; gap: 2rem; align-items: start; }
+        @media (max-width: 992px) { .checkout-grid { grid-template-columns: 1fr; } }
+
+        /* Event Snippet */
+        .event-snippet { display: flex; gap: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .event-snippet img { width: 100px; height: 100px; border-radius: 16px; object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
+        .event-snippet-info h3 { font-size: 1.4rem; font-weight: 800; color: white; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
+        .event-snippet-info p { color: rgba(255,255,255,0.5); font-size: 0.9rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.5rem; }
+
+        /* Ticket Stub rows */
+        .ticket-row { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px; margin-bottom: 0.75rem; }
+        .ticket-row .t-name { font-weight: 600; color: white; font-size: 1rem; display: flex; align-items: center; gap: 0.75rem; }
+        .ticket-row .t-qty { background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; color: rgba(255,255,255,0.8); }
+        .ticket-row .t-price { font-weight: 700; color: var(--primary); font-size: 1.1rem; }
+
+        /* Promo UI */
+        .premium-promo { background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1.5rem; position: relative; overflow: hidden; }
+        .premium-promo::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary); }
+        .promo-input-group { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        .promo-input-group input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.75rem 1rem; border-radius: 10px; text-transform: uppercase; letter-spacing: 1px; font-family: monospace; transition: border-color 0.3s; }
+        .promo-input-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(230,57,70,0.15); }
+        .promo-input-group button { background: var(--primary); color: white; border: none; padding: 0 1.5rem; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+        .promo-input-group button:hover { background: #d63341; transform: translateY(-1px); }
+
+        /* Payment Methods */
+        .pay-method-card { background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
+        .pay-method-card:hover:not(.disabled) { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); transform: translateY(-2px); }
+        .pay-method-card.selected { border-color: var(--primary); background: rgba(230,57,70,0.05); box-shadow: 0 8px 20px rgba(230,57,70,0.15); }
+        .pay-method-card.disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+        .selected-ring { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .pay-method-card.selected .selected-ring { border-color: var(--primary); }
+        .pay-method-card.selected .selected-ring::after { content: ''; width: 10px; height: 10px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 10px var(--primary); }
+        .method-icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+        .pay-method-card.selected .method-icon { background: rgba(230,57,70,0.1); color: var(--primary); }
+
+        /* Summary Panel (Sticky) */
+        .summary-panel { position: sticky; top: 100px; }
+        .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 0; color: rgba(255,255,255,0.6); font-size: 0.95rem; }
+        .summary-row.total { border-top: 1px solid rgba(255,255,255,0.1); margin-top: 0.5rem; padding-top: 1.5rem; color: white; font-size: 1.25rem; font-weight: 800; }
+        .total-amount { color: var(--primary); font-size: 1.6rem; text-shadow: 0 0 20px rgba(230,57,70,0.4); }
+
+        .btn-pay-massive { width: 100%; padding: 1.25rem; border-radius: 16px; background: linear-gradient(135deg, var(--primary) 0%, #b82b36 100%); border: none; color: white; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px; box-shadow: 0 10px 30px rgba(230,57,70,0.3), inset 0 2px 0 rgba(255,255,255,0.2); transition: all 0.3s; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .btn-pay-massive:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(230,57,70,0.4), inset 0 2px 0 rgba(255,255,255,0.2); }
+        .btn-pay-massive:active { transform: translateY(1px); box-shadow: 0 5px 15px rgba(230,57,70,0.3); }
+
+        /* Offers Modal Cards */
+        .premium-coupon-card { background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; transition: all 0.3s; gap: 1rem; }
+        .premium-coupon-card:hover { background: rgba(255,255,255,0.05); border-color: rgba(230,57,70,0.3); }
+        .promo-badge { background: white; color: black; font-weight: 800; letter-spacing: 1px; border-radius: 6px; }
+        @media (max-width: 480px) { .premium-coupon-card { flex-direction: column; align-items: flex-start; } .premium-coupon-card .premium-coupon-action { width: 100%; margin-top: 1rem; } .premium-coupon-action button { width: 100%; } }
+
+    </style>
+
     <div class="checkout-wrap">
+        <a href="/user/events/<%= event._id %>/buy-tickets" class="btn btn-link text-dim mb-4 px-0 text-decoration-none animate stagger-1" style="display:inline-flex; align-items:center; gap:8px;">
+            <i class="fi fi-rr-arrow-left"></i> <span style="font-weight:600;">Back to Event</span>
+        </a>
 
-        <!-- Back -->
-        <div class="mb-4">
-            <a href="/user/events/<%= event._id %>" style="color:rgba(255,255,255,0.38);font-size:0.84rem;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.38)'">
-                <i class="fi fi-rr-arrow-left"></i> Back to Event
-            </a>
-        </div>
-
-        <!-- Progress Steps -->
-        <div class="steps-bar animate stagger-1">
-            <div class="step">
-                <div class="step-circle done"><i class="fi fi-rr-check" style="font-size:0.7rem;"></i></div>
-                <span class="step-label done">Select</span>
+        <!-- Premium Stepper -->
+        <div class="premium-stepper animate stagger-1">
+            <div class="stepper-item done">
+                <div class="stepper-circle"><i class="fi fi-rr-check"></i></div>
+                <div class="stepper-label mt-2">Select</div>
             </div>
-            <div class="step-line done"></div>
-            <div class="step">
-                <div class="step-circle active">2</div>
-                <span class="step-label active">Review & Pay</span>
+            <div class="stepper-line done"></div>
+            <div class="stepper-item active">
+                <div class="stepper-circle">2</div>
+                <div class="stepper-label mt-2">Review</div>
             </div>
-            <div class="step-line"></div>
-            <div class="step">
-                <div class="step-circle pending">3</div>
-                <span class="step-label pending">Confirmation</span>
+            <div class="stepper-line"></div>
+            <div class="stepper-item">
+                <div class="stepper-circle">3</div>
+                <div class="stepper-label mt-2">Confirm</div>
             </div>
         </div>
 
-        <!-- Grid -->
         <div class="checkout-grid animate stagger-2">
-
-            <!-- â”€â”€ LEFT: Order Summary + Payment â”€â”€ -->
-            <div>
+            <!-- Left Column: Order Details & Payment Method -->
+            <div class="d-flex flex-column gap-4">
+                
                 <!-- Order Summary Card -->
-                <div class="co-card">
-                    <div class="co-card-header">Order Summary</div>
-                    <div class="co-card-body">
-                        <!-- Event snippet -->
-                        <div class="d-flex align-items-center gap-3 mb-4 pb-3" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                <div class="glass-card">
+                    <div class="glass-card-header">
+                        <i class="fi fi-rr-shopping-bag text-primary"></i>
+                        <h5>Order Summary</h5>
+                    </div>
+                    <div class="glass-card-body">
+                        <!-- Event Info -->
+                        <div class="event-snippet">
                             <% if(event.banners && event.banners.length > 0) { %>
-                                <img src="<%= event.banners[0] %>" class="event-thumb">
+                                <img src="<%= event.banners[0] %>" alt="Event Banner">
+                            <% } else { %>
+                                <div style="width:100px;height:100px;border-radius:16px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;">
+                                    <i class="fi fi-rr-picture text-dim fs-3"></i>
+                                </div>
                             <% } %>
-                            <div>
-                                <h6 class="fw-bold text-white mb-1" style="font-size:0.95rem;"><%= event.title %></h6>
-                                <p class="text-dim mb-0" style="font-size:0.8rem;">
-                                    <i class="fi fi-rr-calendar me-1"></i>
-                                    <%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}) %> Â&middot; <%= event.startTime %>
-                                </p>
-                                <p class="text-dim mb-0" style="font-size:0.8rem;">
-                                    <i class="fi fi-rr-marker me-1"></i><%= event.location.address %>
-                                </p>
+                            <div class="event-snippet-info">
+                                <h3><%= event.title %></h3>
+                                <p><i class="fi fi-rr-calendar"></i> <%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'}) %> · <%= event.startTime %></p>
+                                <p><i class="fi fi-rr-marker"></i> <%= event.location.address %></p>
                             </div>
                         </div>
-                        <!-- Breakdown -->
-                        <div class="mb-3">
-                            <p class="text-dim small mb-2 text-uppercase" style="letter-spacing: 0.05em;">Tickets Included:</p>
-                            <% cartItems.forEach(item => { %>
-                                <div class="detail-row" style="padding: 0.4rem 0;">
-                                    <span class="detail-key"><%= item.ticket.name %> <span class="text-white">(x<%= item.quantity %>)</span></span>
-                                    <span class="detail-val"><%= item.ticket.price === 0 ? 'Free' : '₹' + (item.ticket.price * item.quantity).toLocaleString('en-IN') %></span>
-                                </div>
-                            <% }) %>
+
+                        <!-- Tickets List -->
+                        <div class="mt-4">
+                            <p class="text-dim text-uppercase mb-3" style="font-size:0.8rem; font-weight:700; letter-spacing:1px;">Tickets Included</p>
+                            <div class="tickets-list">
+                                <% cartItems.forEach(item => { %>
+                                    <div class="ticket-row">
+                                        <div class="t-name">
+                                            <i class="fi fi-rr-ticket text-dim"></i>
+                                            <%= item.ticket.name %>
+                                            <span class="t-qty">x<%= item.quantity %></span>
+                                        </div>
+                                        <div class="t-price">
+                                            <%= item.ticket.price === 0 ? 'Free' : '₹' + (item.ticket.price * item.quantity).toLocaleString('en-IN') %>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            </div>
                         </div>
-                    </div>
-                    <div class="total-highlight">
-                        <span class="text-dim fw-bold">Total Amount</span>
-                        <span class="fw-bold text-white" style="font-size:1.4rem;"><%= totalAmount === 0 ? 'Free' : '₹' + totalAmount.toLocaleString('en-IN') %></span>
+
+                        <!-- Offers & Promo -->
+                        <div class="premium-promo mt-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="text-white fw-bold m-0 d-flex align-items-center gap-2">
+                                    <i class="fi fi-rr-tags text-primary"></i> Apply Promo Code
+                                </h6>
+                                <button class="btn btn-link p-0 text-primary fw-bold text-decoration-none" style="font-size:0.85rem;" onclick="openOffersModal()">View Offers</button>
+                            </div>
+                            <div class="promo-input-group">
+                                <input type="text" id="promoCodeInput" placeholder="ENTER CODE">
+                                <button id="applyPromoBtn" onclick="applyPromoCode()">APPLY</button>
+                            </div>
+                            <div id="promoMessage" class="small mt-2 fw-bold" style="display: none;"></div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Payment Method Card -->
-                <div class="co-card">
-                    <div class="co-card-header">Payment Method</div>
-                    <div class="co-card-body">
-
+                <div class="glass-card">
+                    <div class="glass-card-header">
+                        <i class="fi fi-rr-credit-card text-primary"></i>
+                        <h5>Payment Method</h5>
+                    </div>
+                    <div class="glass-card-body">
+                        
                         <!-- Wallet Option -->
-                        <div class="pay-method-card <%= walletBalance >= totalAmount ? 'selected' : 'disabled' %>"
-                             id="walletMethod" onclick="selectMethod('wallet')">
+                        <div class="pay-method-card <%= walletBalance >= totalAmount ? 'selected' : 'disabled' %>" id="walletMethod" onclick="selectMethod('wallet')">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="pay-icon wallet-icon"><i class="fi fi-rr-wallet"></i></div>
+                                <div class="method-icon"><i class="fi fi-rr-wallet"></i></div>
                                 <div class="flex-grow-1">
-                                    <p class="text-white fw-bold mb-0" style="font-size:0.92rem;">EventHub Wallet</p>
-                                    <p class="text-dim mb-0" style="font-size:0.78rem;">
-                                        Balance: <strong style="color: <%= walletBalance >= totalAmount ? '#2ecc71' : '#E63946' %>;">
-                                            ₹<%= walletBalance.toLocaleString('en-IN') %>
-                                        </strong>
-                                        <% if(walletBalance < totalAmount) { %>
-                                            Â&middot; Need ₹<%= (totalAmount - walletBalance).toLocaleString('en-IN') %> more
-                                        <% } %>
-                                    </p>
+                                    <h6 class="text-white fw-bold mb-1">EventHub Wallet</h6>
+                                    <div class="text-dim" style="font-size:0.85rem;">
+                                        Balance: <strong id="walletBalanceText" style="color: <%= walletBalance >= totalAmount ? '#2ecc71' : '#E63946' %>;">₹<%= walletBalance.toLocaleString('en-IN') %></strong>
+                                        <span id="walletShortfallContainer" style="display: <%= walletBalance >= totalAmount ? 'none' : 'inline' %>;">
+                                            · Need ₹<span id="walletShortfall"><%= Math.max(0, totalAmount - walletBalance).toLocaleString('en-IN') %></span> more
+                                        </span>
+                                    </div>
                                 </div>
-                                <div class="selected-dot" id="walletDot"></div>
+                                <div class="selected-ring"></div>
                             </div>
-                            <% if(walletBalance < totalAmount) { %>
-                            <div class="warn-box">
-                                <i class="fi fi-rr-exclamation me-1"></i> Insufficient balance.
-                                <a href="/user/wallet" class="fw-bold" style="color:var(--primary);">Top up wallet â†’</a>
+                            <div id="walletWarnBox" class="mt-3 p-2 rounded" style="background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.2); display: <%= walletBalance >= totalAmount ? 'none' : 'flex' %>; align-items: center; justify-content: space-between; font-size:0.85rem;">
+                                <span class="text-danger"><i class="fi fi-rr-exclamation me-1"></i> Insufficient balance</span>
+                                <a href="/user/wallet" class="fw-bold text-primary text-decoration-none">Top up →</a>
                             </div>
-                            <% } %>
                         </div>
 
                         <!-- Razorpay Option -->
-                        <div class="pay-method-card <%= walletBalance < totalAmount ? 'selected' : '' %>"
-                             id="razorpayMethod" onclick="selectMethod('razorpay')">
+                        <div class="pay-method-card <%= walletBalance < totalAmount ? 'selected' : '' %>" id="razorpayMethod" onclick="selectMethod('razorpay')">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="pay-icon rzp-icon">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                                        <path d="M4 6L12 2L20 6V18L12 22L4 18V6Z" fill="rgba(90,120,255,0.3)" stroke="#5a78ff" stroke-width="1.5"/>
-                                        <path d="M9 12L11 14L15 10" stroke="#5a78ff" stroke-width="1.5" stroke-linecap="round"/>
-                                    </svg>
-                                </div>
+                                <div class="method-icon" style="color:#5a78ff;"><i class="fi fi-rr-globe"></i></div>
                                 <div class="flex-grow-1">
-                                    <p class="text-white fw-bold mb-1" style="font-size:0.92rem;">Online Payment</p>
-                                    <div class="rzp-methods">
-                                        <span class="rzp-chip">UPI</span>
-                                        <span class="rzp-chip">Debit Card</span>
-                                        <span class="rzp-chip">Credit Card</span>
-                                        <span class="rzp-chip">Net Banking</span>
-                                        <span class="rzp-chip">Wallets</span>
+                                    <h6 class="text-white fw-bold mb-1">Online Payment</h6>
+                                    <div class="text-dim d-flex gap-2 flex-wrap" style="font-size:0.75rem;">
+                                        <span class="badge bg-dark border border-secondary text-white">UPI</span>
+                                        <span class="badge bg-dark border border-secondary text-white">Cards</span>
+                                        <span class="badge bg-dark border border-secondary text-white">Net Banking</span>
                                     </div>
                                 </div>
-                                <div class="selected-dot" id="razorpayDot"></div>
+                                <div class="selected-ring"></div>
                             </div>
                         </div>
 
-                        <!-- Powered by Razorpay -->
-                        <div class="d-flex align-items-center gap-2 mt-2">
-                            <i class="fi fi-rr-shield-check" style="color:rgba(255,255,255,0.2);"></i>
-                            <span style="font-size:0.73rem;color:rgba(255,255,255,0.2);">Secured by Razorpay Â&middot; 256-bit SSL encrypted</span>
+                        <div class="mt-3 text-center">
+                            <span style="font-size:0.75rem; color:rgba(255,255,255,0.3);"><i class="fi fi-rr-shield-check me-1"></i>Secured by Razorpay · 256-bit SSL encrypted</span>
                         </div>
                     </div>
                 </div>
+
             </div>
 
-            <!-- â”€â”€ RIGHT: Confirm Panel â”€â”€ -->
+            <!-- Right Column: Summary Sticky Panel -->
             <div>
-                <div class="co-card confirm-panel">
-                    <div class="co-card-header">Payment Summary</div>
-                    <div class="co-card-body">
-                        <div class="detail-row"><span class="detail-key">Subtotal</span><span class="detail-val">₹<%= totalAmount.toLocaleString('en-IN') %></span></div>
-                        <div class="detail-row"><span class="detail-key">Platform Fee</span><span class="detail-val" style="color:#2ecc71;">Free</span></div>
-                        <div class="detail-row" style="border-bottom:none;"><span class="detail-key fw-bold text-white">Total</span><span class="detail-val" style="font-size:1.1rem;color:var(--primary);">₹<%= totalAmount.toLocaleString('en-IN') %></span></div>
+                <div class="glass-card summary-panel">
+                    <div class="glass-card-header">
+                        <i class="fi fi-rr-receipt text-primary"></i>
+                        <h5>Payment Summary</h5>
+                    </div>
+                    <div class="glass-card-body p-4">
+                        
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span class="text-white fw-bold">₹<%= totalAmount.toLocaleString('en-IN') %></span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Platform Fee</span>
+                            <span class="fw-bold" style="color:#2ecc71;">Free</span>
+                        </div>
+                        
+                        <div class="summary-row" id="discountRow" style="display: none !important;">
+                            <span class="text-success"><i class="fi fi-rr-tags me-1"></i> Discount</span>
+                            <span class="fw-bold text-success" id="discountDisplay">-₹0</span>
+                        </div>
 
-                        <hr style="border-color:rgba(255,255,255,0.06);margin:1rem 0;">
+                        <div class="summary-row total">
+                            <span>Total</span>
+                            <span class="total-amount" id="finalTotalDisplay">₹<%= totalAmount.toLocaleString('en-IN') %></span>
+                        </div>
 
-                        <!-- Selected method indicator -->
-                        <div class="d-flex align-items-center gap-2 mb-4 p-3 rounded-3" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);" id="methodIndicator">
-                            <i class="fi fi-rr-wallet" id="methodIcon" style="color:var(--primary);"></i>
+                        <div class="mt-4 mb-4 p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); display:flex; align-items:center; gap:1rem;">
+                            <div style="width:40px;height:40px;border-radius:10px;background:rgba(230,57,70,0.1);display:flex;align-items:center;justify-content:center;">
+                                <i class="fi fi-rr-wallet text-primary fs-5" id="methodIcon"></i>
+                            </div>
                             <div>
-                                <p class="text-white fw-bold mb-0" style="font-size:0.85rem;" id="methodName">EventHub Wallet</p>
-                                <p class="text-dim mb-0" style="font-size:0.75rem;" id="methodSub">Instant deduction</p>
+                                <h6 class="text-white m-0 fw-bold" style="font-size:0.9rem;" id="methodName">EventHub Wallet</h6>
+                                <p class="text-dim m-0" style="font-size:0.75rem;" id="methodSub">Instant deduction</p>
                             </div>
                         </div>
 
-                        <button class="btn btn-primary confirm-btn" id="confirmBtn" onclick="handlePayment()">
+                        <button class="btn-pay-massive" id="confirmBtn" onclick="handlePayment()">
                             <i class="fi fi-rr-lock" id="confirmIcon"></i>
                             <span id="confirmText">Pay ₹<%= totalAmount.toLocaleString('en-IN') %></span>
                         </button>
-
-                        <p class="secure-note">
-                            <i class="fi fi-rr-shield-check me-1"></i> All transactions are secure & encrypted
+                        
+                        <p class="text-center mt-3 mb-0" style="font-size:0.75rem; color:rgba(255,255,255,0.4);">
+                            By proceeding, you agree to EventHub's Terms & Conditions.
                         </p>
                     </div>
                 </div>
@@ -173,46 +272,93 @@
         </div>
     </div>
 
-    <!-- Razorpay Checkout Script -->
+    <div class="modal-overlay" id="offersModal" style="z-index: 9999;">
+        <div class="modal-container glass-premium" style="max-width: 450px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+            <div class="modal-header d-flex justify-content-between align-items-center mb-4">
+                <h5 class="text-white m-0"><i class="fi fi-rr-ticket-alt me-2 text-primary"></i>Available Offers</h5>
+                <button class="btn btn-link text-dim p-0" onclick="closeOffersModal()"><i class="fi fi-rr-cross"></i></button>
+            </div>
+            
+            <div id="offersList" class="d-flex flex-column gap-3" style="max-height: 400px; overflow-y: auto;">
+                <div class="text-center py-4 text-dim">
+                    <i class="fi fi-rr-spinner-alt fa-spin fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
         const EVENT_ID = '<%= event._id %>';
-        const TOTAL_AMOUNT = <%= totalAmount %>;
+        const BASE_TOTAL = <%= totalAmount %>;
         const WALLET_BALANCE = <%= walletBalance %>;
         const RZP_KEY = '<%= razorpayKeyId %>';
         const USER_NAME = '<%= userName %>';
         const USER_EMAIL = '<%= userEmail %>';
         const CART_DATA = <%- JSON.stringify(cartItems.map(i => ({ ticketId: i.ticket._id.toString(), quantity: i.quantity }))) %>;
 
-        let selectedMethod = WALLET_BALANCE >= TOTAL_AMOUNT ? 'wallet' : 'razorpay';
+        // Dynamic State Variables
+        let currentTotal = BASE_TOTAL;
+        let appliedCouponId = null;
+        let selectedMethod = WALLET_BALANCE >= currentTotal ? 'wallet' : 'razorpay';
+        
         updateMethodUI();
 
         function selectMethod(method) {
-            if (method === 'wallet' && WALLET_BALANCE < TOTAL_AMOUNT) return;
+            if (method === 'wallet' && WALLET_BALANCE < currentTotal) return;
             selectedMethod = method;
             updateMethodUI();
         }
 
         function updateMethodUI() {
-            // Card borders
+            // 1. Dynamically check if the Wallet is affordable NOW
+            const canUseWallet = WALLET_BALANCE >= currentTotal;
+            
+            const walletCard = document.getElementById('walletMethod');
+            const shortfallContainer = document.getElementById('walletShortfallContainer');
+            const shortfallAmount = document.getElementById('walletShortfall');
+            const warnBox = document.getElementById('walletWarnBox');
+            const balanceText = document.getElementById('walletBalanceText');
+
+            if (canUseWallet) {
+                // Unlock the wallet UI! (Removed the aggressive auto-switch from here)
+                walletCard.classList.remove('disabled');
+                if (shortfallContainer) shortfallContainer.style.display = 'none';
+                if (warnBox) warnBox.style.display = 'none';
+                if (balanceText) balanceText.style.color = '#2ecc71'; // Turn balance green
+            } else {
+                // Lock the wallet UI
+                walletCard.classList.add('disabled');
+                if (shortfallContainer) shortfallContainer.style.display = 'inline';
+                if (shortfallAmount) shortfallAmount.innerText = (currentTotal - WALLET_BALANCE).toLocaleString('en-IN');
+                if (warnBox) warnBox.style.display = 'flex'; 
+                if (balanceText) balanceText.style.color = '#E63946'; // Turn balance red
+                
+                // Force switch to razorpay if they somehow selected wallet but can't afford it
+                if (selectedMethod === 'wallet') {
+                    selectedMethod = 'razorpay';
+                }
+            }
+
+            // 2. Update the visual borders on the cards
             document.getElementById('walletMethod').classList.toggle('selected', selectedMethod === 'wallet');
             document.getElementById('razorpayMethod').classList.toggle('selected', selectedMethod === 'razorpay');
 
-            // Indicator
+            // 3. Update the Pay Button & Summary Box at the bottom
             if (selectedMethod === 'wallet') {
-                document.getElementById('methodIcon').className = 'fi fi-rr-wallet';
+                document.getElementById('methodIcon').className = 'fi fi-rr-wallet fs-4';
                 document.getElementById('methodIcon').style.color = 'var(--primary)';
                 document.getElementById('methodName').textContent = 'EventHub Wallet';
-                document.getElementById('methodSub').textContent = `₹${TOTAL_AMOUNT.toLocaleString('en-IN')} will be deducted from wallet`;
+                document.getElementById('methodSub').textContent = `₹${currentTotal.toLocaleString('en-IN')} will be deducted from wallet`;
                 document.getElementById('confirmIcon').className = 'fi fi-rr-wallet';
-                document.getElementById('confirmText').textContent = `Pay ₹${TOTAL_AMOUNT.toLocaleString('en-IN')} via Wallet`;
+                document.getElementById('confirmText').textContent = `Pay ₹${currentTotal.toLocaleString('en-IN')} via Wallet`;
             } else {
-                document.getElementById('methodIcon').className = 'fi fi-rr-credit-card';
+                document.getElementById('methodIcon').className = 'fi fi-rr-credit-card fs-4';
                 document.getElementById('methodIcon').style.color = '#5a78ff';
                 document.getElementById('methodName').textContent = 'Online Payment (Razorpay)';
                 document.getElementById('methodSub').textContent = 'UPI / Card / Net Banking / Wallets';
                 document.getElementById('confirmIcon').className = 'fi fi-rr-credit-card';
-                document.getElementById('confirmText').textContent = `Pay ₹${TOTAL_AMOUNT.toLocaleString('en-IN')} Online`;
+                document.getElementById('confirmText').textContent = `Pay ₹${currentTotal.toLocaleString('en-IN')} Online`;
             }
         }
 
@@ -224,7 +370,7 @@
             }
         }
 
-        // â”€â”€ Wallet Payment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ─── Wallet Payment ──────────────────────────────────────────────────────────
         async function payWithWallet() {
             const btn = document.getElementById('confirmBtn');
             btn.disabled = true;
@@ -232,9 +378,12 @@
             Loader.show('PROCESSING PAYMENT...');
             try {
                 const res = await axios.post(`/user/events/${EVENT_ID}/book`, {
-                    cart: CART_DATA
+                    cart: CART_DATA,
+                    couponId: appliedCouponId,
+                    expectedTotal: currentTotal
                 });
                 if (res.data.success) {
+                    localStorage.removeItem('EventHub_cart_' + EVENT_ID);
                     window.location.href = res.data.redirectUrl;
                 }
             } catch (err) {
@@ -245,11 +394,13 @@
                 Toast.error(msg);
                 if (err.response?.data?.code === 'INSUFFICIENT_WALLET') {
                     setTimeout(() => window.location.href = `/user/booking/failed?reason=${encodeURIComponent(msg)}`, 1500);
+                } else if (msg === 'Event not found or not available') {
+                    setTimeout(() => window.location.href = `/user/events`, 1500);
                 }
             }
         }
 
-        // â”€â”€ Razorpay Payment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ─── Razorpay Payment ────────────────────────────────────────────────────────
         async function payWithRazorpay() {
             const btn = document.getElementById('confirmBtn');
             btn.disabled = true;
@@ -257,14 +408,16 @@
             Loader.show('OPENING PAYMENT...');
             try {
                 const res = await axios.post(`/user/events/${EVENT_ID}/razorpay-order`, {
-                    cart: CART_DATA
+                    cart: CART_DATA,
+                    couponId: appliedCouponId,
+                    expectedTotal: currentTotal
                 });
                 if (!res.data.success) throw new Error(res.data.message);
 
                 Loader.hide();
                 btn.disabled = false;
                 updateMethodUI();
-
+                
                 const options = {
                     key: RZP_KEY,
                     amount: res.data.order.amount,
@@ -282,11 +435,13 @@
                                 razorpay_order_id: response.razorpay_order_id,
                                 razorpay_payment_id: response.razorpay_payment_id,
                                 razorpay_signature: response.razorpay_signature,
-                                cart: CART_DATA
+                                cart: CART_DATA,
+                                couponId: appliedCouponId,
+                                expectedTotal: currentTotal
                             });
                             
-                            // FIX 2: Fixed the syntax error here (removed the extra '}')
                             if (verifyRes.data.success) {
+                                localStorage.removeItem('EventHub_cart_' + EVENT_ID);
                                 window.location.href = verifyRes.data.redirectUrl;
                             }
                             
@@ -297,7 +452,7 @@
                         }
                     }
                 };
-
+                
                 const rzp = new Razorpay(options);
                 rzp.on('payment.failed', function(resp) {
                     Loader.hide();
@@ -310,8 +465,125 @@
                 Loader.hide();
                 btn.disabled = false;
                 updateMethodUI();
-                Toast.error(err.response?.data?.message || 'Failed to initialize payment.');
+                const msg = err.response?.data?.message || 'Failed to initialize payment.';
+                Toast.error(msg);
+                if (msg === 'Event not found or not available') {
+                    setTimeout(() => window.location.href = `/user/events`, 1500);
+                }
             }
+        }
+
+        // ─── Promo Code Logic ────────────────────────────────────────────────────
+        async function applyPromoCode() {
+            const code = document.getElementById('promoCodeInput').value.trim();
+            const msgBox = document.getElementById('promoMessage');
+            const applyBtn = document.getElementById('applyPromoBtn');
+
+            if (!code) return;
+            
+            applyBtn.innerHTML = '<i class="fi fi-rr-spinner-alt fa-spin"></i>';
+            applyBtn.disabled = true;
+
+            try {
+                const res = await axios.post('/user/checkout/validate-coupon', {
+                    code, 
+                    eventId: EVENT_ID, 
+                    currentTotal: BASE_TOTAL,
+                    cart: CART_DATA,
+                });
+                
+                if (res.data.success) {
+                    appliedCouponId = res.data.couponId;
+                    currentTotal = res.data.newTotal;
+                    
+                    // Show discount UI
+                    document.getElementById('discountRow').style.setProperty('display', 'flex', 'important');
+                    document.getElementById('discountDisplay').innerText = `-₹${res.data.discountAmount.toLocaleString('en-IN')}`;
+                    document.getElementById('finalTotalDisplay').innerText = `₹${currentTotal.toLocaleString('en-IN')}`;
+
+                    msgBox.style.display = 'block';
+                    msgBox.className = 'small mt-2 text-success';
+                    msgBox.innerHTML = '<i class="fi fi-rr-check-circle me-1"></i> Promo code applied successfully!';
+                    
+                    document.getElementById('promoCodeInput').disabled = true;
+                    applyBtn.innerText = 'Applied';
+                    
+                    // ✨ NEW: Auto-select wallet ONLY when the coupon is first applied, if it becomes affordable
+                    if (WALLET_BALANCE >= currentTotal) {
+                        selectedMethod = 'wallet';
+                    }
+
+                    // Update the payment UI to reflect the new total
+                    updateMethodUI();
+                }
+            } catch (err) {
+                console.error("Promo Error:", err);
+                msgBox.style.display = 'block';
+                msgBox.className = 'small mt-2 text-danger';
+                msgBox.innerHTML = `<i class="fi fi-rr-info me-1"></i> ${err.response?.data?.message || 'Invalid code'}`;
+                applyBtn.innerText = 'Apply';
+                applyBtn.disabled = false;
+            }
+        }
+
+        // ─── Offers Modal Logic ──────────────────────────────────────────────────
+        async function openOffersModal() {
+            document.getElementById('offersModal').classList.add('active');
+            const list = document.getElementById('offersList');
+            
+            try {
+                const res = await axios.get(`/user/checkout/events/${EVENT_ID}/coupons`);
+                
+                if (res.data.success && res.data.coupons.length > 0) {
+                    list.innerHTML = res.data.coupons.map(c => {
+                        let discountText = c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `₹${c.discountValue} OFF`;
+                        if (c.discountType === 'percentage' && c.maxDiscountAmount) {
+                            discountText += ` (Up to ₹${c.maxDiscountAmount})`;
+                        }
+                        let minPurchaseText = '';
+                        if (c.minOrderValue && c.minOrderValue > 0) {
+                            minPurchaseText = `<div class="text-warning small mt-1" style="font-size: 0.75rem;"><i class="fi fi-rr-shopping-cart-check me-1"></i>Min. Purchase: ₹${c.minOrderValue}</div>`;
+                        }
+                        const expiryDate = new Date(c.expiryDate).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+                        
+                        return `
+                        <div class="premium-coupon-card mb-3">
+                            <div class="premium-coupon-details">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="badge promo-badge px-3 py-2">${c.code}</span>
+                                </div>
+                                <h5 class="text-white fw-bold mb-1">${discountText}</h5>
+                                ${minPurchaseText}
+                                <div class="text-dim small mt-1" style="font-size: 0.75rem;">
+                                    <i class="fi fi-rr-clock-three me-1"></i>Valid until ${expiryDate}
+                                </div>
+                            </div>
+                            <div class="premium-coupon-action">
+                                <button class="btn btn-primary rounded-pill px-4" onclick="useOffer('${c.code}')">Apply</button>
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+                } else {
+                    list.innerHTML = `
+                        <div class="text-center text-dim py-5">
+                            <i class="fi fi-rr-tags fs-1 opacity-50 mb-3 d-block"></i>
+                            <p class="mb-0">No active offers available for this event right now.</p>
+                        </div>`;
+                }
+            } catch (err) {
+                list.innerHTML = '<div class="text-danger text-center py-4">Failed to load offers.</div>';
+            }
+        }
+
+        function closeOffersModal() {
+            document.getElementById('offersModal').classList.remove('active');
+        }
+
+        function useOffer(code) {
+            closeOffersModal();
+            document.getElementById('promoCodeInput').value = code;
+            applyPromoCode();
         }
     </script>
 </body>

@@ -65,6 +65,17 @@ export const getAdminOrganizer = async (req,res, next)=>{
 }
 
 
+// ─── User Detail Page ─────────────────────────────────────────────────────────
+export const getAdminUserDetail = async (req, res, next) => {
+    try {
+        const { user, bookings } = await adminServices.fetchUserDetail(req.params.id);
+        res.render('admin/users/view', { title: 'User Details', user, bookings });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 // ─── Toggle User Block ────────────────────────────────────────────────────────
 export const toggleUserBlock = async (req, res, next) => {
     try {
@@ -134,6 +145,33 @@ export const updateOrganizerStatus = async (req, res, next) => {
 };
 
 
+// ─── Toggle Organizer Block ───────────────────────────────────────────────────
+export const toggleOrganizerBlock = async (req, res, next) => {
+    try {
+        const { orgId } = req.body;
+        if (!orgId) return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: 'Organizer ID is required' });
+
+        const updatedOrganizer = await adminServices.toggleUserBlockStatus(orgId);
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: `Organizer successfully ${updatedOrganizer.isBlocked ? 'blocked' : 'unblocked'}.`
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+// ─── Organizer Detail Page ────────────────────────────────────────────────────
+export const getAdminOrganizerDetail = async (req, res, next) => {
+    try {
+        const { organizer, events, totalEvents } = await adminServices.fetchOrganizerDetail(req.params.id);
+        res.render('admin/organizers/view', { title: 'Organizer Details', organizer, events, totalEvents });
+    } catch (error) {
+        next(error);
+    }
+};
+
 
 // ─── Category Page (simple render) ───────────────────────────────────────────
 export const getCategoryPage = (req, res, next) => {
@@ -178,7 +216,7 @@ export const deleteNotification = async (req, res, next) => {
             _id: req.params.id,
             recipient: req.session.admin._id
         });
-        if (!deleted) return res.status(404).json({ success: false, message: 'Notification not found' });
+        if (!deleted) return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: 'Notification not found' });
         res.json({ success: true, message: 'Notification deleted' });
     } catch (error) {
         next(error);

@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head') %>
+    <title>Organizer Profile | EventHub</title>
+</head>
+<body class="bg-mesh">
+    
+    <%- include('../partials/navbars/organizer-nav') %>
+
+    <div class="dashboard-layout">
+        <%- include('../partials/organizer-sidebar', { title: 'Organizer Profile' }) %>
+        
+        <main class="dashboard-main">
+            <!-- Page Header -->
+            <div class="mb-4 animate stagger-1">
+                <h2 class="fw-bold">Profile Settings</h2>
+                <p class="text-dim">Manage your account details, preferences, and security.</p>
+            </div>
+
+            <!-- 1. Profile Banner -->
+            <div class="glass-premium dynamic-card p-4 rounded-3 mb-4 animate stagger-2 d-flex flex-wrap align-center gap-4 border-red" style="position: relative; overflow: hidden;">
+                <div style="position: absolute; right: 0; top: 0; width: 300px; height: 100%; background: linear-gradient(90deg, transparent, rgba(230, 57, 70, 0.05)); z-index: 0;"></div>
+                
+                <div class="profile-avatar-btn" style="width: 100px; height: 100px; font-size: 2.5rem; z-index: 1;">
+                    <% if(organizer.avatar) {%>
+                        <img src="<%= organizer.avatar %>" id="currentAvatarPreview" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                    <% }else{ %>
+                        <span id="currentAvatarPreview"><%= organizer.organizationName ? organizer.organizationName.charAt(0).toUpperCase() : organizer.fullName.charAt(0).toUpperCase() %></span>
+                    <% } %>
+                </div>
+                
+                <div style="z-index: 1;">
+                    <h3 class="fw-bold mb-1"><%= organizer.organizationName || organizer.fullName %></h3>
+                    <p class="text-dim mb-2 d-flex align-center gap-2" style="font-size: 0.95rem;">
+                        <i class="fi fi-rr-envelope text-muted"></i> <%= organizer.email %>
+                    </p>
+                    <div class="d-flex align-center gap-2">
+                        <span class="badge" style="background: rgba(230, 57, 70, 0.15); color: var(--primary); padding: 5px 12px; border-radius: 6px; font-size: 0.75rem; letter-spacing: 0.5px;">
+                            <i class="fi fi-rr-star" style="font-size: 0.7rem; margin-right: 4px;"></i> EventHub Organizer
+                        </span>
+                    </div>
+                </div>
+
+                <div class="ms-auto" style="z-index: 1;">
+                    <input type="file" id="avatarUpload" name="avatar" accept="image/png, image/jpeg, image/jpg, image/webp" style="display: none;">
+                    <!-- Button now opens the choice modal instead of directly opening the file picker -->
+                    <button type="button" class="btn btn-outline btn-sm" onclick="openModal('avatarChoiceModal')">
+                        <i class="fi fi-rr-picture me-1"></i> Change Photo
+                    </button>
+                    <p class="text-dim mt-2 mb-0 text-end" style="font-size: 0.75rem;">Upload JPG/PNG or use AI.</p>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- 2. Main Details Form -->
+                <div class="col-lg-7 animate stagger-3">
+                    <form id="profileUpdateForm" novalidate class="glass-premium dynamic-card p-4 rounded-3 d-flex flex-column h-100">
+                        <div class="d-flex justify-between align-center mb-4">
+                            <h4 class="fw-bold m-0">Account Details</h4>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-4">
+                                <input type="text" id="organizationName" name="organizationName" class="form-control input" placeholder=" " value="<%= organizer.organizationName %>" data-rule="required, min3, max50">
+                                <label for="organizationName">Organization Name</label>
+                            </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-4">
+                                    <input type="text" id="fullName" name="fullName" class="form-control input" placeholder=" " value="<%= organizer.fullName %>" data-rule="required, name, min3, max50">
+                                    <label for="fullName">Representative Name</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr style="border-color: rgba(255,255,255,0.05); margin: 0.5rem 0 1.5rem 0;">
+                        <h6 class="text-muted fw-bold mb-3" style="font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase;">Contact Information</h6>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-4">
+                                    <input type="tel" id="phone" name="phone" class="form-control input" placeholder=" " value="<%= organizer.phone || '' %>" pattern="^[0-9]{10,15}$">
+                                    <label for="phone">Phone Number</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-4">
+                                    <input type="email" class="form-control input" value="<%= organizer.email %>" readonly disabled style="opacity: 0.6; cursor: not-allowed;">
+                                    <label>Email Address</label>
+                                    <i class="fi fi-rr-lock text-dim" style="position: absolute; right: 15px; top: 18px; font-size: 1rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Address Selection Toggle & Inputs -->
+                        <div class="mb-4">
+                            <!-- Sleek Toggle Switch -->
+                            <div class="d-flex justify-between align-center mb-3">
+                                <label class="text-muted fw-bold" style="font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase;">Location</label>
+                                <div class="p-1 rounded-3 d-flex gap-1" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border);">
+                                    <button type="button" class="btn btn-sm addr-toggle active" data-target="manualAddress" style="padding: 0.3rem 1rem; font-size: 0.8rem; background: rgba(255,255,255,0.1); color: white; border: none; height: auto;">
+                                        <i class="fi fi-rr-keyboard me-1"></i> Manual
+                                    </button>
+                                    <button type="button" class="btn btn-sm addr-toggle text-dim" data-target="mapAddress" style="padding: 0.3rem 1rem; font-size: 0.8rem; background: transparent; border: none; height: auto;">
+                                        <i class="fi fi-rr-map-marker me-1"></i> Map Picker
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Option A: Manual Entry -->
+                            <div id="manualAddress" class="address-section animate">
+                                <div class="form-floating">
+                                    <input type="text" id="address" name="address" class="form-control" placeholder=" " value="<%= organizer.address || '' %>" readonly>
+                                    <label for="address">Full Address</label>
+                                </div>
+                            </div>
+
+                            <!-- Option B: Map Picker -->
+                            <div id="mapAddress" class="address-section animate" style="display: none;">
+                                
+                                <!-- The Actual Map Container -->
+                                <div class="glass-premium dynamic-card rounded-3 mb-3" style="height: 250px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; position: relative;">
+                                    <!-- Leaflet Map Div -->
+                                    <div id="leafletMapContainer" style="width: 100%; height: 100%; z-index: 1;"></div>
+                                </div>
+                                
+                                <!-- Read-only input populated by the map -->
+                                <div class="form-floating">
+                                    <input type="text" id="mapAddressInput" class="form-control input" placeholder=" " value="<%= organizer.address || '' %>" readonly style="opacity: 0.7; cursor: not-allowed; background: rgba(255,255,255,0.02);">
+                                    <label for="mapAddressInput">Selected Map Address</label>
+                                    <i class="fi fi-rr-lock text-dim" style="position: absolute; right: 15px; top: 18px; font-size: 1rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr style="border-color: rgba(255,255,255,0.05); margin: 0.5rem 0 1.5rem 0;">
+                        <h6 class="text-muted fw-bold mb-3" style="font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase;">Public Profile</h6>
+
+                        <div class="form-floating mb-4 flex-grow-1">
+                            <textarea id="bio" name="bio" class="form-control input" placeholder=" " maxlength="500" style="height: 100%; min-height: 120px; resize: none; padding-top: 1.5rem;"><%= organizer.bio || '' %></textarea>
+                            <label for="bio">Organization Bio</label>
+                        </div>
+
+                        <div class="text-end mt-2">
+                            <button type="submit" class="btn btn-primary px-5">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 3. Security & Actions -->
+                <div class="col-lg-5 animate stagger-4">
+                    <!-- Security Card -->
+                    <div class="glass-premium dynamic-card p-4 rounded-3 mb-4">
+                        <h4 class="mb-4 fw-bold">Security</h4>
+
+                        <!-- Email Row (Always Visible) -->
+                        <div class="d-flex justify-between align-center p-3 mb-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border);">
+                            <div>
+                                <h6 class="fw-bold mb-1" style="font-size: 0.95rem;">Email Address</h6>
+                                <p class="text-dim m-0" style="font-size: 0.85rem;"><%= organizer.email %></p>
+                            </div>
+                        </div>
+
+                        <!-- Password Row -->
+                        <div class="d-flex justify-between align-center p-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border);">
+                            <div>
+                                <h6 class="fw-bold mb-1" style="font-size: 0.95rem;">Password</h6>
+                                <% if(organizer.password) { %>
+                                    <p class="text-dim m-0" style="font-size: 0.85rem;">••••••••••••</p>
+                                <% } else { %>
+                                    <p class="text-warning m-0" style="font-size: 0.85rem; color: #f1c40f;">Not set</p>
+                                <% } %>
+                            </div>
+                            <button type="button" class="btn btn-outline btn-sm px-3" onclick="openModal('passwordModal')">
+                                Edit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODALS SECTION (MUST BE OUTSIDE THE MAIN LAYOUT) -->
+    <!-- ========================================== -->
+
+    <!-- Email Update Modal -->
+    <div class="modal-overlay" id="emailModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h5 class="fw-bold m-0 text-white">Update Email Address</h5>
+                <i class="fi fi-rr-cross modal-close" onclick="closeModal('emailModal')"></i>
+            </div>
+            <form id="emailUpdateForm" novalidate>
+                <div class="modal-body">
+                    <input type="hidden" name="currentEmail" value="<%= organizer.email %>">
+                    
+                    <div class="form-floating mb-2" id="newEmailContainer">
+                        <input type="email" name="newEmail" class="form-control input" id="newEmail" placeholder=" " data-rule="required, email">
+                        <label for="newEmail">New Email Address</label>
+                    </div>
+
+                    <div id="otpContainer" style="display: none;">
+                        <p class="text-sm text-dim mb-2">Enter the OTP sent to your new email.</p>
+                        <div class="form-floating mb-2">
+                            <input type="text" name="otp" class="form-control input" id="otpInput" placeholder=" " maxlength="4">
+                            <label for="otpInput">OTP</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn text-dim" style="background: transparent;" onclick="closeModal('emailModal')">Cancel</button>
+                    <button type="submit" id="emailUpdateSubmitBtn" class="btn btn-primary">Send OTP</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Password Update Modal -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h5 class="fw-bold m-0 text-white"><%= organizer.password ? 'Update Password' : 'Add Password' %></h5>
+                <i class="fi fi-rr-cross modal-close" onclick="closeModal('passwordModal')"></i>
+            </div>
+            <form id="passwordUpdateForm" novalidate>
+                <div class="modal-body">
+                    
+                    <!-- Send the action to the backend -->
+                    <input type="hidden" name="action" value="<%= organizer.password ? 'update' : 'add' %>">
+                    
+                    <div class="form-floating password-group mb-4">
+                        <input type="password" name="currentPassword" class="form-control input" id="currentPassword" placeholder=" " data-rule="required">
+                        <label for="currentPassword">Current Password</label>
+                        <button type="button" class="password-toggle" onclick="togglePassword('currentPassword', this)">
+                            <i class="fi fi-rr-eye"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="form-floating password-group mb-4">
+                        <input type="password" name="newPassword" class="form-control input" id="newPassword" placeholder=" " data-rule="required, password, min8">
+                        <label for="newPassword">New Password</label>
+                        <button type="button" class="password-toggle" onclick="togglePassword('newPassword', this)">
+                            <i class="fi fi-rr-eye"></i>
+                        </button>
+                    </div>
+
+                    <div class="form-floating password-group mb-2">
+                        <input type="password" name="confirmPassword" class="form-control input" id="confirmPassword" placeholder=" " data-rule="required, password, match:newPassword">
+                        <label for="confirmPassword">Confirm New Password</label>
+                        <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
+                            <i class="fi fi-rr-eye"></i>
+                        </button>
+                    </div>
+                    
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn text-dim" style="background: transparent;" onclick="closeModal('passwordModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><%= organizer.password ? 'Save Password' : 'Create Password' %></button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Avatar Cropper Modal -->
+    <div class="modal-overlay" id="cropModal">
+        <div class="modal-container" style="max-width: 600px;">
+            <div class="modal-header">
+                <h5 class="fw-bold m-0 text-white">Crop Profile Picture</h5>
+                <i class="fi fi-rr-cross modal-close" onclick="closeModal('cropModal')"></i>
+            </div>
+            <div class="modal-body text-center">
+                <!-- Cropper.js needs a wrapping div with a set max-height -->
+                <div class="img-container" style="max-height: 400px; width: 100%; background: #000; overflow: hidden; border-radius: 8px;">
+                    <img id="imageToCrop" src="" alt="Picture to crop" style="max-width: 100%; display: block;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn text-dim" style="background: transparent;" onclick="closeModal('cropModal')">Cancel</button>
+                <button type="button" class="btn btn-primary" id="cropAndApplyBtn">Apply Crop</button>
+            </div>
+        </div>
+    </div>
+    <!-- Avatar Choice Modal -->
+<!-- 1. Avatar Choice Modal -->
+    <div class="modal-overlay" id="avatarChoiceModal">
+        <div class="modal-container" style="max-width: 450px;">
+            <div class="modal-header">
+                <h5 class="fw-bold m-0 text-white">Update Profile Photo</h5>
+                <i class="fi fi-rr-cross modal-close" onclick="closeModal('avatarChoiceModal')"></i>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <!-- Choice A: Upload -->
+                    <div class="col-6">
+                        <div class="glass-premium dynamic-card p-4 rounded-3 text-center" style="cursor: pointer; transition: all 0.3s ease; border: 1px solid transparent;" 
+                             onmouseover="this.style.borderColor='var(--primary)'; this.style.transform='translateY(-3px)';" 
+                             onmouseout="this.style.borderColor='transparent'; this.style.transform='translateY(0)';"
+                             onclick="triggerUpload()">
+                            <i class="fi fi-rr-upload text-white" style="font-size: 2rem;"></i>
+                            <h6 class="mt-3 mb-1 fw-bold">Upload Photo</h6>
+                            <p class="text-dim m-0" style="font-size: 0.75rem;">From your device</p>
+                        </div>
+                    </div>
+                    <!-- Choice B: AI Generate -->
+                    <div class="col-6">
+                        <div class="glass-premium dynamic-card p-4 rounded-3 text-center" style="cursor: pointer; transition: all 0.3s ease; border: 1px solid transparent;"
+                             onmouseover="this.style.borderColor='var(--primary)'; this.style.transform='translateY(-3px)';" 
+                             onmouseout="this.style.borderColor='transparent'; this.style.transform='translateY(0)';"
+                             onclick="openAiModal()">
+                            <i class="fi fi-rr-magic-wand text-gradient" style="font-size: 2rem;"></i>
+                            <h6 class="mt-3 mb-1 fw-bold">AI Avatar</h6>
+                            <p class="text-dim m-0" style="font-size: 0.75rem;">Generate with AI</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. AI Generator Modal -->
+    <div class="modal-overlay" id="aiAvatarModal">
+        <div class="modal-container" style="max-width: 500px;">
+            <div class="modal-header">
+                <h5 class="fw-bold m-0 text-white">
+                    <i class="fi fi-rr-magic-wand text-gradient me-2"></i> AI Avatar Generator
+                </h5>
+                <i class="fi fi-rr-cross modal-close" onclick="closeModal('aiAvatarModal')"></i>
+            </div>
+            <div class="modal-body">
+                <div class="form-floating mb-3">
+                    <input type="text" id="aiPrompt" class="form-control input" placeholder=" " data-rule="required">
+                    <label for="aiPrompt">Describe your avatar (e.g., A cyberpunk hacker)</label>
+                </div>
+                
+                <!-- Preview Area -->
+                <div id="aiPreviewArea" class="glass-premium dynamic-card rounded-3 d-flex align-center justify-center mb-1" style="height: 250px; border: 1px dashed rgba(255,255,255,0.2); position: relative; overflow: hidden; background: #000;">
+                    
+                    <div class="text-center" id="aiPlaceholderText">
+                        <i class="fi fi-rr-sparkles text-dim" style="font-size: 2rem;"></i>
+                        <p class="text-dim m-0 mt-2" style="font-size: 0.85rem;">Your generated avatar will appear here.</p>
+                    </div>
+                    
+                    <img id="aiGeneratedImage" src="" crossorigin="anonymous" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                    
+                    <!-- Loading State -->
+                    <!-- Modern AI Loading State -->
+                    <div id="aiLoader" style="display: none; position: absolute; inset: 0; background: #080808; flex-direction: column; align-items: center; justify-content: center; z-index: 10;">
+                        
+                        <!-- Glowing Animated Rings -->
+                        <div class="ai-spinner-wrapper">
+                            <div class="ai-outer-ring"></div>
+                            <div class="ai-inner-ring"></div>
+                            <div class="ai-glow-core"></div>
+                            
+                            <!-- Text in the center -->
+                            <div class="ai-loader-text-wrapper">
+                                <span class="ai-percent" id="aiProgressText">0%</span>
+                                <span class="ai-status">GENERATING...</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn text-dim" style="background: transparent;" onclick="closeModal('aiAvatarModal')">Cancel</button>
+                <button type="button" class="btn btn-primary" id="generateAiBtn">Generate</button>
+                <button type="button" class="btn btn-outline" id="applyAiBtn" style="display: none; border-color: #2ECC71 !important; color: #2ECC71 !important;">Use This Avatar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SCRIPTS -->
+    <!-- ========================================== -->
+    <script>
+        // --- Modal Control Logic ---
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Close the modal if the user clicks the dark background overlay
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.classList.remove('active');
+            }
+        });
+
+        // --- Password Eye Toggle ---
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fi-rr-eye', 'fi-rr-eye-crossed');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fi-rr-eye-crossed', 'fi-rr-eye');
+            }
+        }
+        // --- Address Toggle Logic ---
+        const addrToggles = document.querySelectorAll('.addr-toggle');
+        const addressSections = document.querySelectorAll('.address-section');
+
+        addrToggles.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // 1. Reset all buttons to inactive/dim state
+                addrToggles.forEach(b => {
+                    b.classList.remove('active');
+                    b.style.background = 'transparent';
+                    b.style.color = 'var(--text-dim)';
+                });
+
+                // 2. Hide all address sections
+                addressSections.forEach(sec => {
+                    sec.style.display = 'none';
+                });
+
+                // 3. Activate the clicked button
+                const targetBtn = e.currentTarget;
+                targetBtn.classList.add('active');
+                targetBtn.style.background = 'rgba(255,255,255,0.1)';
+                targetBtn.style.color = 'white';
+
+                // 4. Show the targeted section
+                const targetId = targetBtn.getAttribute('data-target');
+                document.getElementById(targetId).style.display = 'block';
+            });
+        });
+        // --- Leaflet Interactive Map Logic ---
+        let mapInitialized = false;
+        let map;
+        let marker;
+
+        // Coordinates for Kozhikode Trade Centre (Leaflet uses [Latitude, Longitude])
+        const defaultLatLgn = [11.2588, 75.7804]; 
+
+        const mapToggleButton = document.querySelector('[data-target="mapAddress"]');
+
+        mapToggleButton.addEventListener('click', () => {
+            if (!mapInitialized) {
+                // Delay slightly to ensure the div is fully visible before rendering the map
+                setTimeout(() => {
+                    // 1. Initialize the map
+                    map = L.map('leafletMapContainer', {
+                        zoomControl: false // We will move it to the bottom right to avoid your UI elements
+                    }).setView(defaultLatLgn, 14);
+
+                    // Move zoom controls to bottom right
+                    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+                    // 2. Add the completely FREE "Dark Matter" map tiles from Carto
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; CARTO',
+                        subdomains: 'abcd',
+                        maxZoom: 20
+                    }).addTo(map);
+
+                    // 3. Create a custom EventHub Red marker icon
+                    const customIcon = L.divIcon({
+                        className: 'custom-map-marker',
+                        html: `<div style="color: #E63946; font-size: 2.5rem; text-shadow: 0 4px 10px rgba(0,0,0,0.5);"><i class="fi fi-rr-map-marker"></i></div>`,
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 40] // Points the bottom tip of the icon exactly at the coordinate
+                    });
+
+                    // 4. Add the draggable marker
+                    marker = L.marker(defaultLatLgn, {
+                        draggable: true,
+                        icon: customIcon
+                    }).addTo(map);
+
+                    // 5. Listen for the pin drop
+                    marker.on('dragend', onDragEnd);
+                    
+                    mapInitialized = true;
+                    
+                    // Fixes a rare bug where Leaflet tiles don't load fully if the container was hidden
+                    map.invalidateSize();
+                    
+                }, 100);
+            }
+        });
+
+        // Function to convert coordinates to an address using OpenStreetMap's free Geocoder
+        async function onDragEnd() {
+            const position = marker.getLatLng();
+            const mapInput = document.getElementById('mapAddressInput');
+            
+            mapInput.value = "Fetching address...";
+
+            try {
+                // Call the free Nominatim API 
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${position.lat}&lon=${position.lng}`);
+                const data = await response.json();
+
+                if (data && data.display_name) {
+                    const addressParts = data.display_name.split(', ');
+                    const cleanAddress = addressParts.slice(0, 4).join(', ');
+            
+                    // --- ADD THIS MISSING LINE ---
+                    mapInput.value = cleanAddress; 
+                    // -----------------------------
+
+                    const addressBox = document.getElementById('address'); 
+                    if (addressBox) {
+                        addressBox.value = cleanAddress; 
+                        
+                        // Tell the form it was updated programmatically so the button lights up
+                        addressBox.dispatchEvent(new Event('input', { bubbles: true }));
+                    } 
+                } else {
+                    mapInput.value = "Location not found. Try moving the pin.";
+                }
+            } catch (error) {
+                console.error("Geocoding Error:", error);
+                mapInput.value = "Error fetching address. Please try again.";
+            }
+        }
+
+        // --- CROPPER.JS & INSTANT AVATAR UPLOAD LOGIC ---
+        let cropper;
+
+        const avatarInput = document.getElementById('avatarUpload');
+        const imageToCrop = document.getElementById('imageToCrop');
+        const cropModal = document.getElementById('cropModal');
+        const cropAndApplyBtn = document.getElementById('cropAndApplyBtn');
+
+        // 1. Load image into modal
+        // 1. Load image into modal WITH VALIDATION
+        avatarInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            
+            if (files && files.length > 0) {
+                const file = files[0];
+                
+                // --- 🚨 FRONTEND VALIDATION START ---
+                // 1. Check File Type
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    Toast.error('Please upload a valid image file (JPG, PNG, or WEBP).');
+                    avatarInput.value = ''; // Clear the invalid file
+                    return; // Stop execution
+                }
+
+                // 2. Check File Size (Max 2MB = 2 * 1024 * 1024 bytes)
+                const maxSize = 2 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    Toast.error('Image is too large. Maximum size is 2MB.');
+                    avatarInput.value = ''; // Clear the invalid file
+                    return; // Stop execution
+                }
+                // --- 🚨 FRONTEND VALIDATION END ---
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    imageToCrop.src = event.target.result;
+                    openModal('cropModal');
+                    if (cropper) cropper.destroy();
+                    
+                    cropper = new Cropper(imageToCrop, {
+                        aspectRatio: 1, 
+                        viewMode: 1,    
+                        background: false,
+                        zoomable: true,
+                        guides: true,
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 2. Instantly Upload when clicking "Apply Crop"
+        cropAndApplyBtn.addEventListener('click', () => {
+            if (!cropper) return;
+
+            // Change button state to show loading
+            const originalBtnText = cropAndApplyBtn.innerText;
+            cropAndApplyBtn.innerText = 'Uploading...';
+            cropAndApplyBtn.disabled = true;
+
+            const canvas = cropper.getCroppedCanvas({ width: 500, height: 500 });
+
+            canvas.toBlob(async (blob) => {
+                // Create a FormData payload with JUST the image
+                const formData = new FormData();
+                formData.append('avatar', blob, 'profile_cropped.jpg'); 
+
+                try {
+                    // Send to our NEW dedicated avatar route
+                    const response = await axios.post('/organizer/avatar', formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    });
+
+                    if (response.data.success) {
+                        // 1. Grab the real Cloudinary URL returned from the backend
+                        const newAvatarUrl = response.data.avatarUrl;
+                        
+                        // 2. Update the main UI preview
+                        const previewEl = document.getElementById('currentAvatarPreview');
+                        if(previewEl.tagName === 'IMG') {
+                            previewEl.src = newAvatarUrl;
+                        } else {
+                            const newImg = document.createElement('img');
+                            newImg.id = 'currentAvatarPreview';
+                            newImg.src = newAvatarUrl;
+                            newImg.style.cssText = "width: 100%; height: 100%; border-radius: 50%; object-fit: cover;";
+                            previewEl.parentNode.replaceChild(newImg, previewEl);
+                        }
+
+                        // 3. Update the Top Navbar Avatar instantly too!
+                        const navAvatar = document.querySelector('.profile-avatar-btn img');
+                        if(navAvatar) navAvatar.src = newAvatarUrl;
+
+                        closeModal('cropModal');
+                        Toast.success(response.data.message);
+                    }
+                } catch (error) {
+                    Toast.error(error.response?.data?.message || 'Failed to upload image.');
+                } finally {
+                    // Reset button state
+                    cropAndApplyBtn.innerText = originalBtnText;
+                    cropAndApplyBtn.disabled = false;
+                    avatarInput.value = ''; // Reset file input so they can upload the same file again if needed
+                }
+            }, 'image/jpeg', 0.9);
+        });
+
+        
+        // --- AVATAR SELECTION & AI LOGIC ---
+
+        function triggerUpload() {
+            closeModal('avatarChoiceModal');
+            document.getElementById('avatarUpload').click(); // Opens your computer's file browser
+        }
+
+        window.addEventListener('click', function(event) {
+            const modalOverlays = document.querySelectorAll('.modal-overlay');
+            modalOverlays.forEach(overlay => {
+                if (event.target === overlay) {
+                    closeModal(overlay.id);
+                }
+            });
+        });
+
+        function openAiModal() {
+            closeModal('avatarChoiceModal');
+            openModal('aiAvatarModal');
+        }
+
+        // 1. Handle the "Generate" Click with robust Fetch API
+        // 1. Handle the "Generate" Click via your SECURE BACKEND
+        let progressInterval;
+        document.getElementById('generateAiBtn').addEventListener('click', async () => {
+            const prompt = document.getElementById('aiPrompt').value;
+            if(!prompt) return Toast.error("Please enter a description for the AI!");
+
+            const loader = document.getElementById('aiLoader');
+            const placeholder = document.getElementById('aiPlaceholderText');
+            const img = document.getElementById('aiGeneratedImage');
+            const applyBtn = document.getElementById('applyAiBtn');
+            const genBtn = document.getElementById('generateAiBtn');
+            const progressText = document.getElementById('aiProgressText'); // NEW
+
+            // Show UI Loading State
+            loader.style.display = 'flex';
+            placeholder.style.display = 'none';
+            img.style.display = 'none';
+            applyBtn.style.display = 'none';
+
+            // --- NEW: Fake Progress Counter ---
+            let progress = 0;
+            progressText.innerText = '0%';
+            progressInterval = setInterval(() => {
+                // Randomly jump between 1% and 6% every 150ms
+                progress += Math.floor(Math.random() * 6) + 1; 
+                
+                // Cap it at 96% while we wait for the server to actually finish
+                if (progress > 96) progress = 96; 
+                progressText.innerText = progress + '%';
+            }, 150);
+            // ----------------------------------
+
+            try {
+                // Using Axios to download the image file safely
+                const response = await axios.post('/organizer/generate-ai', { prompt: prompt }, {
+                    responseType: 'blob' 
+                });
+
+                const localImageUrl = URL.createObjectURL(response.data);
+
+                // --- NEW: Finish the progress counter ---
+                clearInterval(progressInterval);
+                progressText.innerText = '100%';
+                // ----------------------------------------
+
+                // Short delay so the user sees "100%" before it flashes to the image
+                setTimeout(() => {
+                    img.src = localImageUrl;
+                    img.style.display = 'block';
+                    loader.style.display = 'none';
+
+                    genBtn.innerText = "Regenerate";
+                    applyBtn.style.display = 'inline-flex';
+                }, 300);
+
+            } catch (error) {
+                console.error("AI Generation Error:", error);
+                
+                clearInterval(progressInterval); // Stop counting on error
+                
+                loader.style.display = 'none';
+                placeholder.style.display = 'block';
+                Toast.error("AI generation failed. Please try a different prompt.");
+            }
+        });
+
+        // 2. Handle the "Use This Avatar" Click
+        document.getElementById('applyAiBtn').addEventListener('click', () => {
+            const img = document.getElementById('aiGeneratedImage');
+            const imageToCrop = document.getElementById('imageToCrop');
+
+            // Pass the AI image directly into Cropper.js!
+            imageToCrop.src = img.src;
+
+            closeModal('aiAvatarModal');
+            openModal('cropModal');
+
+            if (cropper) cropper.destroy();
+
+            // Initialize Cropper on the AI Image
+            cropper = new Cropper(imageToCrop, {
+                aspectRatio: 1, 
+                viewMode: 1,    
+                background: false,
+                zoomable: true,
+                guides: true,
+            });
+        });
+
+        // --- MAIN FORM SUBMISSION & "SMART BUTTON" LOGIC ---
+        const profileForm = document.getElementById('profileUpdateForm');
+        const submitBtn = profileForm?.querySelector('button[type="submit"]');
+
+        if (profileForm && submitBtn) {
+            // 1. Capture the exact state of the form when the page loads
+            let initialState = Object.fromEntries(new FormData(profileForm).entries());
+
+            // 2. Disable the Save button by default
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+            submitBtn.style.cursor = 'not-allowed';
+
+            // 3. Function to constantly check if the form has been modified
+            const checkFormChanges = () => {
+                let currentState = Object.fromEntries(new FormData(profileForm).entries());
+                // Compare current typing to the original state
+                let isChanged = JSON.stringify(currentState) !== JSON.stringify(initialState);
+                
+                if (isChanged) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                } else {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                    submitBtn.style.cursor = 'not-allowed';
+                }
+            };
+
+            // 4. Listen for any typing or date selection
+            profileForm.addEventListener('input', checkFormChanges);
+            profileForm.addEventListener('change', checkFormChanges);
+
+            // 5. Handle the actual submission
+            profileForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                if(!profileForm.checkValidity()){
+                    const allInputs = profileForm.querySelectorAll('input, textarea');
+                    allInputs.forEach(input => input.dispatchEvent(new Event('blur')));
+                    return; 
+                }
+
+                // --- 1. START LOADER STATE ---
+                submitBtn.innerText = 'Saving...';
+                submitBtn.disabled = true;
+                submitBtn.style.cursor = 'wait';
+
+                const data = Object.fromEntries(new FormData(profileForm).entries());
+
+                try {
+                    const response = await axios.post('/organizer/profile', data);
+
+                    if (response.data.success) {
+                        Toast.success('Profile updated successfully!');
+                        
+                        const updatedUser = response.data.updateUserData;
+                        
+                        // Safely update the UI (Using Optional Chaining '?.' so it never crashes if an element is missing)
+                        if (updatedUser?.fullName) {
+                            const bannerName = document.querySelector('.profile-avatar-btn + div h3');
+                            if (bannerName) bannerName.innerText = updatedUser.fullName;
+                            
+                            const navDropName = document.querySelector('#userDropdown strong');
+                            if (navDropName) navDropName.innerText = updatedUser.fullName;
+                        }
+
+                        // --- 2. STOP LOADER (SUCCESS STATE) ---
+                        // Update initial state and lock the button until they type again
+                        initialState = { ...data };
+                        submitBtn.innerText = 'Save Changes';
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = '0.5';
+                        submitBtn.style.cursor = 'not-allowed';
+                    }
+                } catch (error) {
+                    const responseData = error.response?.data;
+                    Toast.error(responseData?.message || 'Failed to update profile');
+                    
+                    // Highlight inline Joi errors
+                    if (responseData?.errors && Array.isArray(responseData.errors)) {
+                        responseData.errors.forEach(err => {
+                            const inputElement = profileForm.querySelector(`[name="${err.field}"]`);
+                            if (inputElement) {
+                                inputElement.classList.add('input-error');
+                                const container = inputElement.parentElement;
+                                let errorDiv = container.querySelector('.error-text');
+                                if (!errorDiv) {
+                                    errorDiv = document.createElement('span');
+                                    errorDiv.className = 'error-text';
+                                    container.appendChild(errorDiv);
+                                }
+                                errorDiv.innerText = err.message;
+                            }
+                        });
+                    }
+
+                    // --- 3. STOP LOADER (ERROR STATE) ---
+                    // Re-enable the button so they can fix the error and try again
+                    submitBtn.innerText = 'Save Changes';
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                }
+            });
+        }
+        // --- EMAIL UPDATE LOGIC ---
+        const emailUpdateForm = document.getElementById('emailUpdateForm');
+        
+        let emailOtpSent = false;
+        if (emailUpdateForm) {
+            emailUpdateForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                if(!emailOtpSent) {
+                    if(!emailUpdateForm.checkValidity()){
+                        emailUpdateForm.reportValidity();
+                        return;
+                    }
+                    
+                    const submitBtn = emailUpdateForm.querySelector('button[type="submit"]');
+                    const originalBtnText = submitBtn.innerText;
+                    
+                    Loader.show('Sending OTP...')
+                    submitBtn.innerText = 'Sending...';
+                    submitBtn.disabled = true;
+
+                    const formData = new FormData(emailUpdateForm);
+                    const data = Object.fromEntries(formData.entries());
+
+                    try {
+                        const response = await axios.post('/organizer/update-email', data);
+
+                        if (response.data.success) {
+                            Toast.success(response.data.message);
+                            emailOtpSent = true;
+                            document.getElementById('newEmailContainer').style.display = 'none';
+                            document.getElementById('otpContainer').style.display = 'block';
+                            submitBtn.innerText = 'Verify OTP';
+                        }
+                    } catch (error) {
+                        Toast.error(error.response?.data?.message || 'Failed to send OTP.');
+                    } finally {
+                        Loader.hide();
+                        if(!emailOtpSent) submitBtn.innerText = originalBtnText;
+                        submitBtn.disabled = false;
+                    }
+                } else {
+                    const otp = document.getElementById('otpInput').value;
+                    const newEmail = document.getElementById('newEmail').value;
+                    if(!otp || otp.length < 4) return Toast.error('Please enter a valid OTP.');
+                    
+                    const submitBtn = emailUpdateForm.querySelector('button[type="submit"]');
+                    submitBtn.disabled = true;
+                    Loader.show('Verifying OTP...')
+                    try {
+                        const response = await axios.post('/user/verify-otp', { otp: otp, email: newEmail, action: 'email-update' });
+                        if (response.data.success) {
+                            closeModal('emailModal');
+                            Toast.success(response.data.message);
+                            setTimeout(()=>window.location.reload(), 1500);
+                        }
+                    } catch (error) {
+                        Toast.error(error.response?.data?.message || 'Invalid OTP');
+                    } finally {
+                        Loader.hide();
+                        submitBtn.disabled = false;
+                    }
+                }
+            });
+        }
+        // Password Update Logic
+
+        const passwordUpdateForm = document.getElementById('passwordUpdateForm');
+
+        if (passwordUpdateForm) {
+            passwordUpdateForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                // 1. THE FIX: Stop global validation.js from overriding our custom logic!
+                e.stopImmediatePropagation();
+
+                // 2. Clear all previous errors manually so they don't stack up
+                passwordUpdateForm.querySelectorAll('input').forEach(input => input.classList.remove('input-error'));
+                passwordUpdateForm.querySelectorAll('.error-text').forEach(err => err.remove());
+
+                const newPass = document.getElementById('newPassword');
+                const confirmPass = document.getElementById('confirmPassword');
+                const currentPass = document.getElementById('currentPassword');
+                const actionVal = passwordUpdateForm.querySelector('input[name="action"]').value;
+                let isValid = true;
+
+                // Helper to push errors safely to the bottom of the modal body
+                const showModalError = (input, message) => {
+                    input.classList.add('input-error');
+                    const container = input.parentElement.parentElement; // Targets .modal-body
+                    
+                    let errorDiv = container.querySelector('.error-text');
+                    if (!errorDiv) {
+                        errorDiv = document.createElement('div');
+                        errorDiv.className = 'error-text';
+                        errorDiv.style.marginTop = '10px';
+                        errorDiv.style.paddingLeft = '5px';
+                        container.appendChild(errorDiv);
+                    }
+                    errorDiv.innerText = message;
+                    isValid = false;
+                };
+
+                // 3. Native HTML5 Validation (Checks for empty fields & minlength)
+                if (!passwordUpdateForm.checkValidity()) {
+                    passwordUpdateForm.reportValidity();
+                    return; 
+                }
+
+                // 4. Custom Validation Checks
+                if (newPass.value !== confirmPass.value) {
+                    showModalError(confirmPass, 'Passwords do not match.');
+                }
+
+                if (actionVal === 'update' && currentPass && currentPass.value === newPass.value) {
+                    showModalError(newPass, 'New password cannot be the same as your current password.');
+                }
+
+                // Stop execution entirely if any custom validation failed
+                if (!isValid) return;
+
+                // 5. Prepare for Submission
+                const submitBtn = passwordUpdateForm.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.innerText;
+                
+                Loader.show('UPDATING PASSWORD...');
+                submitBtn.innerText = 'Saving...';
+                submitBtn.disabled = true;
+
+                const formData = new FormData(passwordUpdateForm);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    // Send to your backend route
+                    const response = await axios.post('/organizer/update-password', data);
+
+                    if (response.data.success) {
+                        closeModal('passwordModal');
+                        Toast.success(response.data.message || 'Password updated successfully!');
+                        passwordUpdateForm.reset(); 
+                        
+                        // If they just added a password for the first time, refresh to update the UI
+                        if(actionVal === 'add') {
+                            setTimeout(() => window.location.reload(), 1500);
+                        }
+                    }
+                } catch (error) {
+                    const responseData = error.response?.data;
+                    Toast.error(responseData?.message || 'Failed to update password.');
+
+                    // 6. Catch Backend Joi Errors
+                    if (responseData?.errors && Array.isArray(responseData.errors)) {
+                        responseData.errors.forEach(err => {
+                            const inputElement = passwordUpdateForm.querySelector(`[name="${err.field}"]`);
+                            if (inputElement) showModalError(inputElement, err.message);
+                        });
+                    }
+                } finally {
+                    Loader.hide();
+                    submitBtn.innerText = originalBtnText;
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>

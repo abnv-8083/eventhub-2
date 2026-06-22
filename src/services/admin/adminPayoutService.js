@@ -1,7 +1,7 @@
 import Payout from '../../models/payments/payout.js';
 import AppError from '../../utils/AppError.js';
 import HTTP_STATUS from '../../constant/statusCode.js';
-import { getIO } from '../../utils/socket.js';
+import { sendNotification } from '../../utils/notify.js';
 
 
 // ─── Get Payouts (Filtered, Sorted, Paginated) ───────────────────────────────
@@ -41,6 +41,8 @@ export const getPayouts = async ({ search = '', status = 'all', sort = 'newest',
 };
 
 
+import User from '../../models/users/user.js';
+
 // ─── Approve Payout & Notify Organizer ──────────────────────────────────────
 export const approvePayout = async (payoutId) => {
     const payout = await Payout.findById(payoutId).populate('organizer').populate('event');
@@ -50,12 +52,49 @@ export const approvePayout = async (payoutId) => {
     payout.status = 'paid';
     await payout.save();
 
-    // Notify organizer in real-time
-    const io = getIO();
-    io.to(payout.organizer._id.toString()).emit('notification', {
-        type: 'payout_status',
-        message: `Your payout of ₹${payout.payoutAmount} for event "${payout.event.title}" has been processed.`
+    const organizerId = String(payout.organizer._id).trim();
+    
+    // Credit the organizer's wallet atomically
+    await User.findByIdAndUpdate(organizerId, {
+        $inc: { 'wallet.balance': payout.payoutAmount },
+        $push: {
+            'wallet.transactions': {
+                type: 'credit',
+                amount: payout.payoutAmount,
+                description: `Event Payout for "${payout.event.title}"`
+            }
+        }
     });
+
+    // Notify organizer — saves DB record + emits 'bookingStatusUpdate' via notify.js
+    const netFormatted = payout.payoutAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    await sendNotification(
+        organizerId,
+        `✅ Payout of ₹${netFormatted} for "${payout.event.title}" has been approved and credited to your wallet!`,
+        'success'
+    );
+
+    return payout;
+};
+
+
+// ─── Reject Payout ────────────────────────────────────────────────────────────
+export const rejectPayout = async (payoutId, reason) => {
+    const payout = await Payout.findById(payoutId).populate('organizer').populate('event');
+    if (!payout) throw new AppError('Payout not found', HTTP_STATUS.NOT_FOUND);
+    if (payout.status !== 'pending') throw new AppError('Only pending payouts can be rejected', HTTP_STATUS.BAD_REQUEST);
+
+    payout.status = 'rejected';
+    await payout.save();
+
+    // Notify organizer
+    const organizerId = String(payout.organizer._id).trim();
+    const rejectionNote = reason ? ` Reason: ${reason}` : '';
+    await sendNotification(
+        organizerId,
+        `⚠️ Your payout request for "${payout.event.title}" was rejected.${rejectionNote} Please contact support.`,
+        'danger'
+    );
 
     return payout;
 };

@@ -1,6 +1,6 @@
 
 <% if(user) {%>
-    <header class="navbar-sticky glass-dark">
+    <header class="navbar-sticky glass-premium dynamic-card">
         <div class="container nav-container">
             <a href="/" class="logo">
                 Event<span class="text-gradient">Hub</span>
@@ -25,7 +25,7 @@
         </div>
     </header>
     
-    <div class="dropdown-menu glass-dark" id="userDropdown" style="position: fixed; display: none; z-index: 9999;">
+    <div class="dropdown-menu glass-premium dynamic-card" id="userDropdown" style="position: fixed; display: none; z-index: 9999;">
         <div class="dropdown-header">
             <small class="text-dim d-block" style="font-size: 0.75rem;">Signed in as</small>
             <strong style="color: white; font-size: 0.95rem;"><%= user.fullName || 'User' %></strong>
@@ -38,7 +38,7 @@
     </div> <!-- FIXED: Closed dropdown-menu -->
 
 <% } else if(organizer) {%>
-    <header class="navbar-sticky glass-dark">
+    <header class="navbar-sticky glass-premium dynamic-card">
         <div class="container nav-container">
             <a href="/" class="logo">
                 Event<span class="text-gradient">Hub</span>
@@ -62,7 +62,7 @@
         </div>
     </header>
     
-    <div class="dropdown-menu glass-dark" id="userDropdown" style="position: fixed; display: none; z-index: 9999;">
+    <div class="dropdown-menu glass-premium dynamic-card" id="userDropdown" style="position: fixed; display: none; z-index: 9999;">
         <div class="dropdown-header">
             <small class="text-dim d-block" style="font-size: 0.75rem;">Signed in as</small>
             <strong style="color: white; font-size: 0.95rem;"><%= organizer.organizationName || 'Organizer' %></strong>
@@ -74,7 +74,7 @@
     </div> <!-- FIXED: Closed dropdown-menu -->
 
 <% }else if(admin) {%>
-    <header class="navbar-sticky glass-dark">
+    <header class="navbar-sticky glass-premium dynamic-card">
         <div class="container nav-container">
             <a href="/" class="logo">
                 Event<span class="text-gradient">Hub</span>
@@ -98,7 +98,7 @@
         </div>
     </header>
     
-    <div class="dropdown-menu glass-dark" id="userDropdown" style="position: fixed; display: none; z-index: 9999;">
+    <div class="dropdown-menu glass-premium dynamic-card" id="userDropdown" style="position: fixed; display: none; z-index: 9999;">
         <div class="dropdown-header">
             <small class="text-dim d-block" style="font-size: 0.75rem;">Signed in as</small>
             <strong style="color: white; font-size: 0.95rem;"><%= admin.fullName || 'Admin' %></strong>

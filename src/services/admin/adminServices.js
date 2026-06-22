@@ -2,28 +2,30 @@ import HTTP_STATUS from "../../constant/statusCode.js"
 import User from "../../models/users/user.js"
 import AppError from "../../utils/AppError.js"
 import argon2 from "argon2"
+import Booking from "../../models/payments/booking.js"
+import Event from "../../models/events/event.js"
 
 export const fetchAllUsers = async (query) => {
     // 1. Base query filtered by role (e.g., 'user' or 'organizer')
     const mongoQuery = { role: query.role };
 
     // 2. Search Logic: Handles Organization Name, Full Name, or Email
-    if(query.role == 'user'){
+    if (query.role == 'user') {
         if (query.search) {
             mongoQuery.$or = [
                 { fullName: { $regex: query.search, $options: 'i' } },
                 { email: { $regex: query.search, $options: 'i' } },
             ];
         }
-    }else if(query.role == 'organizer'){
-       if (query.search) {
+    } else if (query.role == 'organizer') {
+        if (query.search) {
             mongoQuery.$or = [
                 { organizationName: { $regex: query.search, $options: 'i' } },
                 { fullName: { $regex: query.search, $options: 'i' } },
                 { email: { $regex: query.search, $options: 'i' } },
-                { phone: { $regex: query.search, $options: 'i'}},
+                { phone: { $regex: query.search, $options: 'i' } },
             ];
-        } 
+        }
     }
 
     // 3. Status Filtering: Maps UI terms to database fields
@@ -35,7 +37,7 @@ export const fetchAllUsers = async (query) => {
         mongoQuery.status = 'pending';
     } else if (query.status === 'approved') {
         mongoQuery.status = 'approved'
-    }else if (query.status === 'rejected') {
+    } else if (query.status === 'rejected') {
         mongoQuery.status = 'rejected'
     }
 
@@ -66,9 +68,9 @@ export const fetchAllUsers = async (query) => {
     const totalUsers = await User.countDocuments({ role: query.role });
     const bannedUsers = await User.countDocuments({ role: query.role, isBlocked: true });
 
-    return { 
-        dbUsers, 
-        totalUsers, 
+    return {
+        dbUsers,
+        totalUsers,
         bannedUsers,
         totalPages: Math.ceil(filteredTotal / limit),
         currentPage: page
@@ -78,25 +80,71 @@ export const fetchAllUsers = async (query) => {
 export const toggleUserBlockStatus = async (userId) => {
     // Fetch the user
     const user = await User.findById(userId);
-    
+
     if (!user) {
         throw new AppError('User not found', HTTP_STATUS.NOT_FOUND);
     }
-    
+
     // Toggle the boolean value
     user.isBlocked = !user.isBlocked;
-    
+
     // Save to database
     await user.save();
-    
+
     return user;
 };
 
 export const deleteUserById = async (userId) => {
-    const deletedUser = await User.findByIdAndDelete(userId);
+    const deletedUser = await User.findById(userId);
     if (!deletedUser) {
         throw new AppError('User not found or already deleted', HTTP_STATUS.NOT_FOUND);
     }
+
+    if (deletedUser.role === 'organizer') {
+        const events = await Event.find({ organizer: userId });
+        for (const event of events) {
+            await Booking.deleteMany({ event: event._id });
+            await event.deleteOne();
+        }
+    } else {
+        await Booking.deleteMany({ user: userId });
+    }
+
+    await deletedUser.deleteOne();
     return deletedUser;
+};
+
+// ─── Fetch Detailed User Info ────────────────────────────────────────────────
+export const fetchUserDetail = async (userId) => {
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'user') {
+        throw new AppError('User not found', HTTP_STATUS.NOT_FOUND);
+    }
+    
+    // Fetch user's recent bookings
+    const bookings = await Booking.find({ user: userId })
+        .populate('event', 'title startDate location')
+        .sort({ createdAt: -1 })
+        .limit(10);
+        
+    return { user, bookings };
+};
+
+// ─── Fetch Detailed Organizer Info ───────────────────────────────────────────
+export const fetchOrganizerDetail = async (orgId) => {
+    const organizer = await User.findById(orgId);
+    if (!organizer || organizer.role !== 'organizer') {
+        throw new AppError('Organizer not found', HTTP_STATUS.NOT_FOUND);
+    }
+    
+    // Fetch events created by this organizer
+    const events = await Event.find({ organizer: orgId })
+        .sort({ createdAt: -1 })
+        .limit(10);
+        
+    const totalEvents = await Event.countDocuments({ organizer: orgId });
+    
+    // Basic stats for revenue could be aggregated, or just return events and let view handle basic info
+    return { organizer, events, totalEvents };
 };
 

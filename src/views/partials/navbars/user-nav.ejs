@@ -1,59 +1,111 @@
-<header class="navbar-sticky glass-dark">
-    <div class="container nav-container">
-        <a href="/" class="logo">Event<span class="text-gradient">Hub</span></a>
-        <nav class="nav-links d-flex align-center gap-3">
+<header class="navbar-sticky">
+    <div class="nav-container container">
+        <a href="/" class="logo" style="text-decoration:none;">Event<span>Hub</span></a>
+
+        <nav class="nav-links" style="flex:1; display:flex; align-items:center; justify-content:center; gap:2rem;">
             <a href="/events">Browse Events</a>
             <a href="/user/tickets">My Tickets</a>
-            <button class="profile-avatar-btn" id="userMenuBtn">
-                <% if(user.avatar) { %>
-                    <img src="<%= user.avatar %>" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
-                <% } else { %>
-                    <span><%= user.fullName.charAt(0).toUpperCase() %></span>
-                <% } %>
-            </button>
-            <div class="dropdown" id="notificationDropdown">
-                <button class="nav-bell-btn position-relative" type="button" id="notificationBell" style="width: 45px; height: 45px;">
-    
-                    <svg class="custom-nav-bell" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                    </svg>
-                    
-                    <span id="notificationDot" class="position-absolute border border-2 border-dark rounded-circle bg-danger" 
-                        style="display: none; width: 10px; height: 10px; top: 8px; right: 8px;">
-                    </span>
-                </button>
-                
-                <ul class="dropdown-menu dropdown-menu-end mt-3 glass-notif-modal" id="notifMenuUI">
-                    <div class="notif-header">
-                        <h6 class="m-0 text-white fw-bold" style="font-size: 0.95rem;">Notifications</h6>
-                        <button class="btn btn-link btn-sm text-dim p-0 text-decoration-none x-small" id="clearAllNotifications">Mark all read</button>
-                    </div>
-                    
-                    <div id="notificationList">
-                        <div class="p-5 text-center text-dim" id="emptyNotificationMsg">
-                            <i class="fi fi-rr-envelope-open d-block mb-2 opacity-50" style="font-size: 2rem;"></i>
-                            <p class="small m-0">All caught up!</p>
-                        </div>
-                    </div>
-                </ul>
-            </div>
+            <a href="/user/calendar">Calendar</a>
         </nav>
+
+        <div style="display:flex;align-items:center;gap:10px;">
+            <% if (locals.user) { %>
+                <!-- Bell -->
+                <div class="dropdown" id="notificationDropdown" style="position:relative;">
+                    <button class="nav-bell-btn" id="notificationBell" type="button" style="position:relative;">
+                        <svg class="custom-nav-bell" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            stroke-width="1.8" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                        </svg>
+                        <span id="notificationDot"
+                            style="display:none;position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:#E63946;box-shadow:0 0 8px rgba(230,57,70,0.7);"></span>
+                    </button>
+                    <ul class="dropdown-menu" id="notifMenuUI"
+                        style="position:absolute;top:calc(100% + 12px);right:0;flex-direction:column;">
+                        <div class="notif-header"
+                            style="display:flex;align-items:center;justify-content:space-between;">
+                            <h6 style="margin:0;font-size:0.88rem;font-weight:700;color:white;">Notifications</h6>
+                            <button id="clearAllNotifications"
+                                style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:0.75rem;cursor:pointer;padding:0;">Mark
+                                all read</button>
+                        </div>
+                        <div id="notificationList">
+                            <div class="p-4 text-center" id="emptyNotificationMsg"
+                                style="color:rgba(255,255,255,0.35);">
+                                <i class="fi fi-rr-envelope-open"
+                                    style="display:block;font-size:1.6rem;margin-bottom:8px;opacity:0.4;"></i>
+                                <p style="margin:0;font-size:0.82rem;">All caught up!</p>
+                            </div>
+                        </div>
+                    </ul>
+                </div>
+
+                <!-- Avatar -->
+                <button class="profile-avatar-btn" id="userMenuBtn">
+                    <% if(user.avatar) { %>
+                        <img src="<%= user.avatar %>"
+                            style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                        <% } else { %>
+                            <span style="font-family:var(--font-display);font-size:0.85rem;font-weight:800;">
+                                <%= user.fullName.charAt(0).toUpperCase() %>
+                            </span>
+                            <% } %>
+                </button>
+                </button>
+            <% } else { %>
+                <% if (locals.organizer) { %>
+                    <a href="/organizer/dashboard" class="btn btn-outline" style="height:42px; border-radius:100px; padding:0 1.5rem; font-size:0.9rem; border-color: rgba(255,255,255,0.2);">Organizer Dashboard</a>
+                <% } %>
+                <% if (locals.admin) { %>
+                    <a href="/admin/dashboard" class="btn btn-outline" style="height:42px; border-radius:100px; padding:0 1.5rem; font-size:0.9rem; border-color: rgba(255,255,255,0.2);">Admin Dashboard</a>
+                <% } %>
+                <a href="/user/login" class="btn btn-primary"
+                    style="height:42px; border-radius:100px; padding:0 1.5rem; font-size:0.9rem;">Sign In</a>
+            <% } %>
+        </div>
     </div>
 </header>
 
-<div class="dropdown-menu glass-dark" id="userDropdown" style="position: fixed; display: none; z-index: 9999;">
-    <div class="dropdown-header">
-        <small class="text-dim d-block">Signed in as</small>
-        <strong style="color: white;"><%= user.fullName %></strong>
+<% if (locals.user) { %>
+    <!-- User Dropdown -->
+    <div id="userDropdown" class="user-dropdown-menu"
+        style="position:fixed;display:none;z-index:9999;flex-direction:column;background:rgba(18,18,18,0.9);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.5);padding:0.5rem 0;min-width:220px;">
+        <div class="dropdown-header"
+            style="padding: 0.75rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.25rem;">
+            <small class="text-dim" style="display:block;font-size:0.75rem;margin-bottom:2px;">Signed in as</small>
+            <strong style="color:white;font-size:0.95rem;letter-spacing:0.2px;">
+                <%= user.fullName %>
+            </strong>
+        </div>
+        <a href="/user/profile" class="dropdown-item"
+            style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 1.5rem;color:var(--text-muted);transition:all 0.2s ease;text-decoration:none;font-size:0.9rem;"><i
+                class="fi fi-rr-user" style="font-size:1.1rem;opacity:0.8;"></i>My Account</a>
+        <a href="/user/tickets" class="dropdown-item"
+            style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 1.5rem;color:var(--text-muted);transition:all 0.2s ease;text-decoration:none;font-size:0.9rem;"><i
+                class="fi fi-rr-ticket" style="font-size:1.1rem;opacity:0.8;"></i>My Tickets</a>
+        <a href="/user/wishlist" class="dropdown-item"
+            style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 1.5rem;color:var(--text-muted);transition:all 0.2s ease;text-decoration:none;font-size:0.9rem;"><i
+                class="fi fi-rr-heart" style="font-size:1.1rem;color:var(--primary);"></i>Wishlist</a>
+        <a href="/user/wallet" class="dropdown-item"
+            style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 1.5rem;color:var(--text-muted);transition:all 0.2s ease;text-decoration:none;font-size:0.9rem;"><i
+                class="fi fi-rr-wallet" style="font-size:1.1rem;color:#4ECDC4;"></i>Wallet</a>
+        
+
+        <div style="height:1px;background:rgba(255,255,255,0.05);margin:0.5rem 0;"></div>
+        <a id="userLogoutButton" class="dropdown-item text-danger"
+            style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 1.5rem;color:#ff4d4d;transition:all 0.2s ease;text-decoration:none;font-size:0.9rem;cursor:pointer;"><i
+                class="fi fi-rr-exit" style="font-size:1.1rem;"></i>Sign Out</a>
     </div>
-    <a href="/user/profile" class="dropdown-item">My Account</a>
-    <a href="/user/tickets" class="dropdown-item">My Tickets</a>
-    <a href="/user/wishlist" class="dropdown-item">
-        <i class="fi fi-rr-heart me-2" style="color:var(--primary);"></i>Wishlist
-    </a>
-    <a href="/user/wallet" class="dropdown-item">
-        <i class="fi fi-rr-wallet me-2" style="color:#3498db;"></i>Wallet
-    </a>
-    <hr style="border-color: var(--border); margin: 4px 0;">
-    <a id="userLogoutButton" class="dropdown-item text-danger" style="cursor: pointer;">Logout</a>
-</div>
+    <style>
+        #userDropdown .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white !important;
+        }
+
+        #userDropdown .dropdown-item.text-danger:hover {
+            background: rgba(230, 57, 70, 0.1);
+            color: #ff4d4d !important;
+        }
+    </style>
+    <% } %>

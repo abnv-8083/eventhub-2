@@ -73,6 +73,25 @@ export const validateUpdateProfile = (req, res, next) => {
     next(); // Data is perfect, proceed to the controller!
 };
 
+export const validateUpdateOrganizerProfile = (req, res, next) => {
+    const { error } = userValidate.updateOrganizerProfileSchema.validate(req.body, { abortEarly: false });
+    
+    if (error) {
+        const errorDetails = error.details.map(detail => ({
+            field: detail.path[0],
+            message: detail.message
+        }));
+        
+        return res.status(400).json({
+            success: false,
+            message: error.details[0].message,
+            errors: errorDetails
+        });
+    }
+    
+    next();
+};
+
 export const validatePasswordUpdate = (req,res,next)=>{
     const {error} = userValidate.updatePasswordSchema.validate(req.body,{abortEarly: false})
 

@@ -5,6 +5,16 @@
 </head>
 <body class="bg-mesh">
     <%- include('../../partials/navbars/organizer-nav') %>
+    <%
+      function formatTime12(time24) {
+          if (!time24) return '';
+          let [h, m] = time24.split(':');
+          h = parseInt(h);
+          const ampm = h >= 12 ? 'PM' : 'AM';
+          h = h % 12 || 12;
+          return `${h}:${m} ${ampm}`;
+      }
+    %>
     <div class="dashboard-layout">
         <%- include('../../partials/organizer-sidebar', { title: 'My Events' }) %>
         <main class="dashboard-main">
@@ -22,14 +32,17 @@
                 </div>
                 <div class="d-flex gap-2">
                     <% if(event.status === 'approved') { %>
+                    <a href="/organizer/events/<%= event._id %>/sales-report" class="btn btn-outline-success btn-sm px-3" style="border-radius:10px;">
+                        <i class="fi fi-rr-chart-histogram me-1"></i>Sales Report
+                    </a>
                     <a href="/organizer/events/<%= event._id %>/bookings" class="btn btn-outline btn-sm px-3" style="border-radius:10px;">
                         <i class="fi fi-rr-money me-1"></i> Booking
                     </a>
                     <% } %>
-                    <% if(event.status === 'pending' || event.status === 'approved') { %>
-                    <a href="/organizer/events/<%= event._id %>/edit" class="btn btn-primary btn-sm px-3" style="border-radius:10px;">
-                        <i class="fi fi-rr-edit me-1"></i> Edit Event
-                    </a>
+                    <% if(event.status === 'pending' || event.status === 'approved' || event.status === 'draft' || event.status === 'inactive') { %>
+                        <a href="/organizer/events/<%= event._id %>/edit" class="btn btn-outline-light me-2 mb-2" style="border-radius:12px;">
+                        <i class="fi fi-rr-edit me-1"></i> <%= event.status === 'draft' ? 'Continue Editing' : 'Edit Event' %>
+                        </a>
                     <% } %>
                 </div>
             </div>
@@ -47,6 +60,12 @@
                             <span class="status-badge status-pending"><i class="fi fi-rr-clock me-1"></i>Pending Approval</span>
                         <% } else if(event.status === 'approved') { %>
                             <span class="status-badge status-approved"><i class="fi fi-rr-check me-1"></i>Live</span>
+                        <% } else if(event.status === 'inactive') { %>
+                            <span class="status-badge" style="background:rgba(108,117,125,0.15);border:1px solid rgba(108,117,125,0.3);color:#6c757d;"><i class="fi fi-rr-time-past me-1"></i>Inactive</span>
+                        <% } else if(event.status === 'draft') { %>
+                            <span class="status-badge" style="background:rgba(155,89,182,0.15);border:1px solid rgba(155,89,182,0.3);color:#9b59b6;">
+                                <i class="fi fi-rr-disk me-1"></i>Draft
+                            </span>
                         <% } else { %>
                             <span class="status-badge status-rejected"><i class="fi fi-rr-cross me-1"></i>Rejected</span>
                         <% } %>
@@ -59,8 +78,8 @@
                     <div class="d-flex align-items-center gap-3 flex-wrap">
                         <span style="color:rgba(255,255,255,0.7);font-size:0.9rem;">
                             <i class="fi fi-rr-calendar me-1"></i>
-                            <%= new Date(event.startDate).toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'}) %>
-                            at <%= event.startTime %>
+                            <%= new Date(event.startDate).toLocaleDateString(undefined, {day:'numeric',month:'long',year:'numeric'}) %>
+                            at <%= formatTime12(event.startTime) %>
                         </span>
                         <span style="color:rgba(255,255,255,0.5);">—</span>
                         <span style="color:rgba(255,255,255,0.7);font-size:0.9rem;">
@@ -74,7 +93,7 @@
             <%# ── Stats Row ───────────────────────────────── %>
             <div class="row g-3 mb-4 animate stagger-2">
                 <div class="col-sm-6 col-lg-3">
-                    <div class="stat-card">
+                    <div class="stat-card dynamic-card">
                         <div class="stat-icon" style="background:rgba(46,204,113,0.12);">
                             <i class="fi fi-rr-coins" style="color:#2ecc71;"></i>
                         </div>
@@ -84,7 +103,7 @@
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-3">
-                    <div class="stat-card">
+                    <div class="stat-card dynamic-card">
                         <div class="stat-icon" style="background:rgba(230,57,70,0.12);">
                             <i class="fi fi-rr-ticket" style="color:#E63946;"></i>
                         </div>
@@ -97,7 +116,7 @@
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-3">
-                    <div class="stat-card">
+                    <div class="stat-card dynamic-card">
                         <div class="stat-icon" style="background:rgba(52,152,219,0.12);">
                             <i class="fi fi-rr-users" style="color:#3498db;"></i>
                         </div>
@@ -107,7 +126,7 @@
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-3">
-                    <div class="stat-card">
+                    <div class="stat-card dynamic-card">
                         <div class="stat-icon" style="background:rgba(155,89,182,0.12);">
                             <i class="fi fi-rr-layers" style="color:#9b59b6;"></i>
                         </div>
@@ -123,7 +142,7 @@
                 <div class="col-lg-7">
 
                     <%# Ticket Tiers %>
-                    <div class="glass-dark p-4 rounded-3 mb-4">
+                    <div class="glass-premium dynamic-card p-4 rounded-3 mb-4">
                         <h5 class="fw-bold mb-4 d-flex align-items-center gap-2">
                             <i class="fi fi-rr-ticket text-primary"></i> Ticket Tiers
                         </h5>
@@ -167,7 +186,7 @@
                     </div>
 
                     <%# Recent Attendees %>
-                    <div class="glass-dark p-4 rounded-3">
+                    <div class="glass-premium dynamic-card p-4 rounded-3">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h5 class="fw-bold m-0 d-flex align-items-center gap-2">
                                 <i class="fi fi-rr-users text-primary"></i> Recent Attendees
@@ -214,7 +233,7 @@
                 <div class="col-lg-5 d-flex flex-column gap-4">
 
                     <%# Event Info %>
-                    <div class="glass-dark p-4 rounded-3">
+                    <div class="glass-premium dynamic-card p-4 rounded-3">
                         <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
                             <i class="fi fi-rr-info text-primary"></i> Event Info
                         </h5>
@@ -222,16 +241,16 @@
                             <div class="info-item">
                                 <p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">Start</p>
                                 <strong style="color:white;font-size:0.9rem;">
-                                    <%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'short'}) %>
+                                    <%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short'}) %>
                                 </strong>
-                                <span class="text-dim" style="font-size:0.82rem;"> at <%= event.startTime %></span>
+                                <span class="text-dim" style="font-size:0.82rem;"> at <%= formatTime12(event.startTime) %></span>
                             </div>
                             <div class="info-item">
                                 <p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">End</p>
                                 <strong style="color:white;font-size:0.9rem;">
-                                    <%= new Date(event.endDate).toLocaleDateString('en-IN',{day:'numeric',month:'short'}) %>
+                                    <%= new Date(event.endDate).toLocaleDateString(undefined,{day:'numeric',month:'short'}) %>
                                 </strong>
-                                <span class="text-dim" style="font-size:0.82rem;"> at <%= event.endTime %></span>
+                                <span class="text-dim" style="font-size:0.82rem;"> at <%= formatTime12(event.endTime) %></span>
                             </div>
                         </div>
 
@@ -253,7 +272,7 @@
                     </div>
 
                     <%# Banners %>
-                    <div class="glass-dark p-4 rounded-3">
+                    <div class="glass-premium dynamic-card p-4 rounded-3">
                         <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
                             <i class="fi fi-rr-picture text-primary"></i> Event Banners
                         </h5>
@@ -272,14 +291,14 @@
                     </div>
 
                     <%# Quick Actions %>
-                    <div class="glass-dark p-4 rounded-3">
+                    <div class="glass-premium dynamic-card p-4 rounded-3">
                         <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
                             <i class="fi fi-rr-settings text-primary"></i> Quick Actions
                         </h5>
                         <div class="d-flex flex-column gap-2">
-                            <% if(event.status === 'pending' || event.status === 'approved') { %>
-                            <a href="/organizer/events/<%= event._id %>/edit" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;">
-                                <i class="fi fi-rr-edit me-2"></i> Edit Event Details
+                            <% if(event.status === 'pending' || event.status === 'approved' || event.status === 'draft' || event.status === 'inactive') { %>
+                            <a href="/organizer/events/<%= event._id %>/edit" class="list-group-item list-group-item-action bg-transparent text-white" style="border-color:rgba(255,255,255,0.05);">
+                                <i class="fi fi-rr-edit me-2"></i> <%= event.status === 'draft' ? 'Continue Editing' : 'Edit Event Details' %>
                             </a>
                             <% } %>
                             <% if(event.status === 'approved') { %>
@@ -287,9 +306,13 @@
                                 <i class="fi <%= event.isBlocked ? 'fi-rr-check' : 'fi-rr-ban' %> me-2"></i>
                                 <%= event.isBlocked ? 'Unblock Event' : 'Block Event' %>
                             </button>
+
+                            <a href="/organizer/events/<%= event._id %>/manage-coupons" class="btn btn-outline-primary">
+                                <i class="fi fi-rr-ticket-alt me-2"></i> Manage Offers
+                            </a>
                             <% } %>
-                            <% if(event.status === 'rejected') { %>
-                            <button onclick="handleResubmit('<%= event._id %>')" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;color:#2ecc71;border-color:rgba(46,204,113,0.4);">
+                            <% if(event.status === 'rejected' || event.status === 'inactive') { %>
+                            <button onclick="handleResubmit('<%= event._id %>')" class="list-group-item list-group-item-action bg-transparent text-success" style="border-color:rgba(255,255,255,0.05);">
                                 <i class="fi fi-rr-redo me-2"></i> Resubmit for Review
                             </button>
                             <% } %>
@@ -309,6 +332,75 @@
         <button onclick="closeLightbox()" style="position:fixed;top:20px;right:20px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:50%;width:40px;height:40px;color:white;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;">
             <i class="fi fi-rr-cross-small"></i>
         </button>
+    </div>
+
+    <div class="modal-overlay" id="couponModal" style="z-index: 9999; backdrop-filter: blur(8px);">
+        <div class="modal-container" style="max-width: 500px; background: linear-gradient(165deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.98) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02) inset; overflow: hidden; padding: 0;">
+            
+            <div style="background: rgba(255,255,255,0.02); padding: 2rem 2.5rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div style="width: 50px; height: 50px; border-radius: 14px; background: linear-gradient(135deg, rgba(46, 204, 113, 0.2), rgba(46, 204, 113, 0.05)); color: #2ecc71; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 1px solid rgba(46, 204, 113, 0.2);">
+                        <i class="fi fi-rr-tags"></i>
+                    </div>
+                    <button class="action-btn" onclick="closeCouponModal()" style="width: 36px; height: 36px; border-radius: 50%;"><i class="fi fi-rr-cross-small"></i></button>
+                </div>
+                <h4 class="text-white m-0 fw-bold" style="letter-spacing: -0.5px;">Create Special Offer</h4>
+                <p class="text-dim small m-0 mt-1">Generate a promo code to boost your event sales.</p>
+            </div>
+            
+            <form id="createCouponForm" onsubmit="submitCoupon(event)" novalidate style="padding: 2rem 2.5rem;">
+                <div class="mb-4">
+                    <label class="form-label text-dim small fw-bold" style="letter-spacing: 1px;">PROMO CODE</label>
+                    <div class="position-relative">
+                        <i class="fi fi-rr-text position-absolute top-50 start-0 translate-middle-y ms-3 text-dim"></i>
+                        <input type="text" id="couponCode" name="code" class="input ps-5 text-uppercase fw-bold text-white" placeholder="e.g. SUMMER50" data-rule="required" style="letter-spacing: 2px; font-family: monospace; font-size: 1.1rem; height: 55px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); transition: border-color 0.3s, box-shadow 0.3s;" onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 3px rgba(var(--primary-rgb), 0.15)';">
+                    </div>
+                </div>
+                
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <label class="form-label text-dim small fw-bold" style="letter-spacing: 1px;">DISCOUNT TYPE</label>
+                        <div class="position-relative">
+                            <i class="fi fi-rr-settings-sliders position-absolute top-50 start-0 translate-middle-y ms-3 text-dim"></i>
+                            <select id="discountType" class="input ps-5 text-white" style="height: 50px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);">
+                                <option value="percentage">% Percentage</option>
+                                <option value="flat">₹ Flat Amount</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label text-dim small fw-bold" style="letter-spacing: 1px;">DISCOUNT VALUE</label>
+                        <div class="position-relative">
+                            <i class="fi fi-rr-coins position-absolute top-50 start-0 translate-middle-y ms-3 text-dim"></i>
+                            <input type="number" id="discountValue" name="discountValue" class="input ps-5 fw-bold text-white" placeholder="e.g. 10" data-rule="required, number" data-min="1" style="height: 50px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-5">
+                    <div class="col-6">
+                        <label class="form-label text-dim small fw-bold" style="letter-spacing: 1px;">MAX USES <span class="opacity-50 fw-normal">(Opt)</span></label>
+                        <div class="position-relative">
+                            <i class="fi fi-rr-users position-absolute top-50 start-0 translate-middle-y ms-3 text-dim"></i>
+                            <input type="number" id="maxUses" class="input ps-5 text-white" placeholder="Unlimited" min="1" style="height: 50px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);">
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label text-dim small fw-bold" style="letter-spacing: 1px;">EXPIRY DATE</label>
+                        <div class="position-relative">
+                            <input type="date" id="expiryDate" name="expiryDate" class="input text-white" data-rule="required, futureDate" style="color-scheme: dark; height: 50px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3">
+                    <button type="button" class="btn btn-outline flex-grow-1" onclick="closeCouponModal()" style="border-color: rgba(255,255,255,0.1) !important; color: white !important; height: 50px; border-radius: 12px; font-weight: 600;">Cancel</button>
+                    <button type="submit" class="btn btn-primary flex-grow-1 d-flex justify-content-center align-items-center gap-2" style="height: 50px; border-radius: 12px; font-weight: 700; background: linear-gradient(135deg, var(--primary) 0%, #3a58df 100%); border: none; box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.3);">
+                        <i class="fi fi-rr-magic-wand"></i> Create Offer
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -415,6 +507,45 @@
         // Remove stale listeners and attach the new one
         window.socket.off('ticketStockUpdate', handleStockUpdate);
         window.socket.on('ticketStockUpdate', handleStockUpdate);
+        // ─── COUPON MANAGEMENT JS ───────────────────────────────────────────────
+        const currentEventId = '<%= event._id %>';
+
+        function openCouponModal() {
+            document.getElementById('couponModal').classList.add('active');
+            // Set minimum date to today
+            document.getElementById('expiryDate').min = new Date().toISOString().split('T')[0];
+        }
+
+        function closeCouponModal() {
+            document.getElementById('couponModal').classList.remove('active');
+            document.getElementById('createCouponForm').reset();
+        }
+
+        async function submitCoupon(e) {
+            e.preventDefault();
+            Loader.show('Creating Promo Code...');
+            
+            const data = {
+                code: document.getElementById('couponCode').value.trim(),
+                discountType: document.getElementById('discountType').value,
+                discountValue: Number(document.getElementById('discountValue').value),
+                maxUses: document.getElementById('maxUses').value ? Number(document.getElementById('maxUses').value) : null,
+                expiryDate: document.getElementById('expiryDate').value
+            };
+
+            try {
+                const res = await axios.post(`/organizer/events/${currentEventId}/coupons`, data);
+                if (res.data.success) {
+                    Toast.success(res.data.message);
+                    closeCouponModal();
+                    // Optional: Reload the page to show the new coupon in a table
+                }
+            } catch (err) {
+                Toast.error(err.response?.data?.message || 'Failed to create coupon');
+            } finally {
+                Loader.hide();
+            }
+        }
     </script>
 </body>
 </html>

@@ -1,196 +1,475 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <%- include('../partials/head') %>
 </head>
 <body class="bg-mesh">
     <%- include('../partials/navbars/user-nav') %>
+
     <div class="dashboard-layout">
         <%- include('../partials/user-sidebar', { title: 'My Wallet' }) %>
+
         <main class="dashboard-main">
 
+            <%# ── Page Header ── %>
             <div class="mb-4 animate stagger-1">
-                <h2 class="fw-bold">My Wallet</h2>
-                <p class="text-dim m-0">Add money and pay for event tickets securely.</p>
+                <p class="page-label">Finance</p>
+                <h2 class="fw-bold mb-1">My Wallet</h2>
+                <p class="text-dim m-0">Secure digital wallet for booking events instantly.</p>
             </div>
 
+            <%# ── Top Section: Balance Card + Add Money ── %>
             <div class="row g-4 mb-4">
-                <!-- Balance -->
-                <div class="col-lg-4 animate stagger-2">
-                    <div class="balance-card h-100">
-                        <p class="text-dim small text-uppercase fw-bold mb-3" style="letter-spacing:0.08em; color:rgba(230,57,70,0.7);">Available Balance</p>
-                        <p class="balance-amount mb-1">₹<span id="liveBalance"><%= balance.toLocaleString('en-IN', {minimumFractionDigits:2}) %></span></p>
-                        <p class="text-dim small mt-2 mb-0"><%= transactions.length %> transaction<%= transactions.length !== 1 ? 's' : '' %></p>
+
+                <%# Balance Card %>
+                <div class="col-lg-5 animate stagger-2">
+                    <div class="wallet-balance-card">
+                        <!-- Decorative orbs -->
+                        <div class="wallet-orb wallet-orb-1"></div>
+                        <div class="wallet-orb wallet-orb-2"></div>
+
+                        <div class="wallet-card-inner">
+                            <div class="d-flex justify-content-between align-items-start mb-4">
+                                <div>
+                                    <p class="wallet-card-label">Available Balance</p>
+                                    <p class="wallet-card-sublabel"><%= transactions.length %> transaction<%= transactions.length !== 1 ? 's' : '' %> total</p>
+                                </div>
+                                <div class="wallet-chip">
+                                    <i class="fi fi-rr-shield-check"></i> Secured
+                                </div>
+                            </div>
+
+                            <div class="wallet-amount-display">
+                                <span class="wallet-currency">&#8377;</span>
+                                <span class="wallet-amount-value" id="liveBalance"><%= balance.toLocaleString('en-IN', {minimumFractionDigits:2}) %></span>
+                            </div>
+
+                            <div class="wallet-card-footer">
+                                <div class="wallet-stat">
+                                    <p class="wallet-stat-label">Credits</p>
+                                    <p class="wallet-stat-value credit">
+                                        +&#8377;<%= transactions.filter(t=>t.type==='credit').reduce((s,t)=>s+t.amount,0).toLocaleString('en-IN') %>
+                                    </p>
+                                </div>
+                                <div class="wallet-stat-divider"></div>
+                                <div class="wallet-stat">
+                                    <p class="wallet-stat-label">Debits</p>
+                                    <p class="wallet-stat-value debit">
+                                        -&#8377;<%= transactions.filter(t=>t.type==='debit').reduce((s,t)=>s+t.amount,0).toLocaleString('en-IN') %>
+                                    </p>
+                                </div>
+                                <div class="wallet-stat-divider"></div>
+                                <div class="wallet-stat">
+                                    <p class="wallet-stat-label">This Month</p>
+                                    <p class="wallet-stat-value">
+                                        <%
+                                        const now = new Date();
+                                        const thisMonthTxns = transactions.filter(t => {
+                                            const d = new Date(t.date);
+                                            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.type === 'credit';
+                                        });
+                                        const thisMonthAmt = thisMonthTxns.reduce((s,t)=>s+t.amount, 0);
+                                        %>
+                                        &#8377;<%= thisMonthAmt.toLocaleString('en-IN') %>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Add Money -->
-                <div class="col-lg-8 animate stagger-3">
-                    <div class="info-panel h-100">
-                        <h6 class="fw-bold text-white mb-1">Add Money to Wallet</h6>
-                        <p class="text-dim small mb-4">Choose a quick amount or enter custom. Max ₹50,000 per transaction.</p>
-
-                        <!-- Quick amounts -->
-                        <div class="quick-amounts" id="quickAmounts">
-                            <% [100, 200, 500, 1000, 2000, 5000].forEach(amt => { %>
-                                <button class="amt-chip" onclick="setAmount(<%= amt %>, this)">₹<%= amt %></button>
-                            <% }) %>
-                        </div>
-
-                        <!-- Amount input + pay button -->
-                        <div class="d-flex gap-3 mb-3">
-                            <div class="amount-wrap">
-                                <span class="amount-prefix">₹</span>
-                                <input type="number" id="amountInput" class="input w-100" placeholder="Enter amount" min="1" max="50000">
+                <%# Add Money Panel %>
+                <div class="col-lg-7 animate stagger-3">
+                    <div class="wallet-topup-panel h-100">
+                        <div class="topup-panel-header">
+                            <div class="topup-icon-wrap">
+                                <i class="fi fi-rr-add"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-white m-0">Add Money</h5>
+                                <p class="text-dim m-0" style="font-size:0.8rem;">Max &#8377;50,000 per transaction</p>
                             </div>
                         </div>
 
-                        <!-- Error message -->
-                        <p id="amtError" class="text-danger small mb-3" style="display:none;"></p>
+                        <div class="topup-divider"></div>
 
-                        <!-- Payment Method -->
-                        <p class="text-dim small text-uppercase fw-bold mb-2" style="letter-spacing:0.07em;">Pay via</p>
-                        <div class="d-flex gap-3 mb-4">
-                            <div class="pay-opt selected" id="rzpOpt" onclick="selectPayOpt('razorpay')">
-                                <p class="text-white fw-bold mb-1" style="font-size:0.88rem;">ðŸ’³ Razorpay</p>
-                                <p class="text-dim mb-0" style="font-size:0.75rem;">UPI Â&middot; Card Â&middot; Net Banking</p>
-                            </div>
+                        <!-- Amount Input -->
+                        <p class="topup-section-label">Amount</p>
+                        <div class="topup-input-wrap mb-3">
+                            <span class="topup-currency-prefix">&#8377;</span>
+                            <input
+                                type="number"
+                                id="amountInput"
+                                class="topup-input"
+                                placeholder="0.00"
+                                min="1"
+                                max="50000"
+                                inputmode="decimal"
+                            >
+                            <button class="topup-clear-btn" onclick="clearAmount()" title="Clear">
+                                <i class="fi fi-rr-cross-small"></i>
+                            </button>
                         </div>
 
-                        <button class="btn btn-primary w-100" style="height:3rem; border-radius:12px; font-size:0.97rem; font-weight:600;" onclick="handleTopUp()">
-                            <i class="fi fi-rr-add me-2"></i>Add Money
+                        <p id="amtError" class="topup-error" style="display:none;"></p>
+
+                        <!-- Pay Button -->
+                        <button class="topup-submit-btn" onclick="handleTopUp()" id="topUpBtn">
+                            <i class="fi fi-rr-credit-card me-2"></i>
+                            <span id="btnLabel">Add Money via Razorpay</span>
                         </button>
-                        <p class="text-dim mt-2 mb-0" style="font-size:0.76rem; text-align:center;">
-                            <i class="fi fi-rr-shield-check me-1"></i> Secured by Razorpay Â&middot; 256-bit SSL
+
+                        <p class="topup-secure-note">
+                            <i class="fi fi-rr-lock me-1"></i>
+                            256-bit SSL &nbsp;·&nbsp; Secured by Razorpay &nbsp;·&nbsp; PCI DSS Compliant
                         </p>
                     </div>
                 </div>
             </div>
 
-            <!-- Transactions -->
-            <div class="info-panel animate stagger-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h6 class="fw-bold text-white mb-0">Transaction History</h6>
-                    <span class="text-dim small"><%= transactions.length %> transaction<%= transactions.length !== 1 ? 's' : '' %></span>
-                </div>
-                <% if(transactions && transactions.length > 0) { %>
-                <div class="txn-list">
-                    <% transactions.forEach(txn => { %>
-                    <div class="txn-item">
-                        <div class="txn-icon <%= txn.type === 'credit' ? 'txn-credit' : 'txn-debit' %>">
-                            <i class="fi fi-rr-<%= txn.type === 'credit' ? 'arrow-small-down' : 'arrow-small-up' %>"></i>
+            <%# ── Transaction History ── %>
+            <div class="wallet-txn-panel animate stagger-5">
+                <div class="txn-panel-header">
+                    <div>
+                        <p class="page-label">History</p>
+                        <h5 class="fw-bold m-0">Transactions</h5>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="txn-filter-wrap d-flex gap-2 align-items-center" id="txnFilterWrap">
+                            <input type="date" id="dateFilter" class="form-control form-control-sm bg-transparent text-white border-secondary" style="max-width: 140px; font-size:0.8rem; border-color: rgba(255,255,255,0.1) !important;" onchange="applyFilters()" title="Filter by date">
+                            <div class="d-flex">
+                                <button class="txn-filter-btn active" data-filter="all" onclick="setTypeFilter('all', this)">All</button>
+                                <button class="txn-filter-btn" data-filter="credit" onclick="setTypeFilter('credit', this)">Credits</button>
+                                <button class="txn-filter-btn" data-filter="debit" onclick="setTypeFilter('debit', this)">Debits</button>
+                            </div>
                         </div>
-                        <div class="flex-grow-1">
-                            <p class="text-white fw-bold mb-0" style="font-size:0.87rem;"><%= txn.description %></p>
-                            <p class="text-dim mb-0" style="font-size:0.75rem;">
-                                <%= new Date(txn.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %> Â&middot;
-                                <%= new Date(txn.date).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) %>
+                        <span class="text-dim" style="font-size:0.8rem;"><%= transactions.length %> total</span>
+                    </div>
+                </div>
+
+                <% if(transactions && transactions.length > 0) { %>
+                <div class="txn-list" id="txnList">
+                    <% transactions.forEach((txn, idx) => {
+                        const isCredit = txn.type === 'credit';
+                        const dateObj  = new Date(txn.date);
+                        const dateStr  = dateObj.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
+                        const timeStr  = dateObj.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+                        
+                        // YYYY-MM-DD for accurate filtering (taking local timezone into account properly)
+                        const localDateStr = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                    %>
+                    <div class="txn-item" data-type="<%= txn.type %>" data-date="<%= localDateStr %>">
+                        <div class="txn-icon-wrap <%= isCredit ? 'txn-credit-icon' : 'txn-debit-icon' %>">
+                            <i class="fi fi-rr-<%= isCredit ? 'arrow-small-down' : 'arrow-small-up' %>"></i>
+                        </div>
+                        <div class="txn-info">
+                            <p class="txn-description"><%= txn.description %></p>
+                            <p class="txn-meta">
+                                <span><i class="fi fi-rr-calendar me-1"></i><%= dateStr %></span>
+                                <span class="txn-meta-dot">·</span>
+                                <span><i class="fi fi-rr-clock me-1"></i><%= timeStr %></span>
+                                <span class="txn-meta-dot">·</span>
+                                <span class="txn-type-badge <%= isCredit ? 'badge-credit' : 'badge-debit' %>">
+                                    <%= isCredit ? 'Credit' : 'Debit' %>
+                                </span>
                             </p>
                         </div>
-                        <span class="txn-amount <%= txn.type %>">
-                            <%= txn.type === 'credit' ? '+' : 'âˆ’' %>₹<%= txn.amount.toLocaleString('en-IN') %>
-                        </span>
+                        <div class="txn-amount-col">
+                            <span class="txn-amount-val <%= isCredit ? 'amount-credit' : 'amount-debit' %>">
+                                <%= isCredit ? '+' : '-' %>&#8377;<%= txn.amount.toLocaleString('en-IN', {minimumFractionDigits:2}) %>
+                            </span>
+                        </div>
                     </div>
                     <% }) %>
                 </div>
                 <% } else { %>
-                <div class="text-center py-4">
-                    <i class="fi fi-rr-receipt" style="font-size:2.5rem; color:rgba(255,255,255,0.12); display:block; margin-bottom:1rem;"></i>
-                    <p class="text-dim mb-0">No transactions yet. Add money to get started!</p>
+                <div class="txn-empty-state">
+                    <div class="txn-empty-icon">
+                        <i class="fi fi-rr-receipt"></i>
+                    </div>
+                    <h6 class="text-white mb-2">No Transactions Yet</h6>
+                    <p class="text-dim mb-0" style="font-size:0.85rem;">Add money to your wallet to get started.</p>
                 </div>
                 <% } %>
             </div>
+
+    <style>
+        .page-label { color: var(--primary); text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+        
+        .wallet-balance-card { position: relative; background: linear-gradient(135deg, rgba(30,30,30,0.8), rgba(15,15,15,0.9)); border-radius: 20px; padding: 2rem; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
+        .wallet-orb { position: absolute; border-radius: 50%; filter: blur(50px); opacity: 0.4; z-index: 0; pointer-events: none; }
+        .wallet-orb-1 { width: 150px; height: 150px; background: var(--primary); top: -20px; right: -20px; }
+        .wallet-orb-2 { width: 120px; height: 120px; background: rgba(241,196,15,0.5); bottom: -30px; left: -20px; }
+        
+        .wallet-card-inner { position: relative; z-index: 2; }
+        .wallet-card-label { font-size: 1.1rem; color: rgba(255,255,255,0.7); margin-bottom: 0.2rem; }
+        .wallet-card-sublabel { font-size: 0.85rem; color: rgba(255,255,255,0.4); margin: 0; }
+        .wallet-chip { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); padding: 0.4rem 0.8rem; border-radius: 100px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; font-weight: 500; backdrop-filter: blur(4px); }
+        .wallet-chip i { color: #4ECDC4; }
+        
+        .wallet-amount-display { margin: 2rem 0; display: flex; align-items: baseline; gap: 0.5rem; }
+        .wallet-currency { font-size: 2rem; color: rgba(255,255,255,0.5); font-weight: 300; }
+        .wallet-amount-value { font-family: var(--font-display); font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; color: white; }
+        
+        .wallet-card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem; }
+        .wallet-stat { flex: 1; display: flex; flex-direction: column; gap: 0.3rem; }
+        .wallet-stat-divider { width: 1px; height: 30px; background: rgba(255,255,255,0.1); margin: 0 1rem; }
+        .wallet-stat-label { font-size: 0.8rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
+        .wallet-stat-value { font-size: 1.1rem; font-weight: 700; margin: 0; color: white; }
+        .wallet-stat-value.credit { color: #2ecc71; }
+        .wallet-stat-value.debit { color: #e74c3c; }
+
+        .wallet-topup-panel { background: rgba(20,20,20,0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 20px; padding: 2rem; border: 1px solid rgba(255,255,255,0.05); }
+        .topup-panel-header { display: flex; align-items: center; gap: 1rem; }
+        .topup-icon-wrap { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: white; border: 1px solid rgba(255,255,255,0.1); }
+        .topup-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 1.5rem 0; }
+        .topup-section-label { font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-bottom: 1rem; }
+        
+        .quick-amounts { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+        .amt-chip { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 0.7rem 1.2rem; border-radius: 12px; color: rgba(255,255,255,0.8); font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+        .amt-chip:hover { background: rgba(255,255,255,0.1); color: white; transform: translateY(-2px); }
+        .amt-chip.active { background: var(--primary); border-color: var(--primary); color: white; box-shadow: 0 4px 15px rgba(230,57,70,0.4); }
+        
+        .topup-input-wrap { position: relative; display: flex; align-items: center; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; transition: border-color 0.3s, box-shadow 0.3s; }
+        .topup-input-wrap:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(230,57,70,0.1); }
+        .topup-currency-prefix { position: absolute; left: 1.2rem; color: rgba(255,255,255,0.5); font-size: 1.2rem; pointer-events: none; }
+        .topup-input { width: 100%; background: transparent; border: none; padding: 1rem 3rem 1rem 2.5rem; color: white; font-size: 1.2rem; font-weight: 500; -moz-appearance: textfield; }
+        .topup-input:focus { outline: none; }
+        .topup-input::-webkit-outer-spin-button, .topup-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .topup-clear-btn { position: absolute; right: 0.5rem; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.5rem; padding: 0.5rem; cursor: pointer; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }
+        .topup-clear-btn:hover { color: white; }
+        
+        .topup-submit-btn { width: 100%; padding: 1rem; font-size: 1.1rem; font-weight: 600; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: transform 0.2s, box-shadow 0.2s; background: var(--primary); color: white; border: none; cursor: pointer; }
+        .topup-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(230,57,70,0.4); }
+        .topup-submit-btn:disabled { opacity: 0.5; pointer-events: none; }
+        
+        .topup-secure-note { display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 1rem; }
+        
+        .wallet-txn-panel { margin-top: 2rem; background: rgba(20,20,20,0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 20px; padding: 2rem; border: 1px solid rgba(255,255,255,0.05); }
+        .txn-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .txn-filter-wrap { display: flex; gap: 0.25rem; background: rgba(255,255,255,0.03); padding: 0.25rem; border-radius: 100px; border: 1px solid rgba(255,255,255,0.05); }
+        .txn-filter-btn { background: transparent; border: none; color: rgba(255,255,255,0.6); padding: 0.4rem 1rem; border-radius: 100px; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; font-weight: 600; }
+        .txn-filter-btn:hover { color: white; background: rgba(255,255,255,0.05); }
+        .txn-filter-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(230,57,70,0.4); }
+
+        .txn-list { display: flex; flex-direction: column; gap: 1rem; }
+        .txn-item { display: flex; align-items: center; gap: 1rem; padding: 1.25rem; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px solid rgba(255,255,255,0.04); transition: transform 0.2s, background 0.2s; }
+        .txn-item:hover { background: rgba(255,255,255,0.04); transform: translateX(4px); }
+        
+        .txn-icon-wrap { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        .txn-credit-icon { background: rgba(46,204,113,0.1); color: #2ecc71; }
+        .txn-debit-icon { background: rgba(231,76,60,0.1); color: #e74c3c; }
+        
+        .txn-info { flex: 1; min-width: 0; }
+        .txn-description { font-weight: 500; color: white; margin: 0 0 0.3rem 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 1rem; }
+        .txn-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; font-size: 0.8rem; color: rgba(255,255,255,0.4); margin: 0; }
+        .txn-meta-dot { font-size: 0.5rem; opacity: 0.5; }
+        
+        .txn-type-badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+        .badge-credit { background: rgba(46,204,113,0.1); color: #2ecc71; }
+        .badge-debit { background: rgba(231,76,60,0.1); color: #e74c3c; }
+        
+        .txn-amount-col { text-align: right; }
+        .txn-amount-val { font-weight: 700; font-size: 1.1rem; }
+        .amount-credit { color: #2ecc71; }
+        .amount-debit { color: #e74c3c; }
+        
+        .empty-state { text-align: center; padding: 4rem 2rem; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px dashed rgba(255,255,255,0.1); }
+        .empty-state i { font-size: 3rem; color: rgba(255,255,255,0.2); margin-bottom: 1rem; display: block; }
+    </style>
         </main>
     </div>
 
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
-        const RZP_KEY = '<%= razorpayKeyId %>';
-        const USER_NAME = '<%= userName %>';
-        const USER_EMAIL = '<%= userEmail %>';
+    const RZP_KEY    = '<%= razorpayKeyId %>';
+    const USER_NAME  = '<%= userName %>';
+    const USER_EMAIL = '<%= userEmail %>';
 
-        function setAmount(amount, btn) {
-            document.getElementById('amountInput').value = amount;
-            document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('selected'));
-            btn.classList.add('selected');
-            clearError();
+    // ── Amount helpers ──────────────────────────────────────────────────────────
+    function setAmount(amount, btn) {
+        document.getElementById('amountInput').value = amount;
+        document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('selected'));
+        btn.classList.add('selected');
+        clearError();
+        updateBtnLabel(amount);
+    }
+
+    function clearAmount() {
+        document.getElementById('amountInput').value = '';
+        document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('selected'));
+        clearError();
+        updateBtnLabel(0);
+    }
+
+    function updateBtnLabel(amount) {
+        const label = document.getElementById('btnLabel');
+        if (amount && amount > 0) {
+            label.textContent = `Add ₹${parseFloat(amount).toLocaleString('en-IN')} via Razorpay`;
+        } else {
+            label.textContent = 'Add Money via Razorpay';
         }
+    }
 
-        document.getElementById('amountInput')?.addEventListener('input', () => {
-            document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('selected'));
-            clearError();
-        });
+    document.getElementById('amountInput')?.addEventListener('input', (e) => {
+        document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('selected'));
+        clearError();
+        updateBtnLabel(parseFloat(e.target.value) || 0);
+    });
 
-        function showError(msg) {
-            const el = document.getElementById('amtError');
-            el.textContent = msg; el.style.display = 'block';
-        }
-        function clearError() { document.getElementById('amtError').style.display = 'none'; }
+    function showError(msg) {
+        const el = document.getElementById('amtError');
+        el.textContent = msg;
+        el.style.display = 'flex';
+    }
+    function clearError() {
+        document.getElementById('amtError').style.display = 'none';
+    }
 
-        async function handleTopUp() {
-            const amount = parseFloat(document.getElementById('amountInput').value);
-            if (!amount || amount <= 0) return showError('Please enter a valid amount');
-            if (amount > 50000) return showError('Maximum ₹50,000 per transaction');
+    // ── Top-up flow ─────────────────────────────────────────────────────────────
+    async function handleTopUp() {
+        const amount = parseFloat(document.getElementById('amountInput').value);
+        if (!amount || amount <= 0) return showError('Please enter a valid amount');
+        if (amount > 50000)        return showError('Maximum ₹50,000 per transaction');
 
-            Loader.show('INITIALIZING PAYMENT...');
-            try {
-                const res = await axios.post('/user/wallet/razorpay-order', { amount });
-                if (!res.data.success) throw new Error(res.data.message);
-                Loader.hide();
+        Loader.show('INITIALIZING PAYMENT...');
+        try {
+            const res = await axios.post('/user/wallet/razorpay-order', { amount });
+            if (!res.data.success) throw new Error(res.data.message);
+            Loader.hide();
 
-                const options = {
-                    key: RZP_KEY,
-                    amount: res.data.order.amount,
-                    currency: 'INR',
-                    name: 'EventHub Wallet',
-                    description: `Add ₹${amount} to wallet`,
-                    order_id: res.data.order.id,
-                    prefill: { name: USER_NAME, email: USER_EMAIL },
-                    theme: { color: '#E63946' },
-                    handler: async function(response) {
-                        Loader.show('VERIFYING PAYMENT...');
-                        try {
-                            const verify = await axios.post('/user/wallet/verify-topup', {
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_signature: response.razorpay_signature,
-                                amount
+            const options = {
+                key:         RZP_KEY,
+                amount:      res.data.order.amount,
+                currency:    'INR',
+                name:        'EventHub Wallet',
+                description: `Add ₹${amount} to wallet`,
+                order_id:    res.data.order.id,
+                prefill:     { name: USER_NAME, email: USER_EMAIL },
+                theme:       { color: '#E63946' },
+                handler: async function(response) {
+                    Loader.show('VERIFYING PAYMENT...');
+                    try {
+                        const verify = await axios.post('/user/wallet/verify-topup', {
+                            razorpay_order_id:   response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature:  response.razorpay_signature,
+                            amount
+                        });
+                        if (verify.data.success) {
+                            const params = new URLSearchParams({
+                                amount,
+                                balance:   verify.data.newBalance,
+                                paymentId: response.razorpay_payment_id
                             });
-                            if (verify.data.success) {
-                                // Redirect to success page with details
-                                const params = new URLSearchParams({
-                                    amount,
-                                    balance: verify.data.newBalance,
-                                    paymentId: response.razorpay_payment_id
-                                });
-                                window.location.href = `/user/wallet/topup/success?${params}`;
-                            } else {
-                                window.location.href = `/user/wallet/topup/failed?reason=${encodeURIComponent(verify.data.message || 'Verification failed')}`;
-                            }
-                        } catch(err) {
-                            Loader.hide();
-                            const reason = err.response?.data?.message || 'Payment verification failed. Please contact support.';
-                            window.location.href = `/user/wallet/topup/failed?reason=${encodeURIComponent(reason)}`;
+                            window.location.href = `/user/wallet/topup/success?${params}`;
+                        } else {
+                            window.location.href = `/user/wallet/topup/failed?reason=${encodeURIComponent(verify.data.message || 'Verification failed')}`;
                         }
+                    } catch(err) {
+                        Loader.hide();
+                        const reason = err.response?.data?.message || 'Payment verification failed.';
+                        window.location.href = `/user/wallet/topup/failed?reason=${encodeURIComponent(reason)}`;
                     }
-                };
+                }
+            };
 
-                const rzp = new Razorpay(options);
-                rzp.on('payment.failed', function(resp) {
-                    Loader.hide();
-                    const reason = resp.error?.description || 'Payment was declined by your bank.';
-                    window.location.href = `/user/wallet/topup/failed?reason=${encodeURIComponent(reason)}`;
-                });
-                rzp.open();
-            } catch(err) {
+            const rzp = new Razorpay(options);
+            rzp.on('payment.failed', function(resp) {
                 Loader.hide();
-                Toast.error(err.response?.data?.message || 'Failed to initialize payment');
-            }
+                const reason = resp.error?.description || 'Payment was declined.';
+                window.location.href = `/user/wallet/topup/failed?reason=${encodeURIComponent(reason)}`;
+            });
+            rzp.open();
+        } catch(err) {
+            Loader.hide();
+            Toast.error(err.response?.data?.message || 'Failed to initialize payment');
         }
+    }
 
-        document.getElementById('amountInput')?.addEventListener('keypress', e => {
-            if (e.key === 'Enter') handleTopUp();
+    document.getElementById('amountInput')?.addEventListener('keypress', e => {
+        if (e.key === 'Enter') handleTopUp();
+    });
+
+    // ── Transaction filter ──────────────────────────────────────────────────────
+    let currentTypeFilter = 'all';
+
+    function setTypeFilter(type, btn) {
+        document.querySelectorAll('.txn-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTypeFilter = type;
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const dateFilterVal = document.getElementById('dateFilter').value;
+        let visibleCount = 0;
+        
+        document.querySelectorAll('.txn-item').forEach(item => {
+            const typeMatch = (currentTypeFilter === 'all' || item.dataset.type === currentTypeFilter);
+            const dateMatch = (!dateFilterVal || item.dataset.date === dateFilterVal);
+            
+            if (typeMatch && dateMatch) {
+                item.style.display = '';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
         });
+        
+        // Optionally update the total count label if you want to reflect the filtered amount
+        // document.querySelector('.txn-panel-header .text-dim').textContent = visibleCount + ' total';
+    }
+
+    // ── Live Wallet Balance Update via Socket ────────────────────────────────────
+    if (window.socket) {
+        window.socket.on('walletUpdate', (data) => {
+            // Update the balance display live
+            const balEl = document.getElementById('liveBalance');
+            if (balEl && data.newBalance !== undefined) {
+                balEl.textContent = parseFloat(data.newBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            }
+            // Show a toast notification
+            if (data.transaction && typeof Toast !== 'undefined') {
+                Toast.success(`\u20b9${parseFloat(data.transaction.amount).toLocaleString('en-IN')} credited to your wallet!`);
+            }
+            // Prepend new transaction to the list
+            if (data.transaction) {
+                const txnList = document.getElementById('txnList');
+                if (txnList) {
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+                    const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                    const localDateStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                    const html = `
+                        <div class="txn-item" data-type="credit" data-date="${localDateStr}" style="background: rgba(46,204,113,0.05); transition: background 2s ease;">
+                            <div class="txn-icon-wrap txn-credit-icon">
+                                <i class="fi fi-rr-arrow-small-down"></i>
+                            </div>
+                            <div class="txn-info">
+                                <p class="txn-description">${data.transaction.description}</p>
+                                <p class="txn-meta">
+                                    <span><i class="fi fi-rr-calendar me-1"></i>${dateStr}</span>
+                                    <span class="txn-meta-dot">·</span>
+                                    <span><i class="fi fi-rr-clock me-1"></i>${timeStr}</span>
+                                    <span class="txn-meta-dot">·</span>
+                                    <span class="txn-type-badge badge-credit">Credit</span>
+                                </p>
+                            </div>
+                            <div class="txn-amount-col">
+                                <span class="txn-amount-val amount-credit">
+                                    +&#8377;${parseFloat(data.transaction.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                    txnList.insertAdjacentHTML('afterbegin', html);
+                    applyFilters();
+                    setTimeout(() => { const el = txnList.firstElementChild; if(el) el.style.background = 'transparent'; }, 3000);
+                }
+            }
+        });
+    }
     </script>
 </body>
 </html>

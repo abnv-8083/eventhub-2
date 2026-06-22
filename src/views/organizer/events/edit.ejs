@@ -1,8 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <%- include('../../partials/head') %>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
 </head>
 <body class="bg-mesh">
     <%- include('../../partials/navbars/organizer-nav') %>
@@ -25,23 +26,30 @@
 
                     <!-- LEFT: Main Details -->
                     <div class="col-lg-8">
-                        <div class="glass-panel mb-4">
+                        <div class="glass-premium-panel mb-4">
                             <p class="section-title"><i class="fi fi-rr-info"></i> Basic Information</p>
 
                             <div class="form-floating mb-4">
-                                <input type="text" id="title" name="title" class="form-control input" placeholder=" " value="<%= event.title %>" minlength="5" required>
+                                <input type="text" id="title" name="title" class="form-control input" placeholder=" " value="<%= event.title %>" data-rule="required, min5">
                                 <label>Event Title</label>
                             </div>
 
                             <div class="row g-3 mb-4">
-                                <div class="col-md-7">
-                                    <select id="category" name="category" class="form-control input" style="height:3.6rem;">
+                                <div class="col-md-12">
+                                    <label class="form-label text-dim mb-3 d-block">Select Category</label>
+                                    <div class="category-selector">
                                         <% categories.forEach(cat => { %>
-                                            <option value="<%= cat._id %>" <%= event.category.toString()===cat._id.toString()?'selected':'' %>><%= cat.name %></option>
+                                            <label class="category-option">
+                                                <input type="radio" name="category" value="<%= cat.id %>" required <%= event.category === cat.id ? 'checked' : '' %>>
+                                                <div class="category-card">
+                                                    <i class="fi <%= cat.icon %>"></i>
+                                                    <span><%= cat.name %></span>
+                                                </div>
+                                            </label>
                                         <% }) %>
-                                    </select>
+                                    </div>
                                 </div>
-                                <div class="col-md-5">
+                                <div class="col-md-12 mt-3">
                                     <div class="d-flex justify-content-between align-items-center px-4 rounded-3"
                                         style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.08);height:3.6rem;border-radius:12px!important;">
                                         <span style="font-weight:500;color:white;">Feature Event?</span>
@@ -57,13 +65,13 @@
                             <div class="row g-3 mb-3">
                                 <div class="col-md-6">
                                     <div class="form-floating">
-                                        <input type="date" id="startDate" name="startDate" class="form-control input" placeholder=" " value="<%= event.startDate.toISOString().split('T')[0] %>" required>
+                                        <input type="date" id="startDate" name="startDate" class="form-control input" placeholder=" " value="<%= event.startDate ? event.startDate.toISOString().split('T')[0] : '' %>" data-rule="required, date">
                                         <label>Start Date</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-floating">
-                                        <input type="time" id="startTime" name="startTime" class="form-control input" placeholder=" " value="<%= event.startTime %>" required>
+                                        <input type="time" id="startTime" name="startTime" class="form-control input" placeholder=" " value="<%= event.startTime || '' %>" data-rule="required">
                                         <label>Start Time</label>
                                     </div>
                                 </div>
@@ -71,20 +79,20 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-md-6">
                                     <div class="form-floating">
-                                        <input type="date" id="endDate" name="endDate" class="form-control input" placeholder=" " value="<%= event.endDate.toISOString().split('T')[0] %>" required>
+                                        <input type="date" id="endDate" name="endDate" class="form-control input" placeholder=" " value="<%= event.endDate ? event.endDate.toISOString().split('T')[0] : '' %>" data-rule="required, date">
                                         <label>End Date</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-floating">
-                                        <input type="time" id="endTime" name="endTime" class="form-control input" placeholder=" " value="<%= event.endTime %>" required>
+                                        <input type="time" id="endTime" name="endTime" class="form-control input" placeholder=" " value="<%= event.endTime || '' %>" data-rule="required">
                                         <label>End Time</label>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="form-floating mb-4">
-                                <textarea id="description" name="description" class="form-control input" placeholder=" " style="height:130px;resize:none;padding-top:1.5rem;border-radius:12px;" required><%= event.description %></textarea>
+                                <textarea id="description" name="description" class="form-control input" placeholder=" " style="height:130px;resize:none;padding-top:1.5rem;border-radius:12px;" data-rule="required, min20"><%= event.description %></textarea>
                                 <label>Event Description</label>
                             </div>
 
@@ -104,7 +112,7 @@
                     <div class="col-lg-4 d-flex flex-column gap-4">
 
                         <!-- Tickets Panel -->
-                        <div class="glass-panel">
+                        <div class="glass-premium-panel">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <p class="section-title m-0"><i class="fi fi-rr-ticket"></i> Ticket Tiers</p>
                                 <button type="button" class="btn btn-outline btn-sm" style="border-radius:8px;font-size:0.8rem;" onclick="addTicketVariant()">
@@ -115,39 +123,89 @@
                         </div>
 
                         <!-- Banners Panel -->
-                        <div class="glass-panel">
+                        <div class="glass-premium-panel">
                             <p class="section-title mb-3"><i class="fi fi-rr-picture"></i> Banners</p>
-                            <% if(event.banners && event.banners.length > 0) { %>
-                            <div class="banner-preview-grid mb-3">
-                                <% event.banners.forEach(b => { %>
-                                    <img class="banner-thumb" src="<%= b %>" alt="Banner">
-                                <% }) %>
+                            <p class="text-dim mb-4 text-start small">Upload high-quality images. Recommended resolution is 1920×1080px.</p>
+                            
+                            <div class="d-flex flex-column gap-3 mb-3">
+                                <div class="banner-slot w-100" id="banner1Slot" onclick="openCropper(1)" style="min-height: 160px; border-radius: 12px; border: 2px dashed rgba(255,255,255,0.1); position: relative; overflow: hidden; cursor: pointer; background: rgba(0,0,0,0.2);">
+                                    <% if(event.banners && event.banners[0]) { %>
+                                        <img src="<%= event.banners[0] %>" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+                                    <% } else { %>
+                                        <div class="placeholder-content" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;padding: 2rem;">
+                                            <i class="fi fi-rr-cloud-upload-alt" style="font-size: 2rem; color: rgba(255,255,255,0.5);"></i>
+                                            <span style="font-weight: 600; color: rgba(255,255,255,0.5); font-size:0.9rem;">Primary Banner</span>
+                                        </div>
+                                    <% } %>
+                                    <div class="banner-slot-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;">
+                                        <i class="fi fi-rr-edit" style="font-size: 1.5rem; color: white;"></i>
+                                    </div>
+                                </div>
+
+                                <div class="banner-slot w-100" id="banner2Slot" onclick="openCropper(2)" style="min-height: 160px; border-radius: 12px; border: 2px dashed rgba(255,255,255,0.1); position: relative; overflow: hidden; cursor: pointer; background: rgba(0,0,0,0.2);">
+                                    <% if(event.banners && event.banners[1]) { %>
+                                        <img src="<%= event.banners[1] %>" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+                                    <% } else { %>
+                                        <div class="placeholder-content" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;padding: 2rem;">
+                                            <i class="fi fi-rr-cloud-upload-alt" style="font-size: 2rem; color: rgba(255,255,255,0.5);"></i>
+                                            <span style="font-weight: 600; color: rgba(255,255,255,0.5); font-size:0.9rem;">Secondary Banner</span>
+                                        </div>
+                                    <% } %>
+                                    <div class="banner-slot-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;">
+                                        <i class="fi fi-rr-edit" style="font-size: 1.5rem; color: white;"></i>
+                                    </div>
+                                </div>
                             </div>
-                            <% } %>
-                            <div class="drop-zone" id="dropZone" onclick="document.getElementById('banners').click()"
-                                ondragover="this.classList.add('dragover');event.preventDefault()"
-                                ondragleave="this.classList.remove('dragover')"
-                                ondrop="handleDrop(event)">
-                                <i class="fi fi-rr-cloud-upload-alt mb-2" style="font-size:1.8rem;color:rgba(255,255,255,0.3);display:block;"></i>
-                                <p id="uploadText" class="text-dim m-0 small">Click or drag to upload new banners<br><span style="font-size:0.72rem;">Replaces existing. Max 2 Ã— 16:9</span></p>
-                                <input type="file" id="banners" name="banners" accept="image/*" multiple style="display:none;" onchange="handleFileSelect(this)">
-                            </div>
+                            <input type="file" id="bannerInput1" accept="image/*" style="display:none;" onchange="onFileSelected(1)">
+                            <input type="file" id="bannerInput2" accept="image/*" style="display:none;" onchange="onFileSelected(2)">
+                            
+                            <input type="hidden" id="existingBanner1" name="existingBanners[]" value="<%= event.banners && event.banners[0] ? event.banners[0] : '' %>">
+                            <input type="hidden" id="existingBanner2" name="existingBanners[]" value="<%= event.banners && event.banners[1] ? event.banners[1] : '' %>">
                         </div>
 
                         <!-- Submit -->
-                        <button type="submit" class="btn btn-primary w-100" style="height:3.2rem;border-radius:14px;font-weight:700;letter-spacing:0.5px;box-shadow:0 8px 25px rgba(230,57,70,0.3);">
-                            <i class="fi fi-rr-check me-2"></i> Save Changes
-                        </button>
+                        <div class="d-flex flex-column gap-2">
+                            <button type="submit" class="btn btn-primary w-100" style="height:3.2rem;border-radius:14px;font-weight:700;letter-spacing:0.5px;box-shadow:0 8px 25px rgba(230,57,70,0.3);">
+                                <i class="fi fi-rr-check me-2"></i> Save & Publish
+                            </button>
+                            <button type="button" class="btn btn-outline w-100" onclick="submitDraft()" style="height:3.2rem;border-radius:14px;font-weight:600; border-color: rgba(255,255,255,0.2);">
+                                <i class="fi fi-rr-disk me-2"></i> Save as Draft
+                            </button>
+                        </div>
                     </div>
                 </div>
             </form>
         </main>
     </div>
 
+    <div id="cropperModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center;">
+        <div class="cropper-modal-box glass-premium-panel" style="width: 100%; max-width: 800px; padding: 2rem; max-height: 90vh; overflow-y: auto;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold m-0" id="cropperTitle">Crop Banner</h4>
+                <button type="button" onclick="closeCropper()" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius: 50%; width: 36px; height: 36px; color:white; cursor:pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                    <i class="fi fi-rr-cross-small"></i>
+                </button>
+            </div>
+            <div class="cropper-img-wrap mb-4" style="border: 2px dashed rgba(255,255,255,0.1); padding: 5px; border-radius: 12px; max-height: 50vh;">
+                <img id="cropperImg" src="" alt="Crop" style="max-width: 100%;">
+            </div>
+            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-end">
+                <button type="button" class="btn btn-outline px-4" style="border-radius: 10px;" onclick="closeCropper()">Cancel</button>
+                <button type="button" class="btn btn-primary px-5" style="border-radius: 10px; font-weight: 600;" onclick="applyCrop()">
+                    Apply Crop <i class="fi fi-rr-check ms-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+    <style>
+        .banner-slot:hover .banner-slot-overlay { opacity: 1 !important; }
+    </style>
     <script>
-        // â”€â”€â”€ MAP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        const initLatLng = [< %= event.location.lat %>, <%= event.location.lng %>];
+        // ─── MAP ─────────────────────────────────────────────────────────────
+        const initLatLng = [<%= event.location.lat %>, <%= event.location.lng %>];
         const map = L.map('eventMap').setView(initLatLng, 14);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(map);
         let marker = L.marker(initLatLng, { draggable: true }).addTo(map);
@@ -164,21 +222,82 @@
         marker.on('dragend', () => { const p = marker.getLatLng(); updateAddress(p.lat, p.lng); });
         setTimeout(() => map.invalidateSize(), 300);
 
-        // â”€â”€â”€ FILE UPLOAD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        function handleFileSelect(input) {
-            if (input.files.length > 2) { Toast.error('Max 2 banners allowed'); input.value = ''; return; }
-            document.getElementById('uploadText').innerHTML = `<strong style="color:white;">${input.files.length} file(s) selected</strong>`;
-        }
-        function handleDrop(e) {
-            e.preventDefault(); document.getElementById('dropZone').classList.remove('dragover');
-            const dt = e.dataTransfer; const input = document.getElementById('banners');
-            const files = Array.from(dt.files).filter(f => f.type.startsWith('image/')).slice(0, 2);
-            if (!files.length) return;
-            const dT = new DataTransfer(); files.forEach(f => dT.items.add(f));
-            input.files = dT.files; handleFileSelect(input);
+        // ─── FILE UPLOAD & CROPPER ───────────────────────────────────────────
+        let cropperInstance = null;
+        let currentBannerSlot = 1;
+        const croppedBlobs = { 1: null, 2: null };
+
+        function openCropper(slot) {
+            currentBannerSlot = slot;
+            document.getElementById('bannerInput' + slot).click();
         }
 
-        // â”€â”€â”€ TICKETS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        function onFileSelected(slot) {
+            const input = document.getElementById('bannerInput' + slot);
+            if (!input.files || !input.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                document.getElementById('cropperTitle').textContent = `Crop Banner ${slot}`;
+                const img = document.getElementById('cropperImg');
+                img.src = e.target.result;
+                document.getElementById('cropperModal').style.display = 'flex';
+
+                if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+                setTimeout(() => {
+                    cropperInstance = new Cropper(img, {
+                        aspectRatio: 16 / 9,
+                        viewMode: 1,
+                        dragMode: 'move',
+                        autoCropArea: 1,
+                        restore: false,
+                        guides: true,
+                        center: true,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: true,
+                        toggleDragModeOnDblclick: false,
+                    });
+                }, 100);
+            };
+            reader.readAsDataURL(input.files[0]);
+            input.value = ''; 
+        }
+
+        function closeCropper() {
+            document.getElementById('cropperModal').style.display = 'none';
+            if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+        }
+
+        function applyCrop() {
+            if (!cropperInstance) return;
+            cropperInstance.getCroppedCanvas({ width: 1920, height: 1080 }).toBlob(blob => {
+                croppedBlobs[currentBannerSlot] = blob;
+
+                const url = URL.createObjectURL(blob);
+                const slot = document.getElementById('banner' + currentBannerSlot + 'Slot');
+                
+                // Clear existing banner logic if replaced
+                document.getElementById('existingBanner' + currentBannerSlot).value = '';
+
+                const oldImg = slot.querySelector('img');
+                const oldPlaceholder = slot.querySelector('.placeholder-content');
+                if (oldImg) oldImg.remove();
+                if (oldPlaceholder) oldPlaceholder.style.display = 'none';
+                
+                const img = document.createElement('img');
+                img.src = url;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                img.style.position = 'absolute';
+                img.style.inset = '0';
+                slot.appendChild(img);
+                
+                closeCropper();
+            }, 'image/jpeg', 0.92);
+        }
+
+        // ─── TICKETS ─────────────────────────────────────────────────────────
         const existingTickets = <%- JSON.stringify(tickets) %>;
         let ticketCount = 0;
         const ticketsContainer = document.getElementById('ticketsContainer');
@@ -193,22 +312,23 @@
                     <button type="button" class="remove-ticket-btn" onclick="this.closest('.ticket-variant').remove()"><i class="fi fi-rr-trash"></i></button>
                 </div>
                 <div class="ticket-variant-body">
+                    <input type="hidden" class="ticket-id" value="${t._id || ''}">
                     <div class="form-floating mb-3">
-                        <input type="text" class="form-control input ticket-name" placeholder=" " value="${t.name}" required>
+                        <input type="text" class="form-control input ticket-name" placeholder=" " value="${t.name}" data-rule="required">
                         <label>Ticket Name</label>
                     </div>
                     <div class="row g-2 mb-3">
                         <div class="col-6"><div class="form-floating">
-                            <input type="number" class="form-control input ticket-price" placeholder=" " value="${t.price}" min="0" required>
+                            <input type="number" class="form-control input ticket-price" placeholder=" " value="${t.price}" data-rule="required, number" data-min="0">
                             <label>Price (₹)</label>
                         </div></div>
                         <div class="col-6"><div class="form-floating">
-                            <input type="number" class="form-control input ticket-capacity" placeholder=" " value="${t.capacity}" min="1" required>
+                            <input type="number" class="form-control input ticket-capacity" placeholder=" " value="${t.capacity}" data-rule="required, number" data-min="1">
                             <label>Capacity</label>
                         </div></div>
                     </div>
                     <div class="form-floating">
-                        <input type="number" class="form-control input ticket-max" placeholder=" " value="${t.maxPerUser}" min="1" required>
+                        <input type="number" class="form-control input ticket-max" placeholder=" " value="${t.maxPerUser}" data-rule="required, number" data-min="1">
                         <label>Max Per User</label>
                     </div>
                 </div>`;
@@ -217,25 +337,96 @@
 
         existingTickets.length > 0 ? existingTickets.forEach(t => addTicketVariant(t)) : addTicketVariant();
 
-        // â”€â”€â”€ SUBMIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ─── DRAFT SUBMIT ────────────────────────────────────────────────────
+        async function submitDraft() {
+            const title = document.getElementById('title').value.trim();
+            if (!title) {
+                return Toast.error('Event title is required to save as draft.');
+            }
+
+            const ticketEls = ticketsContainer.querySelectorAll('.ticket-variant');
+            const tickets = [];
+            for (const el of ticketEls) {
+                const id = el.querySelector('.ticket-id').value;
+                const name = el.querySelector('.ticket-name').value.trim();
+                const price = parseFloat(el.querySelector('.ticket-price').value);
+                const capacity = parseInt(el.querySelector('.ticket-capacity').value);
+                const max = parseInt(el.querySelector('.ticket-max').value);
+                if (name) {
+                    tickets.push({ 
+                        _id: id ? id : undefined,
+                        name: name,  
+                        price: isNaN(price) ? 0 : price, 
+                        capacity: isNaN(capacity) ? 1 : capacity, 
+                        maxPerUser: isNaN(max) ? 1 : max 
+                    });
+                }
+            }
+
+            const formData = new FormData(document.getElementById('editEventForm'));
+            formData.append('tickets', JSON.stringify(tickets));
+            formData.append('action', 'draft');
+            if (croppedBlobs[1]) formData.append('banners', croppedBlobs[1], 'banner1.jpg');
+            if (croppedBlobs[2]) formData.append('banners', croppedBlobs[2], 'banner2.jpg');
+
+            Loader.show('SAVING DRAFT...');
+            try {
+                const res = await axios.post('/organizer/events/<%= event._id %>/update', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                if (res.data.success) {
+                    Toast.success('Draft saved successfully!');
+                    setTimeout(() => window.location.reload(), 1000);
+                }
+            } catch (err) {
+                Toast.error(err.response?.data?.message || 'Failed to save draft.');
+            } finally { Loader.hide(); }
+        }
+
+        // ─── SUBMIT ──────────────────────────────────────────────────────────
         document.getElementById('editEventForm').addEventListener('submit', async e => {
             e.preventDefault();
+
+            // ── Date & Time Validation ──────────────────────────────────────────
+            const startDate = document.getElementById('startDate').value;
+            const startTime = document.getElementById('startTime').value;
+            const endDate   = document.getElementById('endDate').value;
+            const endTime   = document.getElementById('endTime').value;
+
+            if (!startDate) return Toast.error('Start date is required.');
+            if (!startTime) return Toast.error('Start time is required.');
+            if (!endDate)   return Toast.error('End date is required.');
+            if (!endTime)   return Toast.error('End time is required.');
+
+            if (endDate < startDate) {
+                return Toast.error('End date must be the same or after the start date.');
+            }
+
+            if (startDate === endDate && endTime <= startTime) {
+                return Toast.error('End time must be after start time when the event starts and ends on the same day.');
+            }
+
+            // ── Ticket Validation ───────────────────────────────────────────────
             const ticketEls = ticketsContainer.querySelectorAll('.ticket-variant');
             if (!ticketEls.length) return Toast.error('Add at least one ticket tier.');
 
             const tickets = [];
             for (const el of ticketEls) {
-                const name = el.querySelector('.ticket-name').value.trim();
-                const price = parseFloat(el.querySelector('.ticket-price').value);
-                const capacity = parseInt(el.querySelector('.ticket-capacity').value);
+                const id         = el.querySelector('.ticket-id').value;
+                const name       = el.querySelector('.ticket-name').value.trim();
+                const price      = parseFloat(el.querySelector('.ticket-price').value);
+                const capacity   = parseInt(el.querySelector('.ticket-capacity').value);
                 const maxPerUser = parseInt(el.querySelector('.ticket-max').value);
                 if (!name || isNaN(price) || price < 0 || !capacity || capacity < 1)
                     return Toast.error('Please fill all ticket fields correctly.');
-                tickets.push({ name, price, capacity, maxPerUser });
+                tickets.push({ _id: id ? id : undefined, name, price, capacity, maxPerUser });
             }
 
             const formData = new FormData(document.getElementById('editEventForm'));
             formData.append('tickets', JSON.stringify(tickets));
+            formData.append('action', 'publish');
+            if (croppedBlobs[1]) formData.append('banners', croppedBlobs[1], 'banner1.jpg');
+            if (croppedBlobs[2]) formData.append('banners', croppedBlobs[2], 'banner2.jpg');
 
             Loader.show('SAVING CHANGES...');
             try {
@@ -243,7 +434,7 @@
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
                 if (res.data.success) {
-                    Toast.success(res.data.message);
+                    Toast.success('Event published successfully!');
                     setTimeout(() => window.location.href = '/organizer/events/<%= event._id %>', 1500);
                 }
             } catch (err) {

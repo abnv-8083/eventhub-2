@@ -1,54 +1,324 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <%- include('../../partials/head', { title: 'Booking Confirmed' }) %>
+    <style>
+        /* Premium Aesthetic Ticket Design */
+        .success-page-wrapper {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 1rem;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Ambient background glow */
+        .success-page-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(46, 204, 113, 0.15) 0%, transparent 70%);
+            z-index: 0;
+            animation: pulseGlow 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+        }
+
+        /* The Digital Ticket */
+        .digital-ticket {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 480px;
+            background: rgba(15, 15, 15, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        @keyframes slideUpFade {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Ticket Top Section */
+        .ticket-header {
+            padding: 3rem 2.5rem 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        /* Animated Success Badge */
+        .success-badge {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(46, 204, 113, 0.4), inset 0 2px 0 rgba(255,255,255,0.3);
+            animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
+            opacity: 0;
+            transform: scale(0.5);
+        }
+
+        .success-badge i {
+            font-size: 2.5rem;
+            color: #fff;
+            animation: drawCheck 0.5s ease-out 0.8s forwards;
+            opacity: 0;
+        }
+
+        @keyframes popIn {
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes drawCheck {
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .ticket-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #ffffff, #aaaaaa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+            animation: fadeIn 0.5s ease 0.6s forwards;
+            opacity: 0;
+        }
+
+        .ticket-subtitle {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1rem;
+            line-height: 1.5;
+            animation: fadeIn 0.5s ease 0.7s forwards;
+            opacity: 0;
+        }
+
+        .ticket-subtitle strong {
+            color: #fff;
+        }
+
+        /* Ticket Tear Line (Dashed separator with side cutouts) */
+        .ticket-separator {
+            position: relative;
+            height: 2px;
+            background-image: linear-gradient(to right, rgba(255,255,255,0.2) 50%, transparent 50%);
+            background-size: 10px 10px;
+            background-repeat: repeat-x;
+            margin: 0 1rem;
+            animation: fadeIn 0.5s ease 0.8s forwards;
+            opacity: 0;
+        }
+
+        .ticket-separator::before,
+        .ticket-separator::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 30px;
+            height: 30px;
+            background: #000; /* Match body background */
+            border-radius: 50%;
+            transform: translateY(-50%);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        .ticket-separator::before {
+            left: -26px; /* Offset to stick out */
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .ticket-separator::after {
+            right: -26px;
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Ticket Details Section */
+        .ticket-body {
+            padding: 2.5rem;
+            animation: fadeIn 0.5s ease 0.9s forwards;
+            opacity: 0;
+        }
+
+        .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .receipt-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #fff;
+            font-size: 1.05rem;
+        }
+
+        .item-meta {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.85rem;
+            font-family: monospace;
+            letter-spacing: 0.5px;
+        }
+
+        .item-price {
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .grand-total-box {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.1) 0%, rgba(46, 204, 113, 0.02) 100%);
+            border: 1px solid rgba(46, 204, 113, 0.2);
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .total-label {
+            color: #2ecc71;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-size: 0.85rem;
+        }
+
+        .total-amount {
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.8rem;
+            text-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+        }
+
+        /* Actions Section */
+        .ticket-footer {
+            padding: 0 2.5rem 3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            animation: fadeIn 0.5s ease 1s forwards;
+            opacity: 0;
+        }
+
+        .btn-premium {
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.05rem;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-decoration: none;
+            gap: 10px;
+        }
+
+        .btn-primary-glow {
+            background: linear-gradient(135deg, var(--primary), #d81b60);
+            color: #fff;
+            box-shadow: 0 10px 20px rgba(230, 57, 70, 0.3), inset 0 2px 0 rgba(255,255,255,0.2);
+            border: none;
+        }
+
+        .btn-primary-glow:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(230, 57, 70, 0.4), inset 0 2px 0 rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+        .btn-glass {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .btn-glass:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+            color: #fff;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+    </style>
 </head>
-<body class="bg-mesh">
+<body style="background: #000; min-height: 100vh;">
     <%- include('../../partials/navbars/user-nav') %>
 
-    <div class="container py-5" style="margin-top: 80px;">
-        <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-5">
-                <div class="glass-dark p-5 rounded-4 text-center animate stagger-1">
+    <div class="success-page-wrapper">
+        <div class="digital-ticket">
+            
+            <div class="ticket-header">
+                <div class="success-badge">
+                    <i class="fi fi-rr-check"></i>
+                </div>
+                <h1 class="ticket-title">Booking Confirmed!</h1>
+                <p class="ticket-subtitle">Your tickets for<br><strong><%= event.title %></strong><br>have been secured.</p>
+            </div>
+
+            <div class="ticket-separator"></div>
+
+            <div class="ticket-body">
+                <div style="margin-bottom: 2rem;">
+                    <div style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.75rem; color: rgba(255,255,255,0.3); margin-bottom: 1rem; font-weight: 700;">Order Details</div>
                     
-                    <div class="success-icon mb-4 mx-auto d-flex align-items-center justify-content-center" 
-                         style="width: 80px; height: 80px; background: rgba(46, 204, 113, 0.1); border-radius: 50%; color: #2ecc71;">
-                        <i class="fi fi-rr-check-circle" style="font-size: 2.5rem; line-height: 0;"></i>
-                    </div>
-
-                    <h3 class="fw-bold text-white mb-2">Booking Confirmed!</h3>
-                    <p class="text-dim mb-4">Your tickets for <strong><%= event.title %></strong> have been booked successfully.</p>
-
-                    <div class="order-summary text-start glass-dark p-4 rounded-3 mb-4" style="background: rgba(0,0,0,0.2);">
-                        <h6 class="fw-bold mb-3 text-uppercase" style="letter-spacing: 1px; font-size: 0.8rem; color: #aaa;">Order Summary</h6>
-                        
-                        <% if (booking && booking.tickets && booking.tickets.length > 0) { %>
-                            <% booking.tickets.forEach(item => { %>
-                                <div class="d-flex justify-content-between align-items-center mb-3 pb-3" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                    <div>
-                                        <h6 class="m-0 text-white"><%= item.ticketName %></h6>
-                                        <small class="text-dim">Qty: <%= item.quantity %> × ₹<%= item.ticketPrice.toLocaleString('en-IN') %></small>
-                                    </div>
-                                    <div class="text-end">
-                                        <strong style="color: #2ecc71;">₹<%= (item.quantity * item.ticketPrice).toLocaleString('en-IN') %></strong>
-                                    </div>
+                    <% if (booking && booking.tickets && booking.tickets.length > 0) { %>
+                        <% booking.tickets.forEach(item => { %>
+                            <div class="receipt-item">
+                                <div>
+                                    <div class="item-name"><%= item.ticketName %></div>
+                                    <div class="item-meta"><%= item.quantity %> × ₹<%= item.ticketPrice.toLocaleString('en-IN') %></div>
                                 </div>
-                            <% }) %>
-                        <% } %>
+                                <div class="item-price">₹<%= (item.quantity * item.ticketPrice).toLocaleString('en-IN') %></div>
+                            </div>
+                        <% }) %>
+                    <% } %>
+                </div>
 
-                        <div class="d-flex justify-content-between align-items-center mt-2">
-                            <h6 class="m-0 text-white">Grand Total</h6>
-                            <h5 class="m-0" style="color: #2ecc71; font-weight: 700;">₹<%= totalAmount.toLocaleString('en-IN') %></h5>
-                        </div>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <a href="/user/tickets" class="btn btn-primary py-2 fw-bold">View My Tickets</a>
-                        <a href="/events" class="btn btn-outline py-2">Browse More Events</a>
-                    </div>
-
+                <div class="grand-total-box">
+                    <div class="total-label">Grand Total</div>
+                    <div class="total-amount">₹<%= totalAmount.toLocaleString('en-IN') %></div>
                 </div>
             </div>
+
+            <div class="ticket-footer">
+                <a href="/user/tickets" class="btn-premium btn-primary-glow">
+                    <i class="fi fi-rr-ticket"></i> View My Tickets
+                </a>
+                <a href="/events" class="btn-premium btn-glass">
+                    <i class="fi fi-rr-apps"></i> Browse More Events
+                </a>
+            </div>
+
         </div>
     </div>
 </body>

@@ -17,11 +17,16 @@ userAuthRouter.get('/google/callback',isUserGuest,
     passport.authenticate('google',{failureRedirect: '/user/login'}),
     (req,res)=>{
         if(req.user){
+            if (req.user.isBlocked) {
+                return res.redirect('/user/login?message=Your%20account%20is%20blocked%20by%20the%20admin');
+            }
+
             const cleanUser = {
                 _id: req.user._id.toString(),
                 fullName: req.user.fullName,
                 email: req.user.email,
-                avatar: req.user.avatar
+                avatar: req.user.avatar,
+                googleId: req.user.googleId
             };
 
             req.session.user = cleanUser
@@ -60,7 +65,7 @@ userAuthRouter.route('/reset-password')
 
 
 userAuthRouter.route('/verify-otp')
-    .get(isUserGuest,userAuthController.getOtpPage)
+    .get(userAuthController.getOtpPage)
     .post(userAuthController.postOtpPage)
 
 userAuthRouter.post('/logout', userAuthController.userLogout)

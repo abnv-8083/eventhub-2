@@ -24,19 +24,19 @@ const ticketSubSchema = new mongoose.Schema({
 // ─── Event Schema ─────────────────────────────────────────────────────────────
 const eventSchema = new mongoose.Schema({
     title:       { type: String, required: true, trim: true },
-    description: { type: String, required: true },
-    category:    { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
+    description: { type: String, required: function() { return this.status !== 'draft'; } },
+    category:    { type: String, required: function() { return this.status !== 'draft'; } },
 
     location: {
-        address: { type: String, required: true },
-        lat:     { type: Number, required: true },
-        lng:     { type: Number, required: true }
+        address: { type: String, required: function() { return this.status !== 'draft'; } },
+        lat:     { type: Number, required: function() { return this.status !== 'draft'; } },
+        lng:     { type: Number, required: function() { return this.status !== 'draft'; } }
     },
 
-    startDate: { type: Date,   required: true },
-    startTime: { type: String, required: true },
-    endDate:   { type: Date,   required: true },
-    endTime:   { type: String, required: true },
+    startDate: { type: Date,   required: function() { return this.status !== 'draft'; } },
+    startTime: { type: String, required: function() { return this.status !== 'draft'; } },
+    endDate:   { type: Date,   required: function() { return this.status !== 'draft'; } },
+    endTime:   { type: String, required: function() { return this.status !== 'draft'; } },
 
     banners: {
         type: [String],
@@ -56,7 +56,7 @@ const eventSchema = new mongoose.Schema({
     isFeatured: { type: Boolean, default: false },
     organizer:  { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 
-    status:    { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    status:    { type: String, enum: ['draft', 'pending', 'approved', 'rejected', 'inactive'], default: 'draft' },
     isBlocked: { type: Boolean, default: false }
 }, { timestamps: true });
 

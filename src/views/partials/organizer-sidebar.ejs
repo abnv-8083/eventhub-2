@@ -1,17 +1,59 @@
+<!-- src/views/partials/organizer-sidebar.ejs -->
 <aside class="sidebar">
-    <div class="sidebar-nav">
+    <button class="sidebar-toggle-btn" id="orgSidebarToggleBtn" title="Toggle Sidebar">
+        <i class="fi fi-rr-angle-left"></i>
+    </button>
+
+    <nav class="sidebar-nav px-2">
         <a href="/organizer/dashboard" class="<%= title === 'Dashboard' ? 'active' : '' %>">
             <i class="fi fi-rr-apps"></i> <span>Dashboard</span>
         </a>
-        <a href="/organizer/events" class="<%= title === 'My Events' || title === 'Create Event' || title === 'Manage Events' || title === 'Edit Event' ? 'active' : '' %>">
+        <a href="/organizer/events" class="<%= (title === 'My Events' || title === 'Create Event' || title === 'Manage Events' || title === 'Edit Event') ? 'active' : '' %>">
             <i class="fi fi-rr-calendar-lines"></i> <span>My Events</span>
         </a>
-        <a href="/organizer/tickets" class="<%= title === 'Tickets & Sales' ? 'active' : '' %>">
-            <i class="fi fi-rr-ticket"></i> <span>Tickets & Sales</span>
+        <a href="/organizer/scanner" class="<%= title === 'Ticket Scanner' ? 'active' : '' %>">
+            <i class="fi fi-rr-camera"></i> <span>Ticket Scanner</span>
         </a>
-        <a href="/organizer/settings" class="<%= title === 'Settings' ? 'active' : '' %>">
-            <i class="fi fi-rr-settings"></i> <span>Settings</span>
+        <a href="/organizer/sales-report" class="<%= title === 'Global Sales Report' ? 'active' : '' %>">
+            <i class="fi fi-rr-chart-pie-alt"></i> <span>Global Sales</span>
+        </a>
+
+        <a href="/organizer/profile" class="<%= title === 'Organizer Profile' ? 'active' : '' %>">
+            <i class="fi fi-rr-user"></i> <span>My Profile</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer mt-auto px-2 pb-3">
+        <a href="#" id="orgSideLogoutBtn" class="d-flex align-items-center gap-2" style="font-weight: 600; color: rgba(255,100,100,0.7);">
+            <i class="fi fi-rr-exit"></i> <span>Secure Logout</span>
         </a>
     </div>
 </aside>
 
+<script>
+    document.getElementById('orgSideLogoutBtn')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+            const response = await axios.post('/organizer/logout');
+            if (response.data.success) {
+                window.location.href = '/';
+            }
+        } catch (error) {
+            console.error('Logout failed', error);
+        }
+    });
+
+    // Sidebar Toggle Logic
+    const layout = document.querySelector('.dashboard-layout');
+    const toggleBtn = document.getElementById('orgSidebarToggleBtn');
+    
+    if (layout && toggleBtn) {
+        if (localStorage.getItem('sidebar-collapsed') === 'true') {
+            layout.classList.add('sidebar-collapsed');
+        }
+        toggleBtn.addEventListener('click', () => {
+            layout.classList.toggle('sidebar-collapsed');
+            localStorage.setItem('sidebar-collapsed', layout.classList.contains('sidebar-collapsed'));
+        });
+    }
+</script>

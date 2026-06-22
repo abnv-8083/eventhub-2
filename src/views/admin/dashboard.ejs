@@ -13,74 +13,101 @@
             <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-5 animate stagger-1">
                 <div>
-                    <h2 class="fw-bold">Command Center</h2>
-                    <p class="text-dim m-0">System administration and oversight</p>
+                    <p style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary); font-weight: 700; margin-bottom: 4px;">System Administration</p>
+                    <h2 class="fw-bold m-0" style="letter-spacing: -0.5px;">Command Center</h2>
+                    <p class="text-dim m-0" style="margin-top: 4px; font-size: 0.88rem;">Real-time platform oversight and control</p>
                 </div>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="row g-4 mb-5 animate stagger-2">
+            <!-- Primary Stats Grid -->
+            <div class="row g-4 mb-4 animate stagger-2">
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07); cursor:pointer;" onclick="window.location.href='/admin/users'">
+                    <div class="glass-premium stat-card" style="border-radius: 16px; cursor: pointer;" onclick="window.location.href='/admin/users'">
                         <div class="d-flex justify-content-between align-items-start mb-3">
-                            <p class="text-dim small text-uppercase fw-bold m-0" style="letter-spacing:0.07em;">Total Users</p>
-                            <i class="fi fi-rr-user" style="color:var(--primary);"></i>
+                            <span class="stat-label">Total Users</span>
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(230,57,70,0.12); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.1rem;">
+                                <i class="fi fi-rr-user"></i>
+                            </div>
                         </div>
-                        <h3 class="fw-bold text-white m-0" style="font-size:2rem;"><%= totalUsers %></h3>
+                        <div class="stat-number"><%= totalUsers %></div>
+                        <p class="text-dim m-0" style="font-size: 0.75rem; margin-top: 8px !important;">Click to manage &rarr;</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07); cursor:pointer;" onclick="window.location.href='/admin/organizers'">
+                    <div class="glass-premium stat-card" style="border-radius: 16px; cursor: pointer;" onclick="window.location.href='/admin/organizers'">
                         <div class="d-flex justify-content-between align-items-start mb-3">
-                            <p class="text-dim small text-uppercase fw-bold m-0" style="letter-spacing:0.07em;">Organizers</p>
-                            <i class="fi fi-rr-building" style="color:#3498db;"></i>
+                            <span class="stat-label">Organizers</span>
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(52,152,219,0.12); display: flex; align-items: center; justify-content: center; color: #3498db; font-size: 1.1rem;">
+                                <i class="fi fi-rr-building"></i>
+                            </div>
                         </div>
-                        <h3 class="fw-bold text-white m-0" style="font-size:2rem;"><%= totalOrganizers %></h3>
+                        <div class="stat-number" style="color: #3498db;"><%= totalOrganizers %></div>
+                        <p class="text-dim m-0" style="font-size: 0.75rem; margin-top: 8px !important;">Click to review &rarr;</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07); border-left:3px solid #f39c12; cursor:pointer;" onclick="window.location.href='/admin/events'">
+                    <div class="glass-premium stat-card" style="border-radius: 16px; cursor: pointer; border-left: 3px solid #f39c12 !important;" onclick="window.location.href='/admin/events'">
                         <div class="d-flex justify-content-between align-items-start mb-3">
-                            <p class="text-dim small text-uppercase fw-bold m-0" style="letter-spacing:0.07em;">Pending Events</p>
-                            <i class="fi fi-rr-clock" style="color:#f39c12;"></i>
+                            <span class="stat-label">Pending Events</span>
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(243,156,18,0.12); display: flex; align-items: center; justify-content: center; color: #f39c12; font-size: 1.1rem;">
+                                <i class="fi fi-rr-clock"></i>
+                            </div>
                         </div>
-                        <h3 class="fw-bold text-white m-0" style="font-size:2rem;"><%= pendingEvents %></h3>
+                        <div class="stat-number" style="color: #f39c12;"><%= pendingEvents %></div>
+                        <p class="text-dim m-0" style="font-size: 0.75rem; margin-top: 8px !important;">Awaiting approval</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07); border-left:3px solid #2ecc71;">
+                    <div class="glass-premium stat-card" style="border-radius: 16px; border-left: 3px solid #2ecc71 !important;">
                         <div class="d-flex justify-content-between align-items-start mb-3">
-                            <p class="text-dim small text-uppercase fw-bold m-0" style="letter-spacing:0.07em;">Total Revenue</p>
-                            <i class="fi fi-rr-money" style="color:#2ecc71;"></i>
+                            <span class="stat-label">Total Revenue</span>
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(46,204,113,0.12); display: flex; align-items: center; justify-content: center; color: #2ecc71; font-size: 1.1rem;">
+                                <i class="fi fi-rr-money"></i>
+                            </div>
                         </div>
-                        <h3 class="fw-bold text-white m-0" style="font-size:2rem;">₹<%= totalRevenue.toLocaleString('en-IN') %></h3>
+                        <div class="stat-number" style="color: #2ecc71; font-size: 1.9rem;">&#8377;<%= totalRevenue.toLocaleString('en-IN') %></div>
+                        <p class="text-dim m-0" style="font-size: 0.75rem; margin-top: 8px !important;">Platform lifetime</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Secondary stats -->
+            <!-- Secondary Stats -->
             <div class="row g-4 mb-5 animate stagger-3">
                 <div class="col-sm-6">
-                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07);">
-                        <p class="text-dim small text-uppercase fw-bold mb-2">Total Events</p>
-                        <h4 class="text-white m-0"><%= totalEvents %></h4>
+                    <div class="glass-premium p-4" style="border-radius: 16px; border: 1px solid rgba(255,255,255,0.07);">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="text-dim" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 6px;">Total Events</p>
+                                <h4 class="text-white m-0" style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display);"><%= totalEvents %></h4>
+                            </div>
+                            <i class="fi fi-rr-calendar-lines" style="font-size: 2rem; color: rgba(255,255,255,0.1);"></i>
+                        </div>
                     </div>
                 </div>
                 <div class="col-sm-6">
-                    <div class="glass-dark p-4 rounded-3" style="border:1px solid rgba(255,255,255,0.07);">
-                        <p class="text-dim small text-uppercase fw-bold mb-2">Total Bookings</p>
-                        <h4 class="text-white m-0"><%= totalBookings %></h4>
+                    <div class="glass-premium p-4" style="border-radius: 16px; border: 1px solid rgba(255,255,255,0.07);">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="text-dim" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 6px;">Total Bookings</p>
+                                <h4 class="text-white m-0" style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display);"><%= totalBookings %></h4>
+                            </div>
+                            <i class="fi fi-rr-ticket" style="font-size: 2rem; color: rgba(255,255,255,0.1);"></i>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Recent Events -->
-            <div class="glass-dark p-4 rounded-3 animate stagger-4" style="border:1px solid rgba(255,255,255,0.07);">
+            <!-- Recent Events Table -->
+            <div class="glass-premium p-4 animate stagger-4" style="border-radius: 18px; border: 1px solid rgba(255,255,255,0.07);">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h5 class="fw-bold m-0">Recent Events</h5>
-                    <a href="/admin/events" class="text-dim small" style="text-decoration:none;">View all →</a>
+                    <a href="/admin/events" class="text-dim" style="font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,0.08); border-radius: 100px; padding: 5px 14px; transition: all 0.2s;"
+                       onmouseover="this.style.borderColor='rgba(230,57,70,0.3)'; this.style.color='white';"
+                       onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.color='';">
+                        View all <i class="fi fi-rr-arrow-right" style="font-size: 0.75rem;"></i>
+                    </a>
                 </div>
-                <div style="overflow-x:auto;">
+                <div style="overflow-x: auto;">
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -95,14 +122,14 @@
                                 <% recentEvents.forEach(event => { %>
                                 <tr>
                                     <td>
-                                        <p class="fw-bold text-white mb-0" style="font-size:0.9rem;"><%= event.title %></p>
-                                        <p class="text-dim mb-0" style="font-size:0.76rem;"><%= event.category?.name %></p>
+                                        <p class="fw-bold text-white mb-0" style="font-size: 0.9rem;"><%= event.title %></p>
+                                        <p class="text-dim mb-0" style="font-size: 0.76rem;"><%= event.category?.name %></p>
                                     </td>
-                                    <td class="text-dim" style="font-size:0.85rem;">
+                                    <td class="text-dim" style="font-size: 0.85rem;">
                                         <%= event.organizer?.organizationName || event.organizer?.fullName || '—' %>
                                     </td>
-                                    <td class="text-dim" style="font-size:0.85rem;">
-                                        <%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %>
+                                    <td class="text-dim" style="font-size: 0.85rem;">
+                                        <%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %>
                                     </td>
                                     <td><span class="status-badge status-<%= event.status %>"><%= event.status %></span></td>
                                 </tr>
@@ -116,5 +143,13 @@
             </div>
         </main>
     </div>
+    <script>
+        // Listen for live admin notifications (e.g. new organizer approval requests)
+        if (window.socket) {
+            window.socket.on('bookingStatusUpdate', (data) => {
+                setTimeout(() => window.location.reload(), 2000);
+            });
+        }
+    </script>
 </body>
 </html>

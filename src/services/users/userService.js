@@ -33,9 +33,9 @@ export const updateUserProfile = async (userId, updateData)=>{
 
 export const updateUserEmail = async (userData)=>{
 
-    const checkUser = await User.findOne({email: userData.email, role: 'user'})
+    const checkUser = await User.findOne({email: userData.email})
     if(checkUser){
-        throw new AppError('Email Already Exist', HTTP_STATUS.NOT_FOUND)
+        throw new AppError('Email Already Exist', HTTP_STATUS.BAD_REQUEST)
     }
 
     const otp = generateOTP()
@@ -53,7 +53,7 @@ export const updateUserEmail = async (userData)=>{
 
 export const updateEmail = async (userId,newEmail)=>{
     const updateEmail = await User.findByIdAndUpdate(
-        {_id: userId},
+        userId,
         {email: newEmail},
         {new: true}
     )
@@ -97,6 +97,7 @@ export const updatePassword = async (userId, currentPassword, newPassword, actio
             {$set: {password: hashPassword}},
             {new: true}
         ).select('+password')
+        return addPassword
     }else{
         throw new AppError('Unknown Action', HTTP_STATUS.BAD_REQUEST)
     }

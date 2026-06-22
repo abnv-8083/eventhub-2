@@ -3,10 +3,63 @@ import Notification from '../../models/notifications/notification.js';
 import Booking from '../../models/payments/booking.js';
 import Payout from '../../models/payments/payout.js';
 import User from '../../models/users/user.js';
+import Coupon from '../../models/payments/coupon.js';
 import AppError from '../../utils/AppError.js';
 import HTTP_STATUS from '../../constant/statusCode.js';
+import Platform from '../../models/admin/platform.js';
 import * as socketUtil from '../../utils/socket.js';
-import { sendNotification } from '../../utils/notify.js';
+import { sendNotification, notifyAllAdmins } from '../../utils/notify.js';
+import { PAYMENT_STATUS } from '../../constant/paymentConstants.js';
+
+// ─── Helper: Calculate Strict Refund with Coupons ─────────────────────────────
+const calculatePartialRefund = async (booking, cancelledTicketsConfig) => {
+    // cancelledTicketsConfig: Array of { ticketId, quantity }
+    
+    // 1. Calculate the base value of all ACTIVE tickets BEFORE this cancellation
+    const originalBaseTotal = booking.tickets
+        .filter(t => t.status === 'active')
+        .reduce((sum, t) => sum + (t.ticketPrice * t.quantity), 0);
+
+    // 2. Calculate the base value of the tickets being kept
+    let newBaseTotal = originalBaseTotal;
+    for (const cancel of cancelledTicketsConfig) {
+        const ticketItem = booking.tickets.id(cancel.ticketId) || booking.tickets.find(t => t.ticket.toString() === cancel.ticketId.toString());
+        if (ticketItem) {
+            newBaseTotal -= (ticketItem.ticketPrice * cancel.quantity);
+        }
+    }
+    newBaseTotal = Math.max(0, newBaseTotal);
+
+    let newDiscount = 0;
+    
+    // 3. Re-evaluate Coupon
+    if (booking.coupon) {
+        const coupon = await Coupon.findById(booking.coupon);
+        if (coupon && newBaseTotal >= coupon.minPurchase) {
+            if (coupon.discountType === 'percentage') {
+                newDiscount = (newBaseTotal * coupon.discountValue) / 100;
+            } else {
+                newDiscount = coupon.discountValue;
+            }
+            if (coupon.maxDiscount > 0 && newDiscount > coupon.maxDiscount) {
+                newDiscount = coupon.maxDiscount;
+            }
+        }
+    }
+
+    const newCartTotal = Math.max(0, newBaseTotal - newDiscount);
+    
+    // 4. Refund is whatever was paid minus the new required total
+    let refundAmount = booking.totalAmount - newCartTotal;
+    
+    // If the new cart total is somehow larger than what they originally paid (e.g. lost a massive flat discount)
+    if (refundAmount < 0) refundAmount = 0;
+    
+    return {
+        refundAmount: Math.round(refundAmount * 100) / 100,
+        newCartTotal: Math.round(newCartTotal * 100) / 100
+    };
+};
 
 export const getEventBookings = async (eventId, organizerId, { search = '', sort = 'newest', status = 'all', page = 1, limit = 10 }) => {
     const skip = (parseInt(page) - 1) * limit;
@@ -15,7 +68,7 @@ export const getEventBookings = async (eventId, organizerId, { search = '', sort
     if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
 
     const revenueData = await Booking.aggregate([
-        { $match: { event: event._id, paymentStatus: 'completed' } },
+        { $match: { event: event._id, paymentStatus: PAYMENT_STATUS.COMPLETED } },
         { $group: { _id: null, total: { $sum: "$totalAmount" } } }
     ]);
     const totalRevenue = revenueData[0]?.total || 0;
@@ -88,7 +141,115 @@ export const getEventBookings = async (eventId, organizerId, { search = '', sort
         counts.all += item.count;
     });
 
-    return { event, bookings: bookings[0].data, totalRevenue, payout, total, totalPages, counts };
+    // Count pending cancellation requests for this event
+    const pendingCancelCount = await Booking.countDocuments({
+        event: event._id,
+        'cancellationRequest.status': 'pending'
+    });
+
+    return { event, bookings: bookings[0].data, totalRevenue, payout, total, totalPages, counts, pendingCancelCount };
+};
+
+export const getEventCancellations = async (eventId, organizerId, { search = '', sort = 'newest', status = 'all', page = 1, limit = 10 }) => {
+    const skip = (parseInt(page) - 1) * limit;
+
+    const event = await Event.findOne({ _id: eventId, organizer: organizerId });
+    if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
+
+    // Initial match: must belong to event and have some form of cancellation
+    const matchStage = {
+        event: event._id,
+        $or: [
+            { status: 'cancelled' },
+            { 'cancellationRequest.status': { $ne: 'none' } },
+            { 'tickets.status': 'cancelled' }
+        ]
+    };
+
+    if (status !== 'all') {
+        if (status === 'direct') {
+            matchStage.status = 'cancelled';
+            matchStage['cancellationRequest.status'] = 'none';
+        } else {
+            matchStage['cancellationRequest.status'] = status;
+        }
+    }
+
+    const sortStage = {};
+    if (sort === 'oldest') sortStage['cancellationRequest.requestedAt'] = 1;
+    else sortStage['cancellationRequest.requestedAt'] = -1; // newest first by default
+
+    const bookings = await Booking.aggregate([
+        { $match: matchStage },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'user',
+                foreignField: '_id',
+                as: 'user'
+            }
+        },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+        {
+            $match: search ? {
+                $or: [
+                    { "user.fullName": { $regex: search, $options: 'i' } },
+                    { "user.email": { $regex: search, $options: 'i' } },
+                    { "tickets.ticketName": { $regex: search, $options: 'i' } }
+                ]
+            } : {}
+        },
+        { $sort: sortStage },
+        {
+            $facet: {
+                metadata: [{ $count: "total" }],
+                data: [{ $skip: skip }, { $limit: limit }]
+            }
+        }
+    ]);
+
+    const total = bookings[0].metadata[0]?.total || 0;
+    
+    // Status counts
+    const statusCounts = await Booking.aggregate([
+        { 
+            $match: {
+                event: event._id,
+                $or: [
+                    { status: 'cancelled' },
+                    { 'cancellationRequest.status': { $ne: 'none' } },
+                    { 'tickets.status': 'cancelled' }
+                ]
+            } 
+        },
+        { 
+            $group: { 
+                _id: {
+                    $cond: [
+                        { $eq: ["$cancellationRequest.status", "none"] },
+                        "direct",
+                        "$cancellationRequest.status"
+                    ]
+                }, 
+                count: { $sum: 1 } 
+            } 
+        }
+    ]);
+
+    const counts = { all: 0, pending: 0, approved: 0, rejected: 0, direct: 0 };
+    statusCounts.forEach(item => {
+        if (item._id) counts[item._id] = item.count;
+        counts.all += item.count;
+    });
+
+    return {
+        event,
+        cancellations: bookings[0].data,
+        total,
+        totalPages: Math.ceil(total / limit) || 1,
+        currentPage: parseInt(page),
+        counts
+    };
 };
 
 
@@ -112,13 +273,15 @@ export const cancelBookingByOrganizer = async (bookingId, organizerId) => {
     if (!booking) throw new AppError('Booking not found', HTTP_STATUS.NOT_FOUND);
     if (booking.event?.organizer?.toString() !== organizerId.toString()) throw new AppError('Unauthorized', HTTP_STATUS.FORBIDDEN);
     if (booking.status === 'cancelled') throw new AppError('Booking is already cancelled', HTTP_STATUS.BAD_REQUEST);
+    if (booking.status === 'on_hold') throw new AppError('Booking is on hold and cannot be cancelled.', HTTP_STATUS.BAD_REQUEST);
 
-    booking.status        = 'cancelled';
-    booking.cancelledAt   = new Date();
-    booking.paymentStatus = 'refunded';
+    booking.status      = 'cancelled';
+    booking.cancelledAt = new Date();
+    // Wallet refunds are instant; Razorpay needs manual processing
+    booking.paymentStatus = booking.paymentMethod === 'wallet' ? PAYMENT_STATUS.REFUNDED : PAYMENT_STATUS.PENDING_REFUND;
     await booking.save();
 
-    // <--- NEW: Release seats properly for Shopping Cart Array --->
+    // <--- Release seats properly for Shopping Cart Array --->
     if (booking.tickets && booking.tickets.length > 0) {
         for (const t of booking.tickets) {
             await Event.findOneAndUpdate(
@@ -137,35 +300,39 @@ export const cancelBookingByOrganizer = async (bookingId, organizerId) => {
     }
 
     if (booking.paymentMethod === 'wallet') {
-        const user = await User.findById(booking.user);
-        if (user) {
-            user.wallet.balance += booking.totalAmount;
-            user.wallet.transactions.push({
-                type: 'credit',
-                amount: booking.totalAmount,
-                description: `Organizer refund: ${booking.event?.title || 'Event'}`
-            });
-            await user.save();
-        }
-
-        const userId = String(user._id).trim()
+        const userId = String(booking.user).trim();
+        const description = `Organizer refund: ${booking.event?.title || 'Event'}`;
+        
+        await User.findByIdAndUpdate(userId, {
+            $inc: { 'wallet.balance': booking.totalAmount },
+            $push: {
+                'wallet.transactions': {
+                    type: 'credit',
+                    amount: booking.totalAmount,
+                    description
+                }
+            }
+        });
 
         await sendNotification(
             userId,
-            `Your ${booking.event?.title || 'Event'} Total ${booking.totalAmount} is successfully Refunded to Your Wallet`        )
+            `Your ${booking.event?.title || 'Event'} booking has been cancelled. ₹${booking.totalAmount.toLocaleString('en-IN')} refunded to your wallet.`,
+            'info'
+        );
 
         return { message: `Booking cancelled. ₹${booking.totalAmount.toLocaleString('en-IN')} refunded to user's wallet.` };
     }
 
-    const organizer = await User.findById(organizerId)
-
-    const userId = String(booking.user).trim()
+    // Razorpay — notify user about manual refund process
+    const organizer = await User.findById(organizerId);
+    const userId = String(booking.user).trim();
     await sendNotification(
         userId,
-        `Your ${booking.event?.title || 'Event'} has Cancelled By ${organizer.organizationName}`
-    )
+        `Your booking for "${booking.event?.title || 'Event'}" has been cancelled by ${organizer?.organizationName || 'the organizer'}. Razorpay refund will be processed within 5–7 business days.`,
+        'warning'
+    );
 
-    return { message: 'Booking cancelled. Wallet refund will be processed within 5-7 business days.' };
+    return { message: 'Booking cancelled. Razorpay refund will be processed within 5–7 business days.' };
 };
 
 
@@ -208,22 +375,9 @@ export const unholdBookingByOrganizer = async (bookingId, organizerId) => {
     const notifMessage = `Good news! Your booking for "${eventTitle}" is now active again.`;
 
     // 1. Save to Database
-    const newNotif = await Notification.create({
-        recipient: userId,
-        message: notifMessage,
-        status: 'success' // Matches your schema enum
-    });
+    console.log("🚀 Backend emitting notification to Room ID:", `[${userId}]`);
 
-    console.log("📢 Backend emitting notification to Room ID:", `[${userId}]`);
-
-    // 2. Emit Real-Time Socket
-    io.to(userId).emit('bookingStatusUpdate', {
-        id: newNotif._id,
-        title: 'Booking Resumed',
-        message: notifMessage,
-        status: 'success',
-        date: newNotif.createdAt
-    });
+    await sendNotification(userId, notifMessage, 'success');
 
     return { message: 'Booking resumed successfully.' };
 };
@@ -233,19 +387,46 @@ export const requestPayout = async (eventId, organizerId) => {
     const event = await Event.findOne({ _id: eventId, organizer: organizerId });
     if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
 
+    const now = new Date();
+    const eventEnd = new Date(event.endDate || event.startDate);
+    
+    // We check if the current date is past the event end date
+    // We add 1 day (24 hours) to the end date to ensure the full day has passed, or just check the dates.
+    // If we want exact time, we'd parse event.endTime. For now, simple date comparison is robust.
+    // Actually, setting eventEnd to end of day is safer:
+    eventEnd.setHours(23, 59, 59, 999);
+    
+    if (now < eventEnd) {
+        throw new AppError('Payouts can only be requested after the event has completely finished.', HTTP_STATUS.BAD_REQUEST);
+    }
+
     const existing = await Payout.findOne({ event: eventId });
     if (existing) throw new AppError('Payout already requested', HTTP_STATUS.BAD_REQUEST);
 
-    const bookings = await Booking.find({ event: eventId, paymentStatus: 'completed' });
+    const bookings = await Booking.find({ event: eventId, paymentStatus: PAYMENT_STATUS.COMPLETED });
     const totalRevenue = bookings.reduce((sum, b) => sum + b.totalAmount, 0);
 
     if (totalRevenue === 0) throw new AppError('No revenue to payout', HTTP_STATUS.BAD_REQUEST);
 
-    const platformFee  = totalRevenue * 0.05;
+    let platformFeePercentage = 5;
+    const platform = await Platform.findOne();
+    if (platform && platform.platformFeePercentage !== undefined) {
+        platformFeePercentage = platform.platformFeePercentage;
+    }
+
+    const platformFee  = totalRevenue * (platformFeePercentage / 100);
     const payoutAmount = totalRevenue - platformFee;
 
     const newPayout = new Payout({ organizer: organizerId, event: eventId, totalRevenue, platformFee, payoutAmount, status: 'pending' });
     await newPayout.save();
+
+    // Notify all admins about the new payout request
+    const net = payoutAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    await notifyAllAdmins(
+        `💰 Payout Request: Organizer for "${event.title}" has requested a payout of ₹${net}. Please review it.`,
+        'info'
+    );
+
     return newPayout;
 };
 
@@ -281,15 +462,17 @@ export const cancelSingleTicketByOrganizer = async (eventId, bookingId, ticketIt
                        
     if (!ticketItem) throw new AppError('Ticket not found in this booking', HTTP_STATUS.NOT_FOUND);
     if (ticketItem.status === 'cancelled') throw new AppError('This ticket is already cancelled', HTTP_STATUS.BAD_REQUEST);
+    if (booking.status === 'on_hold') throw new AppError('Booking is on hold and tickets cannot be cancelled.', HTTP_STATUS.BAD_REQUEST);
 
     cancelQty = parseInt(cancelQty, 10);
     if (isNaN(cancelQty) || cancelQty <= 0 || cancelQty > ticketItem.quantity) {
         throw new AppError('Invalid cancellation quantity', HTTP_STATUS.BAD_REQUEST);
     }
 
-    // 1. Refund the correct quantity
-    const refundAmount = ticketItem.ticketPrice * cancelQty;
-    booking.totalAmount = Math.max(0, booking.totalAmount - refundAmount);
+    // 1. Calculate strict refund
+    const refundData = await calculatePartialRefund(booking, [{ ticketId: ticketItem._id, quantity: cancelQty }]);
+    const refundAmount = refundData.refundAmount;
+    booking.totalAmount = refundData.newCartTotal;
 
     // 2. Split the ticket or mark it fully cancelled
     if (ticketItem.quantity > cancelQty) {
@@ -319,7 +502,7 @@ export const cancelSingleTicketByOrganizer = async (eventId, bookingId, ticketIt
     if (allCancelled) {
         booking.status = 'cancelled';
         booking.cancelledAt = new Date();
-        booking.paymentStatus = 'refunded';
+        booking.paymentStatus = PAYMENT_STATUS.REFUNDED;
     }
 
     await booking.save();
@@ -347,19 +530,21 @@ export const cancelSingleTicketByOrganizer = async (eventId, bookingId, ticketIt
         });
     }
 
-    // 5. Process Wallet Refund (If applicable)
-    if (booking.paymentMethod === 'wallet' || booking.paymentMethod === 'razorpay') {
-        const user = await User.findById(booking.user);
-        if (user) {
-            user.wallet.balance += refundAmount;
-            user.wallet.transactions.push({
-                type: 'credit',
-                amount: refundAmount,
-                description: `Partial Refund: ${cancelQty}x ${ticketItem.ticketName} cancelled for ${booking.event.title}`
-            });
-            await user.save();
-        }
+    // 5. Process Wallet Refund — ONLY for wallet payments (NOT Razorpay)
+    if (booking.paymentMethod === 'wallet') {
+        const userId = String(booking.user._id || booking.user).trim();
+        await User.findByIdAndUpdate(userId, {
+            $inc: { 'wallet.balance': refundAmount },
+            $push: {
+                'wallet.transactions': {
+                    type: 'credit',
+                    amount: refundAmount,
+                    description: `Partial Refund: ${cancelQty}x ${ticketItem.ticketName} cancelled for ${booking.event.title}`
+                }
+            }
+        });
     }
+    // Note: Razorpay partial refunds require manual processing — do NOT credit wallet
 
     // 6. Notify the User (Using your notify.js utility!)
     const userId = String(booking.user._id || booking.user).trim();
@@ -367,4 +552,260 @@ export const cancelSingleTicketByOrganizer = async (eventId, bookingId, ticketIt
     await sendNotification(userId, notifMessage, 'danger');
 
     return { message: `Successfully cancelled ${cancelQty}x ${ticketItem.ticketName} and refunded ₹${refundAmount.toLocaleString('en-IN')}.` };
+};
+
+export const verifyTicketScan = async (bookingId, organizerId) => {
+    const booking = await Booking.findById(bookingId).populate('user', 'fullName email phone').populate('event', 'title organizer');
+    if (!booking) throw new AppError('Invalid QR Code. Booking not found.', HTTP_STATUS.NOT_FOUND);
+
+    if (booking.event.organizer.toString() !== organizerId.toString()) {
+        throw new AppError('This ticket belongs to another event/organizer.', HTTP_STATUS.FORBIDDEN);
+    }
+
+    if (booking.status === 'cancelled') {
+        throw new AppError('This ticket has been cancelled and is invalid.', HTTP_STATUS.BAD_REQUEST);
+    }
+    
+    if (booking.status === 'on_hold') {
+        throw new AppError('This ticket is currently on hold.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    // You could also add a 'scanned' flag here if you want to prevent double entry
+    // booking.scanned = true;
+    // await booking.save();
+
+    return booking;
+};
+
+
+// ─── Get All Pending Cancellation Requests (Across Organizer's Events) ────────
+export const getPendingCancellationRequests = async (organizerId, { page = 1, limit = 15 } = {}) => {
+    const skip = (parseInt(page) - 1) * limit;
+
+    // 1. Find all events owned by this organizer
+    const organizerEvents = await Event.find({ organizer: organizerId }).select('_id title');
+    const eventIds        = organizerEvents.map(e => e._id);
+
+    if (!eventIds.length) return { requests: [], total: 0, totalPages: 1 };
+
+    // 2. Fetch bookings with pending cancellation requests for those events
+    const query = {
+        event: { $in: eventIds },
+        'cancellationRequest.status': 'pending'
+    };
+
+    const [requests, total] = await Promise.all([
+        Booking.find(query)
+            .populate('user',  'fullName email phone profilePic')
+            .populate('event', 'title startDate banners')
+            .sort({ 'cancellationRequest.requestedAt': -1 })
+            .skip(skip)
+            .limit(limit),
+        Booking.countDocuments(query)
+    ]);
+
+    return {
+        requests,
+        total,
+        totalPages: Math.ceil(total / limit) || 1,
+        currentPage: parseInt(page)
+    };
+};
+
+
+// ─── Approve Cancellation Request ─────────────────────────────────────────────
+export const approveCancellationRequest = async (bookingId, organizerId) => {
+    const booking = await Booking.findById(bookingId)
+        .populate('event', 'title organizer');
+
+    if (!booking) throw new AppError('Booking not found', HTTP_STATUS.NOT_FOUND);
+    if (booking.event?.organizer?.toString() !== organizerId.toString())
+        throw new AppError('Unauthorized', HTTP_STATUS.FORBIDDEN);
+
+    if (booking.cancellationRequest?.status !== 'pending')
+        throw new AppError('No pending cancellation request for this booking.', HTTP_STATUS.BAD_REQUEST);
+
+    if (booking.status === 'cancelled')
+        throw new AppError('Booking is already cancelled.', HTTP_STATUS.BAD_REQUEST);
+
+    if (booking.cancellationRequest.isPartial) {
+        let ticketsCancelledMessage = [];
+        
+        // Filter valid cancellations first
+        const validCancellations = booking.cancellationRequest.requestedTickets.filter(reqTicket => {
+            const ticketItem = booking.tickets.id(reqTicket.ticketId);
+            return ticketItem && ticketItem.status !== 'cancelled' && reqTicket.quantity <= ticketItem.quantity;
+        });
+
+        // Calculate strict refund using helper
+        const refundData = await calculatePartialRefund(booking, validCancellations);
+        const totalRefund = refundData.refundAmount;
+        booking.totalAmount = refundData.newCartTotal;
+
+        // Loop through each valid requested ticket cancellation to update array
+        for (const reqTicket of validCancellations) {
+            const ticketItem = booking.tickets.id(reqTicket.ticketId);
+            const cancelQty = reqTicket.quantity;
+
+            // Split ticket if partial, else mark full
+            if (ticketItem.quantity > cancelQty) {
+                ticketItem.quantity -= cancelQty; 
+                const existingCancelled = booking.tickets.find(t => 
+                    t.ticket.toString() === ticketItem.ticket.toString() && t.status === 'cancelled'
+                );
+                if (existingCancelled) {
+                    existingCancelled.quantity += cancelQty;
+                } else {
+                    booking.tickets.push({
+                        ticket: ticketItem.ticket,
+                        ticketName: ticketItem.ticketName,
+                        ticketPrice: ticketItem.ticketPrice,
+                        quantity: cancelQty, 
+                        status: 'cancelled'
+                    });
+                }
+            } else {
+                ticketItem.status = 'cancelled';
+            }
+
+            ticketsCancelledMessage.push(`${cancelQty}x ${ticketItem.ticketName}`);
+
+            // Release inventory seats
+            await Event.findOneAndUpdate(
+                { _id: booking.event._id, 'tickets._id': ticketItem.ticket },
+                { $inc: { 'tickets.$[elem].sold': -cancelQty } },
+                { arrayFilters: [{ 'elem._id': ticketItem.ticket }], runValidators: false }
+            );
+        }
+
+        // Check if ALL tickets inside the booking are now cancelled
+        const allCancelled = booking.tickets.every(t => t.status === 'cancelled');
+        if (allCancelled) {
+            booking.status      = 'cancelled';
+            booking.cancelledAt = new Date();
+            booking.paymentStatus = PAYMENT_STATUS.REFUNDED;
+        }
+
+        // Mark the request as approved
+        booking.cancellationRequest.status     = 'approved';
+        booking.cancellationRequest.resolvedAt = new Date();
+        await booking.save();
+
+        // Emit live socket stock update
+        const io = socketUtil.getIO();
+        io.to(booking.event._id.toString()).emit('ticketStockUpdate', {});
+
+        // Wallet refund
+        const userId = String(booking.user._id || booking.user).trim();
+        const description = `Refund: Partial cancellation approved (${ticketsCancelledMessage.join(', ')}) for "${booking.event.title}"`;
+        
+        if (totalRefund > 0) {
+            const updatedUser = await User.findByIdAndUpdate(
+                userId,
+                {
+                    $inc: { 'wallet.balance': totalRefund },
+                    $push: { 'wallet.transactions': { type: 'credit', amount: totalRefund, description } }
+                },
+                { new: true }
+            );
+
+            if (updatedUser) {
+                io.to(userId).emit('walletUpdate', {
+                    newBalance: updatedUser.wallet.balance,
+                    transaction: { type: 'credit', amount: totalRefund, description }
+                });
+            }
+        }
+
+        await sendNotification(
+            userId,
+            `✅ Your partial cancellation request for "${booking.event.title}" has been approved. ₹${totalRefund.toLocaleString('en-IN')} has been refunded to your wallet.`,
+            'success'
+        );
+        return { message: `Partial cancellation approved. ₹${totalRefund.toLocaleString('en-IN')} refunded to user's wallet.` };
+
+    } else {
+        // ── Perform full cancellation ──────────────────────────────────────────────
+        booking.status      = 'cancelled';
+        booking.cancelledAt = new Date();
+        booking.paymentStatus = PAYMENT_STATUS.REFUNDED;
+
+        // Mark the request as approved
+        booking.cancellationRequest.status     = 'approved';
+        booking.cancellationRequest.resolvedAt = new Date();
+        await booking.save();
+
+        // Release inventory seats
+        for (const t of booking.tickets) {
+            if (t.status === 'cancelled') continue;
+            t.status = 'cancelled';
+            await Event.findOneAndUpdate(
+                { _id: booking.event._id, 'tickets._id': t.ticket },
+                { $inc: { 'tickets.$[elem].sold': -t.quantity } },
+                { arrayFilters: [{ 'elem._id': t.ticket }], runValidators: false }
+            );
+        }
+        await booking.save();
+
+        // Emit live socket stock update
+        const io = socketUtil.getIO();
+        io.to(booking.event._id.toString()).emit('ticketStockUpdate', {});
+
+        // ── Wallet refund unconditionally ────────────────────────────────────────────
+        const userId = String(booking.user._id || booking.user).trim();
+        const description = `Refund: Cancellation approved for "${booking.event.title}"`;
+        
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            {
+                $inc: { 'wallet.balance': booking.totalAmount },
+                $push: { 'wallet.transactions': { type: 'credit', amount: booking.totalAmount, description } }
+            },
+            { new: true } // Return updated document to broadcast the new balance
+        );
+
+        if (updatedUser) {
+            io.to(userId).emit('walletUpdate', {
+                newBalance: updatedUser.wallet.balance,
+                transaction: { type: 'credit', amount: booking.totalAmount, description }
+            });
+        }
+
+        await sendNotification(
+            userId,
+            `✅ Your cancellation request for "${booking.event.title}" has been approved. ₹${booking.totalAmount.toLocaleString('en-IN')} has been refunded to your wallet.`,
+            'success'
+        );
+        return { message: `Cancellation approved. ₹${booking.totalAmount.toLocaleString('en-IN')} refunded to user's wallet.` };
+    }
+};
+
+
+// ─── Reject Cancellation Request ──────────────────────────────────────────────
+export const rejectCancellationRequest = async (bookingId, organizerId, rejectionNote) => {
+    const booking = await Booking.findById(bookingId)
+        .populate('event', 'title organizer');
+
+    if (!booking) throw new AppError('Booking not found', HTTP_STATUS.NOT_FOUND);
+    if (booking.event?.organizer?.toString() !== organizerId.toString())
+        throw new AppError('Unauthorized', HTTP_STATUS.FORBIDDEN);
+
+    if (booking.cancellationRequest?.status !== 'pending')
+        throw new AppError('No pending cancellation request for this booking.', HTTP_STATUS.BAD_REQUEST);
+
+    // Mark the request as rejected
+    booking.cancellationRequest.status        = 'rejected';
+    booking.cancellationRequest.resolvedAt    = new Date();
+    booking.cancellationRequest.rejectionNote = (rejectionNote || 'Request denied by organizer.').trim();
+    await booking.save();
+
+    // Notify the user
+    const userId = String(booking.user._id || booking.user).trim();
+    await sendNotification(
+        userId,
+        `\u274c Your cancellation request for "${booking.event.title}" was rejected. ${booking.cancellationRequest.rejectionNote}`,
+        'danger'
+    );
+
+    return { message: 'Cancellation request rejected and user has been notified.' };
 };

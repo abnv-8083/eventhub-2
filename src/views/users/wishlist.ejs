@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <%- include('../partials/head') %>
@@ -6,17 +6,22 @@
 <body class="bg-mesh">
     <%- include('../partials/navbars/user-nav') %>
 
-    <div style="max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem;">
+    <div class="dashboard-layout">
+        <%- include('../partials/user-sidebar', { title: 'My Wishlist' }) %>
+        <main class="dashboard-main">
 
-        <div class="d-flex justify-content-between align-items-center mb-4 animate stagger-1">
-                <div>
-                    <h2 class="fw-bold">My Wishlist</h2>
-                    <p class="text-dim m-0"><%= events.length %> saved event<%= events.length !== 1 ? 's' : '' %></p>
-                </div>
-                <a href="/user/events" class="btn btn-outline btn-sm px-4">
-                    <i class="fi fi-rr-search me-1"></i> Discover Events
-                </a>
+        <div class="d-flex justify-content-between align-items-center mb-5 animate stagger-1">
+            <div>
+                <p class="page-label">Saved Events</p>
+                <h2 class="fw-bold mb-1">My Wishlist</h2>
+                <p class="text-dim m-0"><%= events.length %> saved event<%= events.length !== 1 ? 's' : '' %></p>
             </div>
+            <a href="/user/events" class="btn btn-outline" style="height:40px; border-radius:10px;">
+                <i class="fi fi-rr-search me-2"></i>Discover Events
+            </a>
+        </div>
+
+        <button id="wishClear">Clear</button>
 
             <% if(events && events.length > 0) { %>
             <div class="row g-4 animate stagger-2" id="wishlistGrid">
@@ -38,7 +43,7 @@
                             </h6>
                             <p class="text-dim mb-3" style="font-size:0.8rem;">
                                 <i class="fi fi-rr-calendar me-1"></i>
-                                <%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %>
+                                <%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %>
                                 <span style="margin:0 6px; opacity:0.4;">Â&middot;</span>
                                 <i class="fi fi-rr-marker me-1"></i>
                                 <%= event.location?.address?.split(',')[0] %>
@@ -66,6 +71,7 @@
                 <a href="/user/events" class="btn btn-primary px-4">Discover Events</a>
             </div>
             <% } %>
+        </main>
     </div>
 
     <script>
@@ -84,6 +90,16 @@
                 Toast.error('Failed to update wishlist');
             }
         }
+
+        const wishClearButton = document.getElementById('wishClear')
+        wishClearButton.addEventListener('click',async ()=>{
+            console.log('hi')
+            const res = await axios.post('/user/wishlist/clear')
+            if(res.data.success){
+                Toast.success('Cleared the wishlist');
+                setTimeout(()=> 300)
+            }
+        })
     </script>
 </body>
 </html>

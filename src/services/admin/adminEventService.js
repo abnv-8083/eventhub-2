@@ -2,6 +2,7 @@ import Event from '../../models/events/event.js';
 import AppError from '../../utils/AppError.js';
 import HTTP_STATUS from '../../constant/statusCode.js';
 import { getIO } from '../../utils/socket.js';
+import { sendNotification } from '../../utils/notify.js';
 
 
 // ─── Get Events (Filtered, Sorted, Paginated) ────────────────────────────────
@@ -33,17 +34,43 @@ export const getEvents = async ({ search = '', status = 'all', sort = 'newest', 
 };
 
 
+// ─── Get Single Event (Full Detail for Admin Review) ────────────────────────
+export const getEventById = async (eventId) => {
+    const event = await Event.findById(eventId)
+        .populate('organizer', 'fullName email organizationName phone city avatar')
+        .populate('category', 'name');
+    if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
+    return event;
+};
+
+
 // ─── Update Event Status & Notify Organizer ──────────────────────────────────
 export const updateEventStatus = async (eventId, status) => {
     const event = await Event.findByIdAndUpdate(eventId, { status }, { new: true });
     if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
 
-    // Notify the organizer in real-time
-    const io = getIO();
-    io.to(event.organizer.toString()).emit('notification', {
-        type: 'event_status',
-        message: `Your event "${event.title}" has been ${status}.`
-    });
+    // Notify the organizer
+    let notifStatus = 'info';
+    if (status === 'approved') notifStatus = 'success';
+    if (status === 'rejected') notifStatus = 'danger';
+    
+    await sendNotification(event.organizer.toString(), `Your event "${event.title}" has been ${status}.`, notifStatus);
+
+    return event;
+};
+
+// ─── Toggle Event Block Status ───────────────────────────────────────────────
+export const toggleEventBlockStatus = async (eventId) => {
+    const event = await Event.findById(eventId).populate('organizer', 'email');
+    if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
+
+    event.isBlocked = !event.isBlocked;
+    await event.save();
+
+    // Notify the organizer
+    const statusMsg = event.isBlocked ? 'blocked by administration' : 'unblocked and is now visible';
+    const notifStatus = event.isBlocked ? 'danger' : 'success';
+    await sendNotification(event.organizer._id.toString(), `Your event "${event.title}" has been ${statusMsg}.`, notifStatus);
 
     return event;
 };
