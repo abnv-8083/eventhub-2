@@ -27,7 +27,7 @@
         <h6 class="fw-bold text-white mb-2" style="font-size:0.96rem;line-height:1.35;flex:1;"><%= event.title %></h6>
         <div class="event-meta-row mb-1">
             <i class="fi fi-rr-calendar"></i>
-            <span><%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %></span>
+            <span><%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %></span>
             <span style="opacity:0.4;">&middot;</span>
             <span><%= event.startTime %></span>
         </div>

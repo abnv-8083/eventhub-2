@@ -42,7 +42,7 @@
                                 <div class="p-4 d-flex flex-column flex-grow-1">
                                     <% if (booking.event) { %>
                                         <p style="font-size:0.78rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">
-                                            <%= new Date(booking.event.startDate).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) %>
+                                            <%= new Date(booking.event.startDate).toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric'}) %>
                                         </p>
                                         <h5 class="fw-bold text-white mb-3 text-truncate"><%= booking.event.title %></h5>
                                     <% } else { %>

@@ -278,7 +278,7 @@
                                         <strong style="color:#2ecc71;font-size:0.9rem;">&#8377;<%= txn.amount.toLocaleString('en-IN') %></strong>
                                     </td>
                                     <td class="text-dim" style="font-size:0.82rem;">
-                                        <%= new Date(txn.bookingDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %>
+                                        <%= new Date(txn.bookingDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %>
                                     </td>
                                     <td>
                                         <% if(txn.status === 'active') { %>

@@ -133,7 +133,7 @@
                                 <div>
                                     <div class="ev-detail-label">Starts</div>
                                     <div class="ev-detail-value">
-                                        <%= new Date(event.startDate).toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'long', year:'numeric' }) %>
+                                        <%= new Date(event.startDate).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'long', year:'numeric' }) %>
                                         &nbsp;·&nbsp;<strong><%= formatTime12(event.startTime) %></strong>
                                     </div>
                                 </div>
@@ -143,7 +143,7 @@
                                 <div>
                                     <div class="ev-detail-label">Ends</div>
                                     <div class="ev-detail-value">
-                                        <%= new Date(event.endDate).toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'long', year:'numeric' }) %>
+                                        <%= new Date(event.endDate).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'long', year:'numeric' }) %>
                                         &nbsp;·&nbsp;<strong><%= formatTime12(event.endTime) %></strong>
                                     </div>
                                 </div>

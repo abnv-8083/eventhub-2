@@ -129,7 +129,7 @@
                                         <%= event.organizer?.organizationName || event.organizer?.fullName || '—' %>
                                     </td>
                                     <td class="text-dim" style="font-size: 0.85rem;">
-                                        <%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %>
+                                        <%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %>
                                     </td>
                                     <td><span class="status-badge status-<%= event.status %>"><%= event.status %></span></td>
                                 </tr>

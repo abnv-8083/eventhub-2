@@ -103,7 +103,7 @@
                                         </td>
                                         <td class="text-dim"><%= user.email %></td>
                                         <td class="text-dim">
-                                            <%= new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                                            <%= new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) %>
                                         </td>
                                         <td>
                                             <% if (!user.isBlocked) { %>

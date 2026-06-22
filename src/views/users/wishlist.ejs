@@ -43,7 +43,7 @@
                             </h6>
                             <p class="text-dim mb-3" style="font-size:0.8rem;">
                                 <i class="fi fi-rr-calendar me-1"></i>
-                                <%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %>
+                                <%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %>
                                 <span style="margin:0 6px; opacity:0.4;">Â&middot;</span>
                                 <i class="fi fi-rr-marker me-1"></i>
                                 <%= event.location?.address?.split(',')[0] %>

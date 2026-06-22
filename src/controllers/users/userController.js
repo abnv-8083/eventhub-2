@@ -195,6 +195,9 @@ export const updateUserEmail = async (req, res, next) => {
             return res.status(HTTP_STATUS.FORBIDDEN).json({ success: false, message: 'Google users cannot change their email address.' });
         }
         const { newEmail } = req.body;
+        if (newEmail === req.session.user.email) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: 'Current email and new email cannot be the same.' });
+        }
         req.session.tempData = { email: newEmail };
 
         const result = await userServices.updateUserEmail({ email: newEmail });

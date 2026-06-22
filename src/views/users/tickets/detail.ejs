@@ -97,7 +97,7 @@
                 <div class="ticket-info-grid">
                     <div class="ticket-info-item">
                         <p class="label"><i class="fi fi-rr-calendar-lines"></i> Date</p>
-                        <p class="val"><%= new Date(booking.event.startDate).toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short', year:'numeric'}) %></p>
+                        <p class="val"><%= new Date(booking.event.startDate).toLocaleDateString(undefined, {weekday:'short', day:'numeric', month:'short', year:'numeric'}) %></p>
                     </div>
                     <div class="ticket-info-item">
                         <p class="label"><i class="fi fi-rr-map-marker"></i> Payment</p>

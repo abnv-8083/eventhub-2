@@ -21,9 +21,9 @@ export const registerSchema = Joi.object({
 
     role: Joi.string().valid('user', 'organizer').default('user'),
 
-    password: Joi.string().min(8).required().messages({
+    password: Joi.string().pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$')).required().messages({
         'string.empty': 'Password is required.',
-        'string.min': 'Password must be at least 8 characters long.'
+        'string.pattern.base': 'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, a number, and a special character.'
     }),
 
     confirmPassword: Joi.string().valid(Joi.ref('password')).required().messages({
@@ -145,9 +145,9 @@ export const updatePasswordSchema = Joi.object({
         otherwise: Joi.optional().allow('', null)
     }),
 
-    newPassword: Joi.string().min(8).invalid(Joi.ref('currentPassword')).required().messages({
+    newPassword: Joi.string().pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$')).invalid(Joi.ref('currentPassword')).required().messages({
         'string.empty': 'New password is required.',
-        'string.min': 'New password must be at least 8 characters long.',
+        'string.pattern.base': 'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, a number, and a special character.',
         'any.invalid': 'New password cannot be the same as your current password.'
     }),
 

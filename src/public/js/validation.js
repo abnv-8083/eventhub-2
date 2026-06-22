@@ -88,7 +88,7 @@ const RULES = {
         return val === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
     },
     password(val) {
-        return val === '' || val.length >= 8;
+        return val === '' || /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(val);
     },
     phone(val) {
         return val === '' || (/^\d+$/.test(val) && val.length >= 10 && val.length <= 15);
@@ -122,7 +122,7 @@ const RULES = {
 const RULE_MESSAGES = {
     required:    'This field is required.',
     email:       'Please enter a valid email address.',
-    password:    'Password must be at least 8 characters.',
+    password:    'Password must be at least 8 chars, with uppercase, lowercase, number, and special char.',
     phone:       'Enter a valid phone number (10–15 digits).',
     name:        'Use letters and spaces only (min. 3 characters).',
     number:      'Please enter a valid number.',

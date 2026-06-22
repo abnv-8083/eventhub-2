@@ -102,7 +102,7 @@
                                             </div>
                                         </td>
                                         <td class="text-dim">
-                                            <%= new Date(c.expiryDate).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) %>
+                                            <%= new Date(c.expiryDate).toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric'}) %>
                                         </td>
                                         <td>
                                             <% if (c.isActive) { %>

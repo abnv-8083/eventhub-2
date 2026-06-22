@@ -78,7 +78,7 @@
                     <div class="d-flex align-items-center gap-3 flex-wrap">
                         <span style="color:rgba(255,255,255,0.7);font-size:0.9rem;">
                             <i class="fi fi-rr-calendar me-1"></i>
-                            <%= new Date(event.startDate).toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'}) %>
+                            <%= new Date(event.startDate).toLocaleDateString(undefined, {day:'numeric',month:'long',year:'numeric'}) %>
                             at <%= formatTime12(event.startTime) %>
                         </span>
                         <span style="color:rgba(255,255,255,0.5);">—</span>
@@ -241,14 +241,14 @@
                             <div class="info-item">
                                 <p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">Start</p>
                                 <strong style="color:white;font-size:0.9rem;">
-                                    <%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'short'}) %>
+                                    <%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short'}) %>
                                 </strong>
                                 <span class="text-dim" style="font-size:0.82rem;"> at <%= formatTime12(event.startTime) %></span>
                             </div>
                             <div class="info-item">
                                 <p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">End</p>
                                 <strong style="color:white;font-size:0.9rem;">
-                                    <%= new Date(event.endDate).toLocaleDateString('en-IN',{day:'numeric',month:'short'}) %>
+                                    <%= new Date(event.endDate).toLocaleDateString(undefined,{day:'numeric',month:'short'}) %>
                                 </strong>
                                 <span class="text-dim" style="font-size:0.82rem;"> at <%= formatTime12(event.endTime) %></span>
                             </div>

@@ -234,7 +234,7 @@
                                         </td>
 
                                         <td class="text-dim" style="font-size:0.8rem;">
-                                            <%= new Date(booking.bookingDate || booking.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %>
+                                            <%= new Date(booking.bookingDate || booking.createdAt).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %>
                                         </td>
 
                                         <td>
@@ -529,7 +529,7 @@
                         <div class="col-md-6">
                             <div class="modal-detail-cell">
                                 <p class="modal-detail-label">Booking Date</p>
-                                <p class="modal-detail-val">${new Date(b.bookingDate || b.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric', hour:'2-digit', minute:'2-digit'})}</p>
+                                <p class="modal-detail-val">${new Date(b.bookingDate || b.createdAt).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric', hour:'2-digit', minute:'2-digit'})}</p>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -543,7 +543,7 @@
                         <div class="col-md-6">
                             <div class="modal-detail-cell">
                                 <p class="modal-detail-label">Held Since</p>
-                                <p class="modal-detail-val" style="color:#f39c12;">${new Date(b.heldAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</p>
+                                <p class="modal-detail-val" style="color:#f39c12;">${new Date(b.heldAt).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})}</p>
                             </div>
                         </div>
                         <div class="col-12 mt-2">
@@ -557,7 +557,7 @@
                         <div class="col-md-6">
                             <div class="modal-detail-cell">
                                 <p class="modal-detail-label">Cancelled On</p>
-                                <p class="modal-detail-val" style="color:#E63946;">${new Date(b.cancelledAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</p>
+                                <p class="modal-detail-val" style="color:#E63946;">${new Date(b.cancelledAt).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})}</p>
                             </div>
                         </div>` : ''}
                     </div>
@@ -879,7 +879,7 @@
 
                 // Format Date & ID safely
                 const safeDate = b.bookingDate || b.createdAt || new Date();
-                const dateStr = new Date(safeDate).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+                const dateStr = new Date(safeDate).toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric'});
                 const safeId = b._id ? b._id.toString().slice(-8).toUpperCase() : 'UNKNOWN';
 
                 // Create Row HTML

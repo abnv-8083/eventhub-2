@@ -80,7 +80,7 @@
                             <div class="meta-row">
                                 <div class="meta-item">
                                     <p>Date</p>
-                                    <p class="text-white"><%= new Date(nextBooking.event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %></p>
+                                    <p class="text-white"><%= new Date(nextBooking.event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %></p>
                                 </div>
                                 <div class="meta-item">
                                     <p>Time</p>

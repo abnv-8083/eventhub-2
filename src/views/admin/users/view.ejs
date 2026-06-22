@@ -52,7 +52,7 @@
                         <div class="row g-4">
                             <div class="col-sm-6">
                                 <p class="text-dim small text-uppercase mb-1">Joined Date</p>
-                                <p class="fw-bold m-0"><%= new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+                                <p class="fw-bold m-0"><%= new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
                             </div>
                             <div class="col-sm-6">
                                 <p class="text-dim small text-uppercase mb-1">User ID</p>

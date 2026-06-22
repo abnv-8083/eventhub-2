@@ -524,7 +524,7 @@
             document.getElementById('previewCategory').textContent = catText;
 
             document.getElementById('previewDate').textContent = startDate
-                ? new Date(startDate + 'T00:00:00').toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' })
+                ? new Date(startDate + 'T00:00:00').toLocaleDateString(undefined, { day:'numeric', month:'long', year:'numeric' })
                 : 'Date TBD';
             document.getElementById('previewLocation').textContent =
                 address ? (address.length > 55 ? address.substring(0, 55) + '...' : address) : 'Location TBD';

@@ -198,6 +198,7 @@ export const deleteEvent = async (eventId, organizerId) => {
     const event = await Event.findOne({ _id: eventId, organizer: organizerId });
     if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
 
+    await Booking.deleteMany({ event: eventId });
     await event.deleteOne();
 };
 

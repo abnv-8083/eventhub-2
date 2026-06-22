@@ -135,6 +135,9 @@ export const updateEmail = async (req, res, next) => {
             return res.status(HTTP_STATUS.FORBIDDEN).json({ success: false, message: 'Google users cannot change their email address.' });
         }
         const { newEmail } = req.body;
+        if (newEmail === req.session.organizer.email) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: 'Current email and new email cannot be the same.' });
+        }
         req.session.tempData = { email: newEmail };
 
         const result = await userServices.updateUserEmail({ email: newEmail });
@@ -146,7 +149,7 @@ export const updateEmail = async (req, res, next) => {
             res.status(HTTP_STATUS.OK).json({
                 success: true,
                 message: 'OTP Sent To email Id',
-                redirect: '/organizer/verify-otp?action=email-update'
+                redirect: '/user/verify-otp?action=email-update'
             });
         });
     } catch (error) {

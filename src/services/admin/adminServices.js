@@ -95,10 +95,22 @@ export const toggleUserBlockStatus = async (userId) => {
 };
 
 export const deleteUserById = async (userId) => {
-    const deletedUser = await User.findByIdAndDelete(userId);
+    const deletedUser = await User.findById(userId);
     if (!deletedUser) {
         throw new AppError('User not found or already deleted', HTTP_STATUS.NOT_FOUND);
     }
+
+    if (deletedUser.role === 'organizer') {
+        const events = await Event.find({ organizer: userId });
+        for (const event of events) {
+            await Booking.deleteMany({ event: event._id });
+            await event.deleteOne();
+        }
+    } else {
+        await Booking.deleteMany({ user: userId });
+    }
+
+    await deletedUser.deleteOne();
     return deletedUser;
 };
 

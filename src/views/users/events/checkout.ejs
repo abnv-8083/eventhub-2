@@ -126,7 +126,7 @@
                             <% } %>
                             <div class="event-snippet-info">
                                 <h3><%= event.title %></h3>
-                                <p><i class="fi fi-rr-calendar"></i> <%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}) %> · <%= event.startTime %></p>
+                                <p><i class="fi fi-rr-calendar"></i> <%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'}) %> · <%= event.startTime %></p>
                                 <p><i class="fi fi-rr-marker"></i> <%= event.location.address %></p>
                             </div>
                         </div>
@@ -544,7 +544,7 @@
                         if (c.minOrderValue && c.minOrderValue > 0) {
                             minPurchaseText = `<div class="text-warning small mt-1" style="font-size: 0.75rem;"><i class="fi fi-rr-shopping-cart-check me-1"></i>Min. Purchase: ₹${c.minOrderValue}</div>`;
                         }
-                        const expiryDate = new Date(c.expiryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                        const expiryDate = new Date(c.expiryDate).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
                         
                         return `
                         <div class="premium-coupon-card mb-3">

@@ -58,14 +58,14 @@
                 <div class="stat-icon"><i class="fi fi-rr-calendar-clock"></i></div>
                 <div>
                     <p class="stat-label mb-0">Start</p>
-                    <p class="stat-value mb-0"><%= new Date(event.startDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %> Â&middot; <%= event.startTime %></p>
+                    <p class="stat-value mb-0"><%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %> Â&middot; <%= event.startTime %></p>
                 </div>
             </div>
             <div class="stat-item">
                 <div class="stat-icon"><i class="fi fi-rr-calendar-check"></i></div>
                 <div>
                     <p class="stat-label mb-0">End</p>
-                    <p class="stat-value mb-0"><%= new Date(event.endDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %> Â&middot; <%= event.endTime %></p>
+                    <p class="stat-value mb-0"><%= new Date(event.endDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %> Â&middot; <%= event.endTime %></p>
                 </div>
             </div>
             <div class="stat-item" style="flex:2;">

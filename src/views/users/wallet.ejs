@@ -152,7 +152,7 @@
                     <% transactions.forEach((txn, idx) => {
                         const isCredit = txn.type === 'credit';
                         const dateObj  = new Date(txn.date);
-                        const dateStr  = dateObj.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+                        const dateStr  = dateObj.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
                         const timeStr  = dateObj.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
                         
                         // YYYY-MM-DD for accurate filtering (taking local timezone into account properly)
@@ -438,7 +438,7 @@
                 const txnList = document.getElementById('txnList');
                 if (txnList) {
                     const now = new Date();
-                    const dateStr = now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                    const dateStr = now.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
                     const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
                     const localDateStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
                     const html = `

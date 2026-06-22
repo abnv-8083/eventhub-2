@@ -14,7 +14,7 @@
             </a>
             <h1 class="text-white fw-bold mb-2"><%= event.title %></h1>
             <div class="d-flex align-items-center gap-3 text-dim small">
-                <span><i class="fi fi-rr-calendar me-2" style="color:var(--primary);"></i><%= new Date(event.startDate).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) %></span>
+                <span><i class="fi fi-rr-calendar me-2" style="color:var(--primary);"></i><%= new Date(event.startDate).toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric'}) %></span>
                 <span><i class="fi fi-rr-marker me-2" style="color:var(--primary);"></i><%= event.location.address %></span>
             </div>
         </div>

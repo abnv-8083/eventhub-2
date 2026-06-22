@@ -196,19 +196,24 @@
             </div>
             <form id="emailUpdateForm" novalidate>
                 <div class="modal-body">
-                    <p class="text-dim mb-4" style="font-size: 0.9rem;">Enter your new email address. We will send a verification OTP to confirm this change.</p>
-                    
-                    <!-- ADD THIS HIDDEN INPUT -->
                     <input type="hidden" name="currentEmail" value="<%= organizer.email %>">
                     
-                    <div class="form-floating mb-2">
+                    <div class="form-floating mb-2" id="newEmailContainer">
                         <input type="email" name="newEmail" class="form-control input" id="newEmail" placeholder=" " data-rule="required, email">
                         <label for="newEmail">New Email Address</label>
+                    </div>
+
+                    <div id="otpContainer" style="display: none;">
+                        <p class="text-sm text-dim mb-2">Enter the OTP sent to your new email.</p>
+                        <div class="form-floating mb-2">
+                            <input type="text" name="otp" class="form-control input" id="otpInput" placeholder=" " maxlength="4">
+                            <label for="otpInput">OTP</label>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn text-dim" style="background: transparent;" onclick="closeModal('emailModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Send OTP</button>
+                    <button type="submit" id="emailUpdateSubmitBtn" class="btn btn-primary">Send OTP</button>
                 </div>
             </form>
         </div>
@@ -235,7 +240,6 @@
                         </button>
                     </div>
                     
-                    <input type="hidden" name="currentUserId" value="<%= organizer._id %>">
                     <div class="form-floating password-group mb-4">
                         <input type="password" name="newPassword" class="form-control input" id="newPassword" placeholder=" " data-rule="required, password, min8">
                         <label for="newPassword">New Password</label>
@@ -853,44 +857,65 @@
         // --- EMAIL UPDATE LOGIC ---
         const emailUpdateForm = document.getElementById('emailUpdateForm');
         
+        let emailOtpSent = false;
         if (emailUpdateForm) {
             emailUpdateForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
 
-                if(!emailUpdateForm.checkValidity()){
-                    emailUpdateForm.reportValidity();
-                    return;
-                }
-
-
-                const submitBtn = emailUpdateForm.querySelector('button[type="submit"]');
-                const originalBtnText = submitBtn.innerText;
-                
-                // Show loader and disable button
-                Loader.show('Sending OTP...')
-                submitBtn.innerText = 'Sending...';
-                submitBtn.disabled = true;
-
-                const formData = new FormData(emailUpdateForm);
-                const data = Object.fromEntries(formData.entries());
-
-                try {
-                    // Send the new email to your backend to trigger the OTP
-                    const response = await axios.post('/organizer/update-email', data);
-
-                    if (response.data.success) {
-                        closeModal('emailModal');
-                        Toast.success(response.data.message);
-                        setTimeout(()=>window.location.href = response.data.redirect,2000)
+                if(!emailOtpSent) {
+                    if(!emailUpdateForm.checkValidity()){
+                        emailUpdateForm.reportValidity();
+                        return;
                     }
-                } catch (error) {
-                    const errorMsg = error.response?.data?.message || 'Failed to send OTP. Please try again.';
-                    Toast.error(errorMsg);
-                } finally {
-                    // Always hide the loader and reset the button when done
-                    Loader.hide()
-                    submitBtn.innerText = originalBtnText;
-                    submitBtn.disabled = false;
+                    
+                    const submitBtn = emailUpdateForm.querySelector('button[type="submit"]');
+                    const originalBtnText = submitBtn.innerText;
+                    
+                    Loader.show('Sending OTP...')
+                    submitBtn.innerText = 'Sending...';
+                    submitBtn.disabled = true;
+
+                    const formData = new FormData(emailUpdateForm);
+                    const data = Object.fromEntries(formData.entries());
+
+                    try {
+                        const response = await axios.post('/organizer/update-email', data);
+
+                        if (response.data.success) {
+                            Toast.success(response.data.message);
+                            emailOtpSent = true;
+                            document.getElementById('newEmailContainer').style.display = 'none';
+                            document.getElementById('otpContainer').style.display = 'block';
+                            submitBtn.innerText = 'Verify OTP';
+                        }
+                    } catch (error) {
+                        Toast.error(error.response?.data?.message || 'Failed to send OTP.');
+                    } finally {
+                        Loader.hide();
+                        if(!emailOtpSent) submitBtn.innerText = originalBtnText;
+                        submitBtn.disabled = false;
+                    }
+                } else {
+                    const otp = document.getElementById('otpInput').value;
+                    const newEmail = document.getElementById('newEmail').value;
+                    if(!otp || otp.length < 4) return Toast.error('Please enter a valid OTP.');
+                    
+                    const submitBtn = emailUpdateForm.querySelector('button[type="submit"]');
+                    submitBtn.disabled = true;
+                    Loader.show('Verifying OTP...')
+                    try {
+                        const response = await axios.post('/user/verify-otp', { otp: otp, email: newEmail, action: 'email-update' });
+                        if (response.data.success) {
+                            closeModal('emailModal');
+                            Toast.success(response.data.message);
+                            setTimeout(()=>window.location.reload(), 1500);
+                        }
+                    } catch (error) {
+                        Toast.error(error.response?.data?.message || 'Invalid OTP');
+                    } finally {
+                        Loader.hide();
+                        submitBtn.disabled = false;
+                    }
                 }
             });
         }

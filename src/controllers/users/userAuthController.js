@@ -68,7 +68,9 @@ export const postSignupPage = async (req, res, next) => {
             });
         }
 
-        req.session.tempData = req.body;
+        const cleanData = { ...req.body };
+        delete cleanData.confirmPassword;
+        req.session.tempData = cleanData;
         
         req.session.save((err) => {
             if (err) {
