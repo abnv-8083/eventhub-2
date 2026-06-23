@@ -59,12 +59,20 @@
     const toggleBtn = document.getElementById('userSidebarToggleBtn');
     
     if (layout && toggleBtn) {
-        if (localStorage.getItem('sidebar-collapsed') === 'true') {
+        if (localStorage.getItem('sidebar-collapsed') === 'true' && window.innerWidth > 1024) {
             layout.classList.add('sidebar-collapsed');
         }
         toggleBtn.addEventListener('click', () => {
             layout.classList.toggle('sidebar-collapsed');
             localStorage.setItem('sidebar-collapsed', layout.classList.contains('sidebar-collapsed'));
+        });
+    }
+
+    // Mobile Sidebar Toggle
+    const mobileToggle = document.getElementById('mobileNavbarToggle');
+    if(mobileToggle && layout) {
+        mobileToggle.addEventListener('click', () => {
+            layout.classList.toggle('mobile-sidebar-open');
         });
     }
 </script>

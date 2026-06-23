@@ -1,8 +1,13 @@
 <header class="navbar-sticky">
     <div class="nav-container container">
-        <a href="/admin/dashboard" class="logo" style="text-decoration:none;">Event<span>Hub</span>
-            <span style="font-size:0.6rem;font-family:var(--font-body);font-weight:600;color:rgba(241,196,15,0.7);letter-spacing:0.12em;text-transform:uppercase;margin-left:6px;background:rgba(241,196,15,0.08);border:1px solid rgba(241,196,15,0.2);border-radius:4px;padding:2px 6px;-webkit-text-fill-color:rgba(241,196,15,0.7);">Admin</span>
-        </a>
+        <div style="display:flex; align-items:center; gap: 1rem;">
+            <button class="mobile-menu-toggle" id="mobileSidebarToggle" style="display:none;">
+                <i class="fi fi-rr-menu-burger"></i>
+            </button>
+            <a href="/admin/dashboard" class="logo" style="text-decoration:none;">Event<span>Hub</span>
+                <span style="font-size:0.6rem;font-family:var(--font-body);font-weight:600;color:rgba(241,196,15,0.7);letter-spacing:0.12em;text-transform:uppercase;margin-left:6px;background:rgba(241,196,15,0.08);border:1px solid rgba(241,196,15,0.2);border-radius:4px;padding:2px 6px;-webkit-text-fill-color:rgba(241,196,15,0.7);">Admin</span>
+            </a>
+        </div>
 
         <div style="display:flex;align-items:center;gap:10px;margin-left:auto;">
             <!-- Bell -->

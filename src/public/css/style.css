@@ -4204,3 +4204,150 @@ body { background: #0a0a10; }
     color: #fff;
     box-shadow: 0 4px 15px rgba(230, 57, 70, 0.2);
 }
+
+/* ==========================================
+   MOBILE & RESPONSIVE OVERRIDES
+========================================== */
+
+/* Utility for wrapping tables */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+}
+
+/* ── Tablet & Mobile (Max 1024px) ── */
+@media (max-width: 1024px) {
+    /* Auto-collapse sidebar on tablet */
+    .dashboard-layout .sidebar { 
+        width: 80px; 
+        padding: 2rem 0.5rem; 
+    }
+    .dashboard-layout .sidebar-nav span, 
+    .dashboard-layout .sidebar-footer span { 
+        display: none; 
+    }
+    .dashboard-layout .sidebar-nav a { 
+        justify-content: center; 
+        padding: 1rem 0; 
+    }
+    .dashboard-layout .sidebar-nav a i { 
+        font-size: 1.25rem; 
+        margin: 0; 
+    }
+    .dashboard-layout .dashboard-main { 
+        margin-left: 80px; 
+    }
+    .dashboard-layout .sidebar-toggle-btn { 
+        display: none; /* Hide desktop toggle on tablet */
+    }
+}
+
+/* ── Mobile Only (Max 768px) ── */
+@media (max-width: 768px) {
+    /* General Layout Padding */
+    .section { padding: 3rem 0; }
+    .container { padding: 0 1rem; }
+    
+    /* Typography Scaling */
+    h1 { font-size: clamp(2rem, 8vw, 3rem) !important; }
+    h2 { font-size: clamp(1.5rem, 6vw, 2.5rem) !important; }
+    
+    /* ── Dashboard Sidebar Off-Canvas ── */
+    .dashboard-layout .sidebar {
+        width: 280px; /* Full width for the offcanvas menu */
+        transform: translateX(-100%);
+        position: fixed;
+        top: var(--header-height);
+        left: 0;
+        bottom: 0;
+        z-index: 1050;
+        transition: transform 0.3s ease;
+        padding: 2rem 1rem;
+        background: var(--bg-dark); /* Ensure it's opaque */
+    }
+    
+    /* When active, slide it in */
+    .dashboard-layout.mobile-sidebar-open .sidebar {
+        transform: translateX(0);
+    }
+    
+    /* Restore text and icons for mobile sidebar (undoing the 1024px rule) */
+    .dashboard-layout .sidebar-nav span, 
+    .dashboard-layout .sidebar-footer span { 
+        display: inline; 
+    }
+    .dashboard-layout .sidebar-nav a { 
+        justify-content: flex-start; 
+        padding: 1rem; 
+    }
+    .dashboard-layout .sidebar-nav a i { 
+        margin-right: 1rem; 
+    }
+
+    /* Dashboard Main pushes back to 0 margin */
+    .dashboard-layout .dashboard-main {
+        margin-left: 0 !important;
+        padding: 1rem;
+    }
+    
+    /* ── Mobile Hamburger Buttons ── */
+    .mobile-menu-toggle {
+        display: flex !important;
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    /* ── Public Navbar Links (Guest/User) ── */
+    .nav-links {
+        display: none;
+        position: fixed;
+        top: var(--header-height);
+        left: 0;
+        right: 0;
+        background: rgba(10, 10, 10, 0.95);
+        backdrop-filter: blur(20px);
+        flex-direction: column;
+        padding: 2rem;
+        gap: 1.5rem;
+        border-bottom: 1px solid var(--border);
+        box-shadow: var(--shadow);
+    }
+    .nav-links.active {
+        display: flex;
+    }
+    
+    /* ── Data Tables ── */
+    .data-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 1rem;
+    }
+    
+    /* Stats Grid */
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+    
+    /* Split Auth layout */
+    .auth-split-layout {
+        flex-direction: column;
+    }
+    .auth-image-side {
+        display: none; /* Hide image side on mobile */
+    }
+    .auth-form-side {
+        width: 100%;
+        padding: 2rem 1rem;
+    }
+}
+
+/* Make sure mobile toggles are hidden on desktop */
+@media (min-width: 769px) {
+    .mobile-menu-toggle {
+        display: none !important;
+    }
+}
