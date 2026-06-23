@@ -4209,6 +4209,15 @@ body { background: #0a0a10; }
    MOBILE & RESPONSIVE OVERRIDES
 ========================================== */
 
+/* ── Base Navbar Links (Desktop) ── */
+.nav-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    flex: 1;
+}
+
 /* Utility for wrapping tables */
 .table-responsive {
     overflow-x: auto;
