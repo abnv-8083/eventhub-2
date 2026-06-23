@@ -6,7 +6,7 @@ import AppError from '../../utils/AppError.js';
 import HTTP_STATUS from '../../constant/statusCode.js';
 import ExcelJS from 'exceljs';
 import puppeteer from 'puppeteer';
-
+import { sendNotification } from '../../utils/notify.js';
 
 
 
@@ -139,6 +139,18 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
     const event = await Event.findOne({ _id: eventId, organizer: organizerId });
     if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
 
+    const oldStartDate = event.startDate ? new Date(event.startDate).toISOString() : null;
+    const newStartDate = eventData.startDate ? new Date(eventData.startDate).toISOString() : null;
+    const oldEndDate = event.endDate ? new Date(event.endDate).toISOString() : null;
+    const newEndDate = eventData.endDate ? new Date(eventData.endDate).toISOString() : null;
+
+    let dateHasChanged = false;
+    // Only flag as changed if it was previously set and is now different
+    if (oldStartDate && (oldStartDate !== newStartDate || oldEndDate !== newEndDate)) {
+        dateHasChanged = true;
+        event.dateChanged = true;
+    }
+
     event.title       = eventData.title;
     event.description = eventData.description;
     event.category    = eventData.category;
@@ -188,7 +200,19 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
 
     event.tickets = [...freshTiers, ...preservedSoldTiers];
 
-    return await event.save();
+    const savedEvent = await event.save();
+
+    if (dateHasChanged) {
+        const activeBookings = await Booking.find({ event: eventId, status: { $ne: 'cancelled' } }).select('user');
+        const uniqueUserIds = [...new Set(activeBookings.map(b => b.user.toString()))];
+        
+        const notificationMessage = `The date for event "${savedEvent.title}" has been updated. The new date is ${new Date(savedEvent.startDate).toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric'})}. You can review or cancel your booking from your dashboard if needed.`;
+        for (const uId of uniqueUserIds) {
+            await sendNotification(uId, notificationMessage, 'warning');
+        }
+    }
+
+    return savedEvent;
 };
 
 

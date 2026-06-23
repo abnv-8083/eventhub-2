@@ -58,7 +58,12 @@
                 <div class="stat-icon"><i class="fi fi-rr-calendar-clock"></i></div>
                 <div>
                     <p class="stat-label mb-0">Start</p>
-                    <p class="stat-value mb-0"><%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %> Â&middot; <%= event.startTime %></p>
+                    <p class="stat-value mb-0">
+                        <%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %> &middot; <%= event.startTime %>
+                        <% if(event.dateChanged) { %>
+                            <span class="badge bg-warning text-dark ms-2" style="font-size: 0.7rem; vertical-align: middle;">Date Updated!</span>
+                        <% } %>
+                    </p>
                 </div>
             </div>
             <div class="stat-item">

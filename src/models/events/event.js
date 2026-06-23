@@ -54,6 +54,7 @@ const eventSchema = new mongoose.Schema({
     tickets: { type: [ticketSubSchema], default: [] },
 
     isFeatured: { type: Boolean, default: false },
+    dateChanged: { type: Boolean, default: false },
     organizer:  { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 
     status:    { type: String, enum: ['draft', 'pending', 'approved', 'rejected', 'inactive'], default: 'draft' },
