@@ -117,7 +117,7 @@ section.container.animate.stagger-4 {
    3. NAVIGATION BAR
 ========================================== */
 header {
-    min-height: 70px;
+    height: var(--header-height);
     background: rgba(10, 10, 10, 0.75);
     backdrop-filter: blur(20px) saturate(180%);
     width: 100%;
