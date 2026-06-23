@@ -72,6 +72,10 @@ app.use(express.static(path.join(__dirname, 'src', 'public')));
 // 3. Session & Authentication Setup
 // ==========================================
 app.set('trust proxy', 1);
+app.use((req, res, next) => {
+    req.headers['x-forwarded-proto'] = 'https';
+    next();
+});
 
 app.use(session({
     secret: process.env.SESSION_SECRET || 'eventhub_super_secret_key_2026',

@@ -15,7 +15,7 @@ userAuthRouter.get('/auth/google',isUserGuest,
 
 userAuthRouter.get('/google/callback',isUserGuest,
     passport.authenticate('google',{failureRedirect: '/user/login'}),
-    (req,res)=>{
+    (req,res,next)=>{
         if(req.user){
             if (req.user.isBlocked) {
                 return res.redirect('/user/login?message=Your%20account%20is%20blocked%20by%20the%20admin');
