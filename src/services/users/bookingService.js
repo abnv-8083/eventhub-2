@@ -1,5 +1,6 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 import Event from '../../models/events/event.js';
 import Booking from '../../models/payments/booking.js';
 import User from '../../models/users/user.js';
@@ -79,18 +80,73 @@ export const createOrder = async (eventId, cart, userId, couponId, expectedTotal
 };
 
 // ─── Atomically Increment sold on an embedded ticket ────────────────────────
-// Uses MongoDB's arrayFilters to $inc the correct subdoc in event.tickets.
-// Returns the updated Event doc (with new.tickets reflecting the new sold count).
+// Uses MongoDB's arrayFilters + $expr to ensure sold + quantity <= capacity.
 const incrementTicketSold = async (eventId, ticketId, quantity) => {
     return await Event.findOneAndUpdate(
-        { _id: eventId, 'tickets._id': ticketId },
+        {
+            _id: eventId,
+            'tickets._id': ticketId,
+            $expr: {
+                $let: {
+                    vars: {
+                        tObj: {
+                            $first: {
+                                $filter: {
+                                    input: "$tickets",
+                                    as: "t",
+                                    cond: { $eq: ["$$t._id", new mongoose.Types.ObjectId(ticketId)] }
+                                }
+                            }
+                        }
+                    },
+                    in: {
+                        $gte: [
+                            "$$tObj.capacity",
+                            { $add: ["$$tObj.sold", quantity] }
+                        ]
+                    }
+                }
+            }
+        },
         { $inc: { 'tickets.$[t].sold': quantity } },
         {
             arrayFilters: [{ 't._id': ticketId }],
-            new: true,          // return updated doc
+            new: true,
             runValidators: false
         }
     );
+};
+
+// Helper: Increment stock for cart items or rollback if race condition exceeded capacity
+const incrementTicketsOrRollback = async (eventId, validatedItems) => {
+    let updatedTickets = [];
+    let incrementedHistory = [];
+
+    for (const item of validatedItems) {
+        const updatedEvent = await incrementTicketSold(eventId, item.ticket._id, item.quantity);
+        if (!updatedEvent) {
+            // Rollback previously incremented stock in this loop
+            for (const historyItem of incrementedHistory) {
+                await Event.findOneAndUpdate(
+                    { _id: eventId, 'tickets._id': historyItem.ticketId },
+                    { $inc: { 'tickets.$[t].sold': -historyItem.quantity } },
+                    { arrayFilters: [{ 't._id': historyItem.ticketId }] }
+                );
+            }
+            const currentEvt = await Event.findById(eventId);
+            const currentTicket = currentEvt?.tickets?.id(item.ticket._id);
+            const remaining = currentTicket ? Math.max(0, currentTicket.capacity - currentTicket.sold) : 0;
+            throw new AppError(
+                remaining === 0
+                    ? `Ticket tier "${item.ticket.name}" is completely Sold Out!`
+                    : `Maximum capacity reached for "${item.ticket.name}". Only ${remaining} seat(s) left!`,
+                HTTP_STATUS.BAD_REQUEST
+            );
+        }
+        incrementedHistory.push({ ticketId: item.ticket._id, quantity: item.quantity });
+        updatedTickets.push(updatedEvent.tickets.id(item.ticket._id));
+    }
+    return updatedTickets;
 };
 
 
@@ -107,20 +163,14 @@ export const verifyAndBook = async (eventId, userId, { razorpay_order_id, razorp
     // 2. Re-validate cart and get applied coupon
     const { validatedItems, totalAmount, appliedCoupon, event } = await validateCartRequest(eventId, cart, userId, couponId, expectedTotal);
 
-    // 3. Build the tickets array and increment stock
-    let ticketsArray = [];
-    let updatedTickets = [];
-
-    for (const item of validatedItems) {
-        ticketsArray.push({
-            ticket:      item.ticket._id,
-            ticketName:  item.ticket.name,
-            ticketPrice: item.ticket.price,
-            quantity:    item.quantity
-        });
-        const updatedEvent = await incrementTicketSold(eventId, item.ticket._id, item.quantity);
-        updatedTickets.push(updatedEvent.tickets.id(item.ticket._id));
-    }
+    // 3. Build the tickets array and atomically increment stock (with rollback on concurrent capacity overflow)
+    const ticketsArray = validatedItems.map(item => ({
+        ticket:      item.ticket._id,
+        ticketName:  item.ticket.name,
+        ticketPrice: item.ticket.price,
+        quantity:    item.quantity
+    }));
+    const updatedTickets = await incrementTicketsOrRollback(eventId, validatedItems);
 
     // 4. Create Booking
     const newBooking = await Booking.create({
@@ -171,30 +221,41 @@ export const bookWithWallet = async (eventId, userId, cart, couponId, expectedTo
         throw new AppError('Insufficient wallet balance.', HTTP_STATUS.BAD_REQUEST);
     }
 
-    // Deduct wallet atomically
-    const updatedUser = await User.findByIdAndUpdate(userId, {
-        $inc: { 'wallet.balance': -totalAmount },
-        $push: {
-            'wallet.transactions': {
-                type: 'debit',
-                amount: totalAmount,
-                description: `Cart Booking: ${event.title}`
+    // 1. Allocate ticket inventory first (prevents overbooking & unnecessary wallet debit on race condition)
+    const ticketsArray = validatedItems.map(item => ({
+        ticket:      item.ticket._id,
+        ticketName:  item.ticket.name,
+        ticketPrice: item.ticket.price,
+        quantity:    item.quantity
+    }));
+    const updatedTickets = await incrementTicketsOrRollback(eventId, validatedItems);
+
+    // 2. Deduct from wallet balance atomically
+    const updatedUser = await User.findOneAndUpdate(
+        { _id: userId, 'wallet.balance': { $gte: totalAmount } },
+        {
+            $inc: { 'wallet.balance': -totalAmount },
+            $push: {
+                'wallet.transactions': {
+                    type: 'debit',
+                    amount: totalAmount,
+                    description: `Cart Booking: ${event.title}`
+                }
             }
+        },
+        { new: true }
+    );
+
+    if (!updatedUser) {
+        // Rollback ticket stock allocation if wallet deduction fails due to concurrent race condition on balance
+        for (const item of validatedItems) {
+            await Event.findOneAndUpdate(
+                { _id: eventId, 'tickets._id': item.ticket._id },
+                { $inc: { 'tickets.$[t].sold': -item.quantity } },
+                { arrayFilters: [{ 't._id': item.ticket._id }] }
+            );
         }
-    }, { new: true });
-
-    let ticketsArray = [];
-    let updatedTickets = [];
-
-    for (const item of validatedItems) {
-        ticketsArray.push({
-            ticket:      item.ticket._id,
-            ticketName:  item.ticket.name,
-            ticketPrice: item.ticket.price,
-            quantity:    item.quantity
-        });
-        const updatedEvent = await incrementTicketSold(eventId, item.ticket._id, item.quantity);
-        updatedTickets.push(updatedEvent.tickets.id(item.ticket._id));
+        throw new AppError('Insufficient wallet balance to complete this transaction.', HTTP_STATUS.BAD_REQUEST);
     }
 
     const newBooking = await Booking.create({
@@ -586,7 +647,21 @@ export const validateCartRequest = async (eventId, cart, userId, couponId = null
 
         const remaining = ticket.capacity - ticket.sold;
         if (item.quantity > remaining) throw new AppError(`Only ${remaining} ${ticket.name} tickets remaining`, HTTP_STATUS.BAD_REQUEST);
-        if (item.quantity > ticket.maxPerUser) throw new AppError(`Max ${ticket.maxPerUser} ${ticket.name} tickets per person`, HTTP_STATUS.BAD_REQUEST);
+        if (item.quantity > ticket.maxPerUser) throw new AppError(`Max ${ticket.maxPerUser} ${ticket.name} tickets per person in a single order`, HTTP_STATUS.BAD_REQUEST);
+
+        // Prevent users from circumventing maxPerUser across multiple active bookings
+        const userPreviousBookings = await Booking.find({ event: eventId, user: userId, status: { $ne: 'cancelled' } });
+        let userExistingCount = 0;
+        for (const prevB of userPreviousBookings) {
+            for (const prevT of (prevB.tickets || [])) {
+                if (String(prevT.ticket) === String(ticket._id) && prevT.status !== 'cancelled') {
+                    userExistingCount += prevT.quantity;
+                }
+            }
+        }
+        if (userExistingCount + item.quantity > ticket.maxPerUser) {
+            throw new AppError(`You already have ${userExistingCount} active "${ticket.name}" ticket(s). Maximum allowed per person is ${ticket.maxPerUser}.`, HTTP_STATUS.BAD_REQUEST);
+        }
 
         totalAmount += ticket.price * item.quantity;
         validatedItems.push({ ticket, quantity: item.quantity });
