@@ -85,6 +85,7 @@ export const eventValidationSchema = Joi.object({
         }),
 
     isFeatured: Joi.boolean().optional(),
+    postStartRegistrationLimit: Joi.number().min(0).allow(null, '').optional(),
 
     existingBanners: Joi.array().items(Joi.string().allow('', null)).optional(),
 
@@ -155,6 +156,7 @@ export const draftEventValidationSchema = Joi.object({
     endDate: Joi.alternatives().try(Joi.date().iso(), Joi.string().valid('', null)).optional(),
     endTime: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).allow('', null).optional(),
     isFeatured: Joi.boolean().optional(),
+    postStartRegistrationLimit: Joi.number().min(0).allow(null, '').optional(),
     existingBanners: Joi.array().items(Joi.string().allow('', null)).optional(),
     tickets: Joi.array().items(
         Joi.object({

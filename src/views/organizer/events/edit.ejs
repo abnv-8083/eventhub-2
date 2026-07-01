@@ -90,6 +90,17 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <div class="form-floating">
+                                        <input type="number" id="postStartRegistrationLimit" name="postStartRegistrationLimit" class="form-control input" placeholder=" " min="0" value="<%= event.postStartRegistrationLimit !== null && event.postStartRegistrationLimit !== undefined ? event.postStartRegistrationLimit : '' %>">
+                                        <label>Registration Time Limit (Minutes after event start)</label>
+                                        <div class="form-text text-dim small mt-1">
+                                            <i class="fi fi-rr-info me-1"></i> Enter minutes after start time when registration closes (e.g., <code>30</code> = closes 30 mins after start; <code>0</code> = closes at start). Leave blank for open until event end.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
                             <div class="form-floating mb-4">
                                 <textarea id="description" name="description" class="form-control input" placeholder=" " style="height:130px;resize:none;padding-top:1.5rem;border-radius:12px;" data-rule="required, min20"><%= event.description %></textarea>

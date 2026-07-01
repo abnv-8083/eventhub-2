@@ -555,6 +555,25 @@ export const validateCartRequest = async (eventId, cart, userId, couponId = null
         throw new AppError('This event has already finished. Bookings are now closed.', HTTP_STATUS.BAD_REQUEST);
     }
 
+    // Check registration time limit after event starts
+    if (event.postStartRegistrationLimit !== null && event.postStartRegistrationLimit !== undefined) {
+        const startDateObj = new Date(event.startDate);
+        if (event.startTime) {
+            const [startHours, startMinutes] = event.startTime.split(':');
+            startDateObj.setHours(parseInt(startHours, 10), parseInt(startMinutes, 10), 0, 0);
+        } else {
+            startDateObj.setHours(0, 0, 0, 0);
+        }
+        const cutoff = new Date(startDateObj.getTime() + event.postStartRegistrationLimit * 60000);
+        if (new Date() > cutoff) {
+            if (event.postStartRegistrationLimit === 0) {
+                throw new AppError('Registration closed once the event started.', HTTP_STATUS.BAD_REQUEST);
+            } else {
+                throw new AppError(`Registration closed ${event.postStartRegistrationLimit} minutes after the event started.`, HTTP_STATUS.BAD_REQUEST);
+            }
+        }
+    }
+
     const user = await User.findById(userId).select('wallet fullName email');
     let totalAmount = 0;
     let validatedItems = [];

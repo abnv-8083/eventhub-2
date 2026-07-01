@@ -102,6 +102,7 @@ export const createEvent = async (organizerId, eventData, bannerUrls, ticketData
         endDate:    eventData.endDate,
         endTime:    eventData.endTime,
         isFeatured: eventData.isFeatured,
+        postStartRegistrationLimit: eventData.postStartRegistrationLimit !== undefined ? eventData.postStartRegistrationLimit : null,
         banners:    bannerUrls,
         organizer:  organizerId,
         status:     status,
@@ -148,6 +149,7 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
     event.endDate     = eventData.endDate;
     event.endTime     = eventData.endTime;
     event.isFeatured  = eventData.isFeatured;
+    event.postStartRegistrationLimit = eventData.postStartRegistrationLimit !== undefined ? eventData.postStartRegistrationLimit : null;
     
     // Only update status if it's currently draft, or if we explicitly publish it
     if (event.status === 'draft' || status !== 'pending') {

@@ -187,6 +187,7 @@ export const createEvent = async (req, res, next) => {
             endDate:     req.body.endDate,
             endTime:     req.body.endTime,
             isFeatured:  req.body.isFeatured === 'true',
+            postStartRegistrationLimit: req.body.postStartRegistrationLimit !== undefined && req.body.postStartRegistrationLimit !== '' ? parseInt(req.body.postStartRegistrationLimit, 10) : null,
             tickets
         };
 
@@ -276,6 +277,7 @@ export const updateEvent = async (req, res, next) => {
             endDate:     req.body.endDate,
             endTime:     req.body.endTime,
             isFeatured:  req.body.isFeatured === 'true',
+            postStartRegistrationLimit: req.body.postStartRegistrationLimit !== undefined && req.body.postStartRegistrationLimit !== '' ? parseInt(req.body.postStartRegistrationLimit, 10) : null,
             existingBanners: req.body.existingBanners || [],
             tickets
         };

@@ -21,6 +21,8 @@
 
         <% 
             let isClosed = false;
+            let closedTitle = 'Event Finished';
+            let closedMessage = 'This event has already concluded. Ticket bookings are permanently closed.';
             if (event.endDate) {
                 const endDateObj = new Date(event.endDate);
                 if (event.endTime) {
@@ -29,7 +31,26 @@
                 } else {
                     endDateObj.setHours(23, 59, 59, 999);
                 }
-                isClosed = new Date() > endDateObj;
+                if (new Date() > endDateObj) {
+                    isClosed = true;
+                }
+            }
+            if (!isClosed && event.postStartRegistrationLimit !== null && event.postStartRegistrationLimit !== undefined) {
+                const startDateObj = new Date(event.startDate);
+                if (event.startTime) {
+                    const [startHours, startMinutes] = event.startTime.split(':');
+                    startDateObj.setHours(parseInt(startHours, 10), parseInt(startMinutes, 10), 0, 0);
+                } else {
+                    startDateObj.setHours(0, 0, 0, 0);
+                }
+                const cutoff = new Date(startDateObj.getTime() + event.postStartRegistrationLimit * 60000);
+                if (new Date() > cutoff) {
+                    isClosed = true;
+                    closedTitle = 'Registration Closed';
+                    closedMessage = event.postStartRegistrationLimit === 0 
+                        ? 'Ticket sales closed once the event started.' 
+                        : `Ticket sales closed ${event.postStartRegistrationLimit} minutes after the event started.`;
+                }
             }
         %>
 
@@ -37,8 +58,8 @@
             <% if (isClosed) { %>
                 <div class="text-center p-5 mt-4" style="background: rgba(230, 57, 70, 0.05); border: 1px dashed rgba(230, 57, 70, 0.3); border-radius: 20px;">
                     <i class="fi fi-rr-time-past mb-3" style="font-size: 3rem; color: #e63946; display: block;"></i>
-                    <h4 class="fw-bold text-white mb-2">Event Finished</h4>
-                    <p class="text-dim mb-0">This event has already concluded. Ticket bookings are permanently closed.</p>
+                    <h4 class="fw-bold text-white mb-2"><%= closedTitle %></h4>
+                    <p class="text-dim mb-0"><%= closedMessage %></p>
                 </div>
             <% } else { %>
                 <h5 class="fw-bold text-white mb-4">Select Tickets</h5>

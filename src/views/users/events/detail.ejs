@@ -103,6 +103,8 @@
                     
                     <% 
                         let isClosed = false;
+                        let closedTitle = 'Event Finished';
+                        let closedMessage = 'Bookings are now closed.';
                         if (event.endDate) {
                             const endDateObj = new Date(event.endDate);
                             if (event.endTime) {
@@ -111,14 +113,33 @@
                             } else {
                                 endDateObj.setHours(23, 59, 59, 999);
                             }
-                            isClosed = new Date() > endDateObj;
+                            if (new Date() > endDateObj) {
+                                isClosed = true;
+                            }
+                        }
+                        if (!isClosed && event.postStartRegistrationLimit !== null && event.postStartRegistrationLimit !== undefined) {
+                            const startDateObj = new Date(event.startDate);
+                            if (event.startTime) {
+                                const [startHours, startMinutes] = event.startTime.split(':');
+                                startDateObj.setHours(parseInt(startHours, 10), parseInt(startMinutes, 10), 0, 0);
+                            } else {
+                                startDateObj.setHours(0, 0, 0, 0);
+                            }
+                            const cutoff = new Date(startDateObj.getTime() + event.postStartRegistrationLimit * 60000);
+                            if (new Date() > cutoff) {
+                                isClosed = true;
+                                closedTitle = 'Registration Closed';
+                                closedMessage = event.postStartRegistrationLimit === 0 
+                                    ? 'Ticket sales ended when the event started.' 
+                                    : `Ticket sales ended ${event.postStartRegistrationLimit} minutes after event start.`;
+                            }
                         }
                     %>
                     
                     <% if (isClosed) { %>
                         <div class="p-3 mb-3" style="background: rgba(230, 57, 70, 0.1); border: 1px dashed rgba(230, 57, 70, 0.3); border-radius: 12px;">
-                            <h5 class="fw-bold mb-1" style="color: #e63946;">Event Finished</h5>
-                            <p class="text-dim mb-0" style="font-size: 0.85rem;">Bookings are now closed.</p>
+                            <h5 class="fw-bold mb-1" style="color: #e63946;"><%= closedTitle %></h5>
+                            <p class="text-dim mb-0" style="font-size: 0.85rem;"><%= closedMessage %></p>
                         </div>
                     <% } else { %>
                         <a href="/user/events/<%= event._id %>/buy-tickets" class="btn btn-primary w-100 shadow-sm" style="height: 3.2rem; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 1.05rem; font-weight: 600;">
