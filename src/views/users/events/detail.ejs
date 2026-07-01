@@ -105,7 +105,11 @@
                         let isClosed = false;
                         let closedTitle = 'Event Finished';
                         let closedMessage = 'Bookings are now closed.';
-                        if (event.endDate) {
+                        if (event.status === 'cancelled') {
+                            isClosed = true;
+                            closedTitle = 'Event Cancelled';
+                            closedMessage = 'This event has been cancelled by the organizer.';
+                        } else if (event.endDate) {
                             const endDateObj = new Date(event.endDate);
                             if (event.endTime) {
                                 const [hours, minutes] = event.endTime.split(':');

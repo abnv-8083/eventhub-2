@@ -68,6 +68,7 @@ organizerRouter.get('/events/:id', eventController.getEventViewPage);
 organizerRouter.get('/events/:id/edit', eventController.getEditEventPage);
 organizerRouter.post('/events/:id/update', eventUpload.array('banners', 2), eventController.updateEvent);
 organizerRouter.delete('/events/:id', eventController.deleteEvent);
+organizerRouter.post('/events/:id/cancel', eventController.cancelEvent);
 organizerRouter.post('/events/:id/toggle-block', eventController.toggleBlockEvent);
 organizerRouter.post('/events/:id/resubmit', eventController.resubmitEvent);
 

@@ -313,6 +313,17 @@ export const deleteEvent = async (req, res, next) => {
 };
 
 
+// ─── Cancel Event ─────────────────────────────────────────────────────────────
+export const cancelEvent = async (req, res, next) => {
+    try {
+        await organizerEventService.cancelEvent(req.params.id, req.session.organizer._id);
+        res.status(HTTP_STATUS.OK).json({ success: true, message: 'Event cancelled successfully and active attendees refunded.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 // ─── Toggle Block Event ───────────────────────────────────────────────────────
 export const toggleBlockEvent = async (req, res, next) => {
     try {

@@ -539,8 +539,10 @@ export const requestCancellation = async (bookingId, userId, reason) => {
 
 // ─── Shared Multi-Cart Validation Helper ────────────────────────────────────
 export const validateCartRequest = async (eventId, cart, userId, couponId = null, expectedTotal = null) => {
-    const event = await Event.findOne({ _id: eventId, status: 'approved', isBlocked: false });
+    const event = await Event.findOne({ _id: eventId, isBlocked: false });
     if (!event) throw new AppError('Event not found or not available', HTTP_STATUS.NOT_FOUND);
+    if (event.status === 'cancelled') throw new AppError('This event has been cancelled by the organizer.', HTTP_STATUS.BAD_REQUEST);
+    if (event.status !== 'approved') throw new AppError('Event not found or not available', HTTP_STATUS.NOT_FOUND);
 
     // ✨ Prevent booking if event is already finished
     const endDateObj = new Date(event.endDate);

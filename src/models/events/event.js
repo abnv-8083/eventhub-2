@@ -57,7 +57,7 @@ const eventSchema = new mongoose.Schema({
     postStartRegistrationLimit: { type: Number, min: 0, default: null }, // Minutes after start time registration stays open (0 = close at start time, null = close at event end)
     organizer:  { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 
-    status:    { type: String, enum: ['draft', 'pending', 'approved', 'rejected', 'inactive'], default: 'draft' },
+    status:    { type: String, enum: ['draft', 'pending', 'approved', 'rejected', 'inactive', 'cancelled'], default: 'draft' },
     isBlocked: { type: Boolean, default: false }
 }, { timestamps: true });
 

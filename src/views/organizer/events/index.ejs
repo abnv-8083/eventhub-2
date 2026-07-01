@@ -117,6 +117,8 @@
                                     <span class="status-badge status-approved" style="font-size:0.7rem;"><i class="fi fi-rr-check me-1"></i>Live</span>
                                 <% } else if(event.status==='inactive') { %>
                                     <span class="status-badge" style="font-size:0.7rem;background:rgba(108,117,125,0.15);color:#6c757d;border:1px solid rgba(108,117,125,0.3);"><i class="fi fi-rr-time-past me-1"></i>Inactive</span>
+                                <% } else if(event.status==='cancelled') { %>
+                                    <span class="status-badge status-rejected" style="font-size:0.7rem;background:rgba(230,57,70,0.15);color:#e63946;border:1px solid rgba(230,57,70,0.3);"><i class="fi fi-rr-cross-circle me-1"></i>Cancelled</span>
                                 <% } else { %>
                                     <span class="status-badge status-rejected" style="font-size:0.7rem;"><i class="fi fi-rr-cross me-1"></i>Rejected</span>
                                 <% } %>
@@ -164,6 +166,9 @@
                                 <% if(event.status==='approved') { %>
                                 <button onclick="toggleBlockEvent('<%= event._id %>', <%= event.isBlocked %>)" class="action-icon-btn" title="<%= event.isBlocked ? 'Unblock' : 'Block' %>">
                                     <i class="fi <%= event.isBlocked ? 'fi-rr-check' : 'fi-rr-ban' %>"></i>
+                                </button>
+                                <button onclick="cancelEvent('<%= event._id %>')" class="action-icon-btn danger" title="Cancel Event" style="color:#ff9f43;border-color:rgba(255,159,67,0.2);">
+                                    <i class="fi fi-rr-cross-circle"></i>
                                 </button>
                                 <% } %>
                                 <button onclick="deleteEvent('<%= event._id %>')" class="action-icon-btn danger" title="Delete">
@@ -220,6 +225,12 @@
             const c=await CustomConfirm.show({title:'Delete Event?',message:'Permanently delete this event? This cannot be undone.',confirmText:'Yes, Delete',actionType:'danger',icon:'fi-rr-trash'});
             if(!c) return; Loader.show('DELETING...');
             try { const r=await axios.delete(`/organizer/events/${id}`); if(r.data.success){Toast.success(r.data.message);setTimeout(()=>location.reload(),1000);} }
+            catch(e){Toast.error(e.response?.data?.message||'Failed');} finally{Loader.hide();}
+        }
+        async function cancelEvent(id) {
+            const c=await CustomConfirm.show({title:'Cancel Event?',message:'Are you sure you want to cancel this event? All registered attendees will be automatically refunded to their wallet.',confirmText:'Yes, Cancel Event',actionType:'danger',icon:'fi-rr-cross-circle'});
+            if(!c) return; Loader.show('CANCELLING EVENT & REFUNDING...');
+            try { const r=await axios.post(`/organizer/events/${id}/cancel`); if(r.data.success){Toast.success(r.data.message);setTimeout(()=>location.reload(),1200);} }
             catch(e){Toast.error(e.response?.data?.message||'Failed');} finally{Loader.hide();}
         }
         async function handleResubmit(id) {

@@ -6,6 +6,9 @@ import AppError from '../../utils/AppError.js';
 import HTTP_STATUS from '../../constant/statusCode.js';
 import ExcelJS from 'exceljs';
 import puppeteer from 'puppeteer';
+import User from '../../models/users/user.js';
+import { sendNotification } from '../../utils/notify.js';
+import { PAYMENT_STATUS } from '../../constant/paymentConstants.js';
 
 
 
@@ -195,13 +198,70 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
 
 
 // ─── Delete Event ─────────────────────────────────────────────────────────────
-// Embedded tickets are automatically removed when the event is deleted.
+// Prevent permanent deletion if registrations exist; prompt organizer to cancel instead.
 export const deleteEvent = async (eventId, organizerId) => {
     const event = await Event.findOne({ _id: eventId, organizer: organizerId });
     if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
 
+    const totalSold = (event.tickets || []).reduce((acc, t) => acc + t.sold, 0);
+    const activeBookingsCount = await Booking.countDocuments({ event: eventId, status: { $ne: 'cancelled' } });
+
+    if (totalSold > 0 || activeBookingsCount > 0) {
+        throw new AppError('Cannot delete an event that has registrations. Please use Cancel Event instead to refund attendees and mark the event cancelled.', HTTP_STATUS.BAD_REQUEST);
+    }
+
     await Booking.deleteMany({ event: eventId });
     await event.deleteOne();
+};
+
+
+// ─── Cancel Event ─────────────────────────────────────────────────────────────
+export const cancelEvent = async (eventId, organizerId) => {
+    const event = await Event.findOne({ _id: eventId, organizer: organizerId });
+    if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
+
+    if (event.status === 'cancelled') {
+        throw new AppError('Event is already cancelled.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    event.status = 'cancelled';
+    await event.save();
+
+    // Find all active bookings for this event
+    const bookings = await Booking.find({ event: eventId, status: { $ne: 'cancelled' } });
+
+    for (const booking of bookings) {
+        booking.status = 'cancelled';
+        booking.cancelledAt = new Date();
+        booking.paymentStatus = PAYMENT_STATUS.REFUNDED;
+
+        // Cancel sub-tickets
+        for (const ticket of booking.tickets) {
+            ticket.status = 'cancelled';
+        }
+        await booking.save();
+
+        const refundAmount = booking.finalAmount || booking.totalAmount || 0;
+        const userId = String(booking.user._id || booking.user).trim();
+
+        if (booking.paymentMethod === 'wallet' && refundAmount > 0) {
+            await User.findByIdAndUpdate(userId, {
+                $inc: { 'wallet.balance': refundAmount },
+                $push: {
+                    'wallet.transactions': {
+                        type: 'credit',
+                        amount: refundAmount,
+                        description: `Full Refund: Event "${event.title}" cancelled by organizer`
+                    }
+                }
+            });
+        }
+
+        const notifMessage = `Event "${event.title}" has been cancelled by the organizer. ${refundAmount > 0 ? `₹${refundAmount.toLocaleString('en-IN')} will be refunded.` : ''}`;
+        await sendNotification(userId, notifMessage.trim(), 'danger');
+    }
+
+    return event;
 };
 
 
