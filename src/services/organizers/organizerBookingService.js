@@ -570,9 +570,17 @@ export const verifyTicketScan = async (bookingId, organizerId) => {
         throw new AppError('This ticket is currently on hold.', HTTP_STATUS.BAD_REQUEST);
     }
 
-    // You could also add a 'scanned' flag here if you want to prevent double entry
-    // booking.scanned = true;
-    // await booking.save();
+    // Single-use QR check-in enforcement
+    if (booking.isCheckedIn) {
+        const timeStr = booking.checkedInAt 
+            ? new Date(booking.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+            : 'an earlier time';
+        throw new AppError(`Ticket already used at ${timeStr}. Single-use entry has already been claimed.`, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    booking.isCheckedIn = true;
+    booking.checkedInAt = new Date();
+    await booking.save();
 
     return booking;
 };

@@ -29,6 +29,10 @@ const bookingSchema = new mongoose.Schema({
     heldAt:             { type: Date },
     holdReason:         { type: String, default: '' },
 
+    // ── QR Code Verification / Check-in State ──
+    isCheckedIn:        { type: Boolean, default: false },
+    checkedInAt:        { type: Date },
+
     // ── User-initiated cancellation request (awaiting organizer approval) ──
     cancellationRequest: {
         status:        { type: String, enum: ['none', 'pending', 'approved', 'rejected'], default: 'none' },

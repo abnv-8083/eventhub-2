@@ -74,7 +74,10 @@
             <div class="ticket-details">
                 <p class="text-white mb-2"><strong>Attendee:</strong> <%= booking.user.fullName %></p>
                 <p class="text-white mb-2"><strong>Phone:</strong> <%= booking.user.phone || 'N/A' %></p>
-                <p class="text-white mb-3"><strong>Event:</strong> <%= booking.event.title %></p>
+                <p class="text-white mb-2"><strong>Event:</strong> <%= booking.event.title %></p>
+                <% if (booking.checkedInAt) { %>
+                    <p class="text-white mb-3" style="color: #2ecc71 !important;"><strong>Checked In:</strong> <%= new Date(booking.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) %></p>
+                <% } %>
                 
                 <h6 class="text-dim text-uppercase small fw-bold mb-2">Tickets Included:</h6>
                 <% booking.tickets.forEach(t => { %>
