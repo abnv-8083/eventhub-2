@@ -8,66 +8,89 @@
 
     <div class="browse-page">
 
-        <!-- Hero Search -->
+        <!-- Modern Hero Section -->
         <div class="browse-hero animate stagger-1">
-            <p class="page-label">
-                <i class="fi fi-rr-sparkles"></i> Discover Events
-            </p>
-            <h2 class="fw-bold text-white mb-1" style="font-size:2rem;">Find Your Next Experience</h2>
-            <p class="text-dim mb-4" style="font-size:0.95rem;"><%= total %> events available right now</p>
+            <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+                <span class="badge-glow"><i class="fi fi-rr-sparkles me-2"></i>Discover Live Experiences</span>
+                <span class="live-count-pill"><span class="pulse-dot"></span> <%= total %> Events Live</span>
+            </div>
+            <h1 class="hero-title">Find Your Next <span class="gradient-text">Experience</span></h1>
+            <p class="hero-subtitle">Explore concerts, tech summits, workshops, and nightlife happening near you.</p>
             <div class="hero-search-wrap">
-                <i class="fi fi-rr-search"></i>
-                <input type="text" id="evtSearch" placeholder="Search events by name..." value="<%= filters.search %>">
+                <i class="fi fi-rr-search search-icon"></i>
+                <input type="text" id="evtSearch" placeholder="Search by event name, artist, or keyword..." value="<%= filters.search %>">
+                <button id="searchBtn" class="btn-hero-search">
+                    <span>Search</span>
+                    <i class="fi fi-rr-arrow-right"></i>
+                </button>
             </div>
         </div>
 
-        <!-- Filter Toolbar -->
+        <!-- Modern Filter Dock -->
         <div class="filter-toolbar animate stagger-2">
-            <span class="text-dim d-none d-md-inline" style="font-size:0.8rem; white-space:nowrap; flex-shrink:0;">Filter by:</span>
-
-            <div class="d-flex flex-wrap gap-2 flex-grow-1">
-                <select id="evtCategory" class="filter-select">
-                    <option value="all" <%= filters.category === 'all' ? 'selected' : '' %>>All Categories</option>
-                    <% categories.forEach(cat => { %>
-                        <option value="<%= cat.id %>" <%= filters.category === cat.id ? 'selected' : '' %>><%= cat.name %></option>
-                    <% }) %>
-                </select>
-
-                <select id="evtDate" class="filter-select">
-                    <option value="all" <%= filters.dateRange === 'all' ? 'selected' : '' %>>Any Date</option>
-                    <option value="today" <%= filters.dateRange === 'today' ? 'selected' : '' %>>Today</option>
-                    <option value="weekend" <%= filters.dateRange === 'weekend' ? 'selected' : '' %>>This Weekend</option>
-                    <option value="month" <%= filters.dateRange === 'month' ? 'selected' : '' %>>This Month</option>
-                </select>
-
-                <select id="evtPrice" class="filter-select">
-                    <option value="all" <%= filters.priceRange === 'all' ? 'selected' : '' %>>Any Price</option>
-                    <option value="free" <%= filters.priceRange === 'free' ? 'selected' : '' %>>Free</option>
-                    <option value="under500" <%= filters.priceRange === 'under500' ? 'selected' : '' %>>Under &#8377;500</option>
-                    <option value="500-2000" <%= filters.priceRange === '500-2000' ? 'selected' : '' %>>&#8377;500 – &#8377;2000</option>
-                    <option value="above2000" <%= filters.priceRange === 'above2000' ? 'selected' : '' %>>Above &#8377;2000</option>
-                </select>
-
-                <select id="evtSort" class="filter-select">
-                    <option value="newest" <%= filters.sort === 'newest' ? 'selected' : '' %>>Newest First</option>
-                    <option value="oldest" <%= filters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
-                    <option value="date-asc" <%= filters.sort === 'date-asc' ? 'selected' : '' %>>Upcoming First</option>
-                    <option value="date-desc" <%= filters.sort === 'date-desc' ? 'selected' : '' %>>Furthest First</option>
-                    <option value="price-asc" <%= filters.sort === 'price-asc' ? 'selected' : '' %>>Price: Low → High</option>
-                    <option value="price-desc" <%= filters.sort === 'price-desc' ? 'selected' : '' %>>Price: High → Low</option>
-                </select>
+            <div class="filter-label">
+                <i class="fi fi-rr-filter"></i>
+                <span>Filters</span>
             </div>
 
-            <div class="d-flex gap-2 flex-shrink-0">
-                <button id="applyBtn" class="btn btn-primary btn-sm px-4" style="height:38px; border-radius:10px;">Apply</button>
-                <button id="clearBtn" class="btn btn-outline btn-sm px-3" style="height:38px; border-radius:10px;">
-                    <i class="fi fi-rr-refresh me-1 d-none d-sm-inline"></i>Clear
+            <div class="filter-controls">
+                <div class="select-wrap">
+                    <i class="fi fi-rr-apps select-icon"></i>
+                    <select id="evtCategory" class="filter-select" aria-label="Filter by Category">
+                        <option value="all" <%= filters.category === 'all' ? 'selected' : '' %>>All Categories</option>
+                        <% categories.forEach(cat => { %>
+                            <option value="<%= cat.id %>" <%= filters.category === cat.id ? 'selected' : '' %>><%= cat.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+
+                <div class="select-wrap">
+                    <i class="fi fi-rr-calendar select-icon"></i>
+                    <select id="evtDate" class="filter-select" aria-label="Filter by Date">
+                        <option value="all" <%= filters.dateRange === 'all' ? 'selected' : '' %>>Any Date</option>
+                        <option value="today" <%= filters.dateRange === 'today' ? 'selected' : '' %>>Today</option>
+                        <option value="weekend" <%= filters.dateRange === 'weekend' ? 'selected' : '' %>>This Weekend</option>
+                        <option value="month" <%= filters.dateRange === 'month' ? 'selected' : '' %>>This Month</option>
+                    </select>
+                </div>
+
+                <div class="select-wrap">
+                    <i class="fi fi-rr-tag select-icon"></i>
+                    <select id="evtPrice" class="filter-select" aria-label="Filter by Price">
+                        <option value="all" <%= filters.priceRange === 'all' ? 'selected' : '' %>>Any Price</option>
+                        <option value="free" <%= filters.priceRange === 'free' ? 'selected' : '' %>>Free</option>
+                        <option value="under500" <%= filters.priceRange === 'under500' ? 'selected' : '' %>>Under &#8377;500</option>
+                        <option value="500-2000" <%= filters.priceRange === '500-2000' ? 'selected' : '' %>>&#8377;500 – &#8377;2000</option>
+                        <option value="above2000" <%= filters.priceRange === 'above2000' ? 'selected' : '' %>>Above &#8377;2000</option>
+                    </select>
+                </div>
+
+                <div class="select-wrap">
+                    <i class="fi fi-rr-sort-alt select-icon"></i>
+                    <select id="evtSort" class="filter-select" aria-label="Sort Events">
+                        <option value="newest" <%= filters.sort === 'newest' ? 'selected' : '' %>>Newest First</option>
+                        <option value="oldest" <%= filters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+                        <option value="date-asc" <%= filters.sort === 'date-asc' ? 'selected' : '' %>>Upcoming First</option>
+                        <option value="date-desc" <%= filters.sort === 'date-desc' ? 'selected' : '' %>>Furthest First</option>
+                        <option value="price-asc" <%= filters.sort === 'price-asc' ? 'selected' : '' %>>Price: Low → High</option>
+                        <option value="price-desc" <%= filters.sort === 'price-desc' ? 'selected' : '' %>>Price: High → Low</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-actions">
+                <button id="applyBtn" class="btn-filter-apply">
+                    <i class="fi fi-rr-check me-1"></i> Apply
+                </button>
+                <button id="clearBtn" class="btn-filter-clear">
+                    <i class="fi fi-rr-refresh me-1"></i> Reset
                 </button>
             </div>
 
-            <span class="d-none d-lg-inline text-dim ms-1" style="font-size:0.82rem; white-space:nowrap; flex-shrink:0;">
-                <%= total %> result<%= total !== 1 ? 's' : '' %>
-            </span>
+            <div class="filter-results-badge">
+                <i class="fi fi-rr-chart-pie me-2"></i>
+                <span><strong><%= total %></strong> result<%= total !== 1 ? 's' : '' %></span>
+            </div>
         </div>
 
         <!-- Events Grid -->
@@ -92,13 +115,15 @@
 
         <% } else { %>
         <div class="empty-state animate stagger-3">
-            <div class="empty-icon">
-                <i class="fi fi-rr-search"></i>
+            <div class="empty-icon-glow">
+                <div class="icon-circle">
+                    <i class="fi fi-rr-search-alt"></i>
+                </div>
             </div>
-            <h5 class="text-white mb-2">No Events Found</h5>
-            <p class="text-dim mb-4">Try adjusting your search or clearing the filters.</p>
-            <button onclick="window.location.href=window.location.pathname" class="btn btn-outline px-5">
-                <i class="fi fi-rr-refresh me-2"></i>Clear Filters
+            <h4 class="fw-bold text-white mb-2">No Matching Events Found</h4>
+            <p class="text-dim mb-4" style="max-width: 420px; margin: 0 auto;">We couldn't find any events matching your current filters. Try widening your search criteria or resetting the filters to discover more experiences!</p>
+            <button onclick="window.location.href=window.location.pathname" class="btn-reset-filters">
+                <i class="fi fi-rr-refresh me-2"></i> Reset All Filters
             </button>
         </div>
         <% } %>
@@ -157,9 +182,14 @@
             window.location.href = url.toString();
         }
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('applyBtn').addEventListener('click', applyFilters);
-            document.getElementById('clearBtn').addEventListener('click', () => window.location.href = window.location.pathname);
-            document.getElementById('evtSearch').addEventListener('keypress', e => { if(e.key==='Enter') applyFilters(); });
+            const applyBtn = document.getElementById('applyBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const searchBtn = document.getElementById('searchBtn');
+            const evtSearch = document.getElementById('evtSearch');
+            if (applyBtn) applyBtn.addEventListener('click', applyFilters);
+            if (clearBtn) clearBtn.addEventListener('click', () => window.location.href = window.location.pathname);
+            if (searchBtn) searchBtn.addEventListener('click', applyFilters);
+            if (evtSearch) evtSearch.addEventListener('keypress', e => { if(e.key==='Enter') applyFilters(); });
         });
     </script>
 </body>
