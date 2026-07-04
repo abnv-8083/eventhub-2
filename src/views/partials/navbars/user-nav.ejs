@@ -65,8 +65,8 @@
                 <% if (locals.admin) { %>
                     <a href="/admin/dashboard" class="btn btn-outline" style="height:42px; border-radius:100px; padding:0 1.5rem; font-size:0.9rem; border-color: rgba(255,255,255,0.2);">Admin Dashboard</a>
                 <% } %>
-                <a href="/user/login" class="btn btn-primary"
-                    style="height:42px; border-radius:100px; padding:0 1.5rem; font-size:0.9rem;">Sign In</a>
+                <button type="button" onclick="openLoginModal()" class="btn btn-primary"
+                    style="height:42px; border-radius:100px; padding:0 1.5rem; font-size:0.9rem;">Sign In</button>
             <% } %>
         </div>
     </div>
@@ -114,3 +114,6 @@
         }
     </style>
     <% } %>
+<% if (!locals.user) { %>
+    <%- include('../login-modal') %>
+<% } %>

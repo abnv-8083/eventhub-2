@@ -136,7 +136,8 @@
         async function toggleWishlist(e, eventId, btn) {
             e.stopPropagation();
             if (!IS_LOGGED_IN) {
-                window.location.href = '/user/login?message=Please login to save events';
+                if (typeof openLoginModal === 'function') openLoginModal('Please login to save events to your wishlist');
+                else window.location.href = '/user/login?message=Please login to save events';
                 return;
             }
             try {
@@ -152,7 +153,8 @@
                 }
             } catch (err) {
                 if (err.response?.status === 401) {
-                    window.location.href = '/user/login?message=Please login to save events';
+                    if (typeof openLoginModal === 'function') openLoginModal('Please login to save events to your wishlist');
+                    else window.location.href = '/user/login?message=Please login to save events';
                 } else {
                     Toast.error('Could not update wishlist. Try again.');
                 }

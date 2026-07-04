@@ -217,7 +217,7 @@
         let curTicketId = '', curPrice = 0, curQty = 1, curMax = 1;
 
         function openBookingModal(tid, name, price, maxQty) {
-            <% if(!locals.user) { %> window.location.href = '/user/login'; return; <% } %>
+            <% if(!locals.user) { %> if (typeof openLoginModal === 'function') { openLoginModal('Please login to book tickets'); } else { window.location.href = '/user/login'; } return; <% } %>
             curTicketId = tid; curPrice = price; curQty = 1; curMax = maxQty;
             document.getElementById('modalTicketName').textContent = name;
             document.getElementById('maxQtyDisplay').textContent = maxQty;
@@ -257,8 +257,10 @@
                     }
                 }
             } catch (err) {
-                if (err.response?.status === 401) window.location.href = '/user/login';
-                else Toast.error('Failed to update wishlist');
+                if (err.response?.status === 401) {
+                    if (typeof openLoginModal === 'function') openLoginModal('Please login to save events to your wishlist');
+                    else window.location.href = '/user/login';
+                } else Toast.error('Failed to update wishlist');
             }
         }
     </script>
