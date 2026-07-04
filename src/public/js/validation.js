@@ -83,7 +83,7 @@ function showError(input, message) {
     input.setAttribute('aria-invalid', 'true');
 
     const successEl = getFeedbackEl(input, 'ev-success-msg');
-    if (successEl) successEl.style.display = 'none';
+    if (successEl) successEl.remove();
 
     let errorEl = getOrCreateFeedbackEl(input, 'ev-error-msg');
     errorEl.innerHTML = `<i class="fi fi-rr-exclamation"></i> <span>${message}</span>`;
@@ -96,9 +96,9 @@ function clearError(input) {
     input.removeAttribute('aria-invalid');
 
     const errorEl = getFeedbackEl(input, 'ev-error-msg');
-    if (errorEl) errorEl.style.display = 'none';
+    if (errorEl) errorEl.remove();
     const successEl = getFeedbackEl(input, 'ev-success-msg');
-    if (successEl) successEl.style.display = 'none';
+    if (successEl) successEl.remove();
 }
 
 function showSuccess(input, message) {
@@ -107,7 +107,7 @@ function showSuccess(input, message) {
     input.removeAttribute('aria-invalid');
 
     const errorEl = getFeedbackEl(input, 'ev-error-msg');
-    if (errorEl) errorEl.style.display = 'none';
+    if (errorEl) errorEl.remove();
 
     if (message) {
         let successEl = getOrCreateFeedbackEl(input, 'ev-success-msg');
@@ -115,7 +115,7 @@ function showSuccess(input, message) {
         successEl.style.display = 'flex';
     } else {
         const successEl = getFeedbackEl(input, 'ev-success-msg');
-        if (successEl) successEl.style.display = 'none';
+        if (successEl) successEl.remove();
     }
 }
 

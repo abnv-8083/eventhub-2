@@ -5617,7 +5617,7 @@ select.input-success,
 
 /* Error Message Badge */
 .ev-error-msg {
-    display: flex !important;
+    display: flex;
     align-items: center;
     gap: 8px;
     color: #ff3b5c;
@@ -5650,7 +5650,7 @@ select.input-success,
 
 /* Success Message Badge */
 .ev-success-msg {
-    display: flex !important;
+    display: flex;
     align-items: center;
     gap: 8px;
     color: #00d26a;
