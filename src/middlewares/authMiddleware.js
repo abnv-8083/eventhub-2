@@ -34,23 +34,23 @@ export const isUserAuthenticated = (req, res, next) => {
         // Return JSON for AJAX/API calls, redirect for browser navigation
         const isAjax = req.xhr || req.headers.accept?.includes('application/json');
         if (isAjax) {
-            return res.status(HTTP_STATUS.UNAUTHORIZED).json({ success: false, message: 'Session expired. Please log in.' });
+            return res.status(HTTP_STATUS.UNAUTHORIZED).json({ success: false, message: 'Please log in to continue.' });
         }
-        return res.redirect('/user/login?message=Session Expired. Please log in.');
+        return res.redirect('/user/login?message=Please log in to continue.');
     }
     next();
 };
 
 export const isOrganizerAuthenticated = (req, res, next) => {
     if (!req.session || !req.session.organizer) {
-        return res.redirect('/organizer/login?message=Session Expired. Please log in.');
+        return res.redirect('/organizer/login?message=Please sign in as an Organizer to access this area.');
     }
     next();
 };
 
 export const isAdminAuthenticated = (req, res, next) => {
     if (!req.session || !req.session.admin) {
-        return res.redirect('/admin?message=Session Expired. Please log in.');
+        return res.redirect('/admin?message=Please sign in as Admin to access the dashboard.');
     }
     next();
 };
