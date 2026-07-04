@@ -134,16 +134,25 @@
                         <p class="page-label">History</p>
                         <h5 class="fw-bold m-0">Transactions</h5>
                     </div>
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="txn-filter-wrap d-flex gap-2 align-items-center" id="txnFilterWrap">
-                            <input type="date" id="dateFilter" class="form-control form-control-sm bg-transparent text-white border-secondary" style="max-width: 140px; font-size:0.8rem; border-color: rgba(255,255,255,0.1) !important;" onchange="applyFilters()" title="Filter by date">
-                            <div class="d-flex">
-                                <button class="txn-filter-btn active" data-filter="all" onclick="setTypeFilter('all', this)">All</button>
-                                <button class="txn-filter-btn" data-filter="credit" onclick="setTypeFilter('credit', this)">Credits</button>
-                                <button class="txn-filter-btn" data-filter="debit" onclick="setTypeFilter('debit', this)">Debits</button>
+                    <div class="d-flex align-items-center gap-3 flex-wrap justify-content-end">
+                        <!-- Modern Date Filter Pill -->
+                        <div class="wallet-date-filter" title="Filter transactions by date">
+                            <div class="date-filter-inner">
+                                <i class="fi fi-rr-calendar-lines date-icon"></i>
+                                <input type="date" id="dateFilter" class="date-input" onchange="applyFilters()">
+                                <button type="button" id="clearDateBtn" class="date-clear-btn" onclick="clearDateFilter()" title="Clear date filter" style="display: none;">
+                                    <i class="fi fi-rr-cross-small"></i>
+                                </button>
                             </div>
                         </div>
-                        <span class="text-dim" style="font-size:0.8rem;"><%= transactions.length %> total</span>
+
+                        <!-- Type Filter Pills -->
+                        <div class="txn-filter-wrap d-flex align-items-center" id="txnFilterWrap">
+                            <button class="txn-filter-btn active" data-filter="all" onclick="setTypeFilter('all', this)">All</button>
+                            <button class="txn-filter-btn" data-filter="credit" onclick="setTypeFilter('credit', this)">Credits</button>
+                            <button class="txn-filter-btn" data-filter="debit" onclick="setTypeFilter('debit', this)">Debits</button>
+                        </div>
+                        <span class="text-dim" style="font-size:0.8rem; white-space: nowrap;"><%= transactions.length %> total</span>
                     </div>
                 </div>
 
@@ -249,8 +258,19 @@
         .txn-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
         .txn-filter-wrap { display: flex; gap: 0.25rem; background: rgba(255,255,255,0.03); padding: 0.25rem; border-radius: 100px; border: 1px solid rgba(255,255,255,0.05); }
         .txn-filter-btn { background: transparent; border: none; color: rgba(255,255,255,0.6); padding: 0.4rem 1rem; border-radius: 100px; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; font-weight: 600; }
-        .txn-filter-btn:hover { color: white; background: rgba(255,255,255,0.05); }
         .txn-filter-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(230,57,70,0.4); }
+
+        /* ── Modern Date Filter Pill ── */
+        .wallet-date-filter { position: relative; display: inline-flex; align-items: center; }
+        .date-filter-inner { display: flex; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 100px; padding: 0.35rem 0.9rem; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); backdrop-filter: blur(10px); height: 40px; }
+        .date-filter-inner:hover, .date-filter-inner:focus-within { background: rgba(255, 255, 255, 0.07); border-color: var(--primary); box-shadow: 0 0 20px rgba(230, 57, 70, 0.25); transform: translateY(-1px); }
+        .date-icon { color: var(--primary); font-size: 0.95rem; margin-right: 0.5rem; transition: transform 0.2s; display: flex; align-items: center; }
+        .date-filter-inner:hover .date-icon { transform: scale(1.1); }
+        .date-input { background: transparent; border: none; color: #ffffff; font-size: 0.85rem; font-family: inherit; font-weight: 500; outline: none; cursor: pointer; color-scheme: dark; padding: 0; width: 120px; }
+        .date-input::-webkit-calendar-picker-indicator { filter: invert(1) opacity(0.7); cursor: pointer; transition: opacity 0.2s, transform 0.2s; }
+        .date-input::-webkit-calendar-picker-indicator:hover { opacity: 1; transform: scale(1.1); }
+        .date-clear-btn { background: rgba(230, 57, 70, 0.2); border: none; color: #ff526f; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; margin-left: 0.5rem; cursor: pointer; transition: all 0.2s; padding: 0; flex-shrink: 0; }
+        .date-clear-btn:hover { background: var(--primary); color: white; transform: scale(1.15) rotate(90deg); }
 
         .txn-list { display: flex; flex-direction: column; gap: 1rem; }
         .txn-item { display: flex; align-items: center; gap: 1rem; padding: 1.25rem; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px solid rgba(255,255,255,0.04); transition: transform 0.2s, background 0.2s; }
@@ -403,6 +423,10 @@
 
     function applyFilters() {
         const dateFilterVal = document.getElementById('dateFilter').value;
+        const clearBtn = document.getElementById('clearDateBtn');
+        if (clearBtn) {
+            clearBtn.style.display = dateFilterVal ? 'inline-flex' : 'none';
+        }
         let visibleCount = 0;
         
         document.querySelectorAll('.txn-item').forEach(item => {
@@ -416,9 +440,14 @@
                 item.style.display = 'none';
             }
         });
-        
-        // Optionally update the total count label if you want to reflect the filtered amount
-        // document.querySelector('.txn-panel-header .text-dim').textContent = visibleCount + ' total';
+    }
+
+    function clearDateFilter() {
+        const dateInput = document.getElementById('dateFilter');
+        if (dateInput) {
+            dateInput.value = '';
+            applyFilters();
+        }
     }
 
     // ── Live Wallet Balance Update via Socket ────────────────────────────────────
