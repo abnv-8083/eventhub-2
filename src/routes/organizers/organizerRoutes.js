@@ -25,6 +25,10 @@ organizerRouter.get('/signup', isOrganizerGuest, (req, res) => {
     res.render('users/auth/register', { title: 'Organizer Signup' });
 });
 
+organizerRouter.get('/apply', isOrganizerGuest, (req, res) => {
+    res.redirect('/organizer/login?message=Please sign in or create an Organizer account to host events.');
+});
+
 
 // ==========================================
 // PROTECTED ROUTES

@@ -88,7 +88,7 @@
                         <div class="text-center mt-4 animate stagger-4" id="login-link-container">
                             <p class="text-muted" style="font-size: 0.9rem;">
                                 Already have an account?
-                                <a href="/user/login" style="color: var(--primary); font-weight: 600;">Sign in</a>
+                                <a href="<%= locals.title === 'Organizer Signup' ? '/organizer/login' : '/user/login' %>" style="color: var(--primary); font-weight: 600;">Sign in</a>
                             </p>
                         </div>
 
