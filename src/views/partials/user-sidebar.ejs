@@ -1,10 +1,26 @@
 <!-- src/views/partials/user-sidebar.ejs -->
-<aside class="sidebar">
+<aside class="sidebar" id="userSidebar">
     <button class="sidebar-toggle-btn" id="userSidebarToggleBtn" title="Toggle Sidebar">
         <i class="fi fi-rr-angle-left"></i>
     </button>
 
-    <nav class="sidebar-nav px-2">
+    <!-- User Info Header -->
+    <div class="sidebar-user-info">
+        <div class="sidebar-avatar">
+            <% if(user && user.avatar) { %>
+                <img src="<%= user.avatar %>" alt="Avatar">
+            <% } else { %>
+                <%= user ? (user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U') : 'U' %>
+            <% } %>
+        </div>
+        <div style="min-width:0;">
+            <div class="sidebar-user-name"><%= user ? (user.fullName || 'User') : 'User' %></div>
+            <div class="sidebar-user-role">Member</div>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="sidebar-section-label">Main</div>
         <a href="/user/dashboard" class="<%= locals.title === 'User Dashboard' ? 'active' : '' %>">
             <i class="fi fi-rr-apps"></i> <span>Overview</span>
         </a>
@@ -21,6 +37,7 @@
             <i class="fi fi-rr-heart"></i> <span>Wishlist</span>
         </a>
 
+        <div class="sidebar-section-label">Finance</div>
         <a href="/user/wallet" class="<%= locals.title === 'My Wallet' ? 'active' : '' %>">
             <i class="fi fi-rr-wallet"></i> <span>Wallet</span>
         </a>
@@ -29,13 +46,14 @@
             <i class="fi fi-rr-gift"></i> <span>Refer &amp; Earn</span>
         </a>
 
+        <div class="sidebar-section-label">Account</div>
         <a href="/user/profile" class="<%= locals.title === 'My Profile' ? 'active' : '' %>">
             <i class="fi fi-rr-user"></i> <span>Profile Settings</span>
         </a>
     </nav>
 
-    <div class="sidebar-footer mt-auto px-2 pb-3">
-        <a href="#" id="userSideLogoutBtn" class="text-danger d-flex align-center gap-2" style="font-weight: 600;">
+    <div class="sidebar-footer">
+        <a href="#" id="userSideLogoutBtn">
             <i class="fi fi-rr-exit"></i> <span>Secure Logout</span>
         </a>
     </div>
@@ -57,7 +75,7 @@
     // Sidebar Toggle Logic
     const layout = document.querySelector('.dashboard-layout');
     const toggleBtn = document.getElementById('userSidebarToggleBtn');
-    
+
     if (layout && toggleBtn) {
         if (localStorage.getItem('sidebar-collapsed') === 'true' && window.innerWidth > 1024) {
             layout.classList.add('sidebar-collapsed');

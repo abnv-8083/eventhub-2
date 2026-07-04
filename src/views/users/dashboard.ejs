@@ -26,7 +26,7 @@
             <!-- Stats Row -->
             <div class="row g-4 mb-5 animate stagger-2">
                 <div class="col-sm-6 col-lg-4">
-                    <div class="stat-card primary dynamic-card" onclick="window.location.href='/user/tickets?filter=upcoming'">
+                    <div class="stat-card primary" onclick="window.location.href='/user/tickets?filter=upcoming'">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <span class="stat-label">Upcoming Events</span>
                             <div class="stat-icon red pulse-primary"><i class="fi fi-rr-calendar-star"></i></div>
@@ -35,7 +35,7 @@
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-4">
-                    <div class="stat-card dynamic-card" onclick="window.location.href='/user/tickets'">
+                    <div class="stat-card" onclick="window.location.href='/user/tickets'">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <span class="stat-label">Total Tickets</span>
                             <div class="stat-icon green"><i class="fi fi-rr-ticket"></i></div>
@@ -44,27 +44,25 @@
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-4">
-                    <div class="stat-card dynamic-card" onclick="window.location.href='/user/wallet'">
+                    <div class="stat-card" onclick="window.location.href='/user/wallet'">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <span class="stat-label">Wallet Balance</span>
                             <div class="stat-icon blue"><i class="fi fi-rr-wallet"></i></div>
                         </div>
-                        <div class="stat-number text-gradient" style="font-size:1.8rem;">₹<%= (user.wallet?.balance || 0).toLocaleString('en-IN') %></div>
+                        <div class="stat-number text-gradient" style="font-size:1.8rem;">&#8377;<%= (user.wallet?.balance || 0).toLocaleString('en-IN') %></div>
                     </div>
                 </div>
             </div>
 
             <!-- Up Next For You -->
             <section class="animate stagger-3">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-bold mb-0">Up Next For You</h5>
-                    <a href="/user/tickets?filter=upcoming" class="text-dim small" style="text-decoration:none; transition:color 0.2s;"
-                       onmouseover="this.style.color='white'" onmouseout="this.style.color=''"
-                    >View all tickets →</a>
+                <div class="section-header mb-4">
+                    <h5 class="section-title">Up Next For You</h5>
+                    <a href="/user/tickets?filter=upcoming" class="section-link">View all tickets →</a>
                 </div>
 
                 <% if(nextBooking) { %>
-                <div class="next-ticket-card glass-premium dynamic-card dynamic-card">
+                <div class="next-ticket-card">
                     <div class="row g-0">
                         <div class="col-md-8 p-4">
                             <div class="d-flex align-items-center gap-2 mb-3">
@@ -88,14 +86,14 @@
                                 </div>
                                 <div class="meta-item">
                                     <p>Amount Paid</p>
-                                    <p style="color:#2ecc71; font-weight:600;">₹<%= nextBooking.totalAmount.toLocaleString('en-IN') %></p>
+                                    <p style="color:#2ecc71; font-weight:600;">&#8377;<%= nextBooking.totalAmount.toLocaleString('en-IN') %></p>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4 qr-side d-flex flex-column align-items-center justify-content-center border-start border-secondary border-opacity-25 p-4">
+                        <div class="col-md-4 qr-side d-flex flex-column align-items-center justify-content-center p-4">
                             <div class="floating">
                                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=<%= nextBooking._id %>&color=fff&bgcolor=161616"
-                                    class="qr-img mb-3 rounded-3 shadow" width="110" height="110" alt="QR Code">
+                                    class="qr-img mb-3" width="110" height="110" alt="QR Code">
                             </div>
                             <a href="/user/tickets/<%= nextBooking._id %>" class="btn btn-primary btn-sm px-4 shadow-sm" style="border-radius:8px;">
                                 View Ticket
@@ -104,8 +102,10 @@
                     </div>
                 </div>
                 <% } else { %>
-                <div class="empty-next">
-                    <div class="empty-icon"><i class="fi fi-rr-calendar-star"></i></div>
+                <div class="empty-next glass-premium rounded-4 p-5 text-center">
+                    <div class="empty-icon mx-auto mb-3" style="width:70px;height:70px;">
+                        <i class="fi fi-rr-calendar-star"></i>
+                    </div>
                     <h6 class="text-white mb-2">No Upcoming Events</h6>
                     <p class="text-dim mb-4 small">Explore and book events to see them here.</p>
                     <a href="/user/events" class="btn btn-primary px-4">Browse Events</a>
@@ -115,8 +115,8 @@
 
             <!-- Calendar Section -->
             <section class="animate stagger-4 mt-5">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-bold mb-0">My Event Calendar</h5>
+                <div class="section-header mb-4">
+                    <h5 class="section-title">My Event Calendar</h5>
                 </div>
                 <div class="glass-premium dynamic-card p-4 rounded-4 shadow-lg">
                     <div id="dashboardCalendar" style="min-height: 500px; color: white;"></div>
@@ -130,8 +130,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var calendarEl = document.getElementById('dashboardCalendar');
-            
-            // Pass the calendar events directly from EJS
             var eventsData = <%- JSON.stringify(calendarEvents || []) %>;
 
             var calendar = new FullCalendar.Calendar(calendarEl, {
@@ -146,11 +144,10 @@
                 eventClick: function(info) {
                     if (info.event.url) {
                         window.location.href = info.event.url;
-                        info.jsEvent.preventDefault(); // prevents browser from following link in current tab.
+                        info.jsEvent.preventDefault();
                     }
                 },
                 eventDidMount: function(info) {
-                    // Add subtle hover effect via CSS or direct style manipulation if needed
                     info.el.style.cursor = 'pointer';
                     info.el.style.borderRadius = '4px';
                     info.el.style.padding = '2px 4px';

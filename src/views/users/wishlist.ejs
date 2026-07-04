@@ -10,18 +10,24 @@
         <%- include('../partials/user-sidebar', { title: 'My Wishlist' }) %>
         <main class="dashboard-main">
 
-        <div class="d-flex justify-content-between align-items-center mb-5 animate stagger-1">
-            <div>
-                <p class="page-label">Saved Events</p>
-                <h2 class="fw-bold mb-1">My Wishlist</h2>
-                <p class="text-dim m-0"><%= events.length %> saved event<%= events.length !== 1 ? 's' : '' %></p>
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-5 animate stagger-1">
+                <div>
+                    <p class="page-label">Saved Events</p>
+                    <h2 class="fw-bold mb-1">My Wishlist</h2>
+                    <p class="text-dim m-0"><%= events.length %> saved event<%= events.length !== 1 ? 's' : '' %></p>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <% if(events.length > 0) { %>
+                    <button id="wishClear" class="btn btn-outline" style="height:40px; border-radius:10px; font-size:0.85rem; border-color:rgba(231,76,60,0.4); color:#e74c3c;">
+                        <i class="fi fi-rr-trash me-2"></i>Clear All
+                    </button>
+                    <% } %>
+                    <a href="/user/events" class="btn btn-primary" style="height:40px; border-radius:10px;">
+                        <i class="fi fi-rr-search me-2"></i>Discover Events
+                    </a>
+                </div>
             </div>
-            <a href="/user/events" class="btn btn-outline" style="height:40px; border-radius:10px;">
-                <i class="fi fi-rr-search me-2"></i>Discover Events
-            </a>
-        </div>
-
-        <button id="wishClear">Clear</button>
 
             <% if(events && events.length > 0) { %>
             <div class="row g-4 animate stagger-2" id="wishlistGrid">
@@ -44,13 +50,13 @@
                             <p class="text-dim mb-3" style="font-size:0.8rem;">
                                 <i class="fi fi-rr-calendar me-1"></i>
                                 <%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %>
-                                <span style="margin:0 6px; opacity:0.4;">Â&middot;</span>
+                                <span style="margin:0 6px; opacity:0.4;">&middot;</span>
                                 <i class="fi fi-rr-marker me-1"></i>
                                 <%= event.location?.address?.split(',')[0] %>
                             </p>
                             <div class="d-flex justify-content-between align-items-center mt-auto pt-2" style="border-top:1px solid rgba(255,255,255,0.06);">
-                                <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.75);padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:600;">
-                                    <%= event.minPrice === 0 ? 'Free' : 'From ₹' + event.minPrice.toLocaleString('en-IN') %>
+                                <span class="event-price-badge">
+                                    <% if(event.minPrice === 0) { %><span style="color:#2ecc71;">Free</span><% } else { %>From &#8377;<%= event.minPrice.toLocaleString('en-IN') %><% } %>
                                 </span>
                                 <button class="rm-btn" title="Remove from Wishlist"
                                     onclick="event.stopPropagation(); removeFromWishlist('<%= event._id %>', this)">
@@ -65,10 +71,12 @@
 
             <% } else { %>
             <div class="empty-box animate stagger-2">
-                <div class="empty-icon"><i class="fi fi-rr-heart"></i></div>
+                <div class="empty-icon">
+                    <i class="fi fi-rr-heart"></i>
+                </div>
                 <h5 class="text-white mb-2">Your Wishlist is Empty</h5>
                 <p class="text-dim mb-4">Browse events and tap the heart icon to save them here.</p>
-                <a href="/user/events" class="btn btn-primary px-4">Discover Events</a>
+                <a href="/user/events" class="btn btn-primary px-5">Discover Events</a>
             </div>
             <% } %>
         </main>
@@ -78,28 +86,34 @@
         async function removeFromWishlist(eventId, btn) {
             try {
                 const res = await axios.post(`/user/events/${eventId}/wishlist`);
-                if (res.data.success) {
-                    Toast.success('Removed from wishlist');
+                if (res.data.success && !res.data.wishlisted) {
                     const card = document.getElementById(`wcard-${eventId}`);
-                    card.style.transition = 'opacity 0.3s, transform 0.3s';
-                    card.style.opacity = '0';
-                    card.style.transform = 'scale(0.95)';
-                    setTimeout(() => card.remove(), 300);
+                    if(card) {
+                        card.style.transition = 'all 0.3s ease';
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.9)';
+                        setTimeout(() => card.remove(), 300);
+                    }
+                    Toast.info(res.data.message);
                 }
             } catch (err) {
-                Toast.error('Failed to update wishlist');
+                Toast.error('Could not remove from wishlist.');
             }
         }
 
-        const wishClearButton = document.getElementById('wishClear')
-        wishClearButton.addEventListener('click',async ()=>{
-            console.log('hi')
-            const res = await axios.post('/user/wishlist/clear')
-            if(res.data.success){
-                Toast.success('Cleared the wishlist');
-                setTimeout(()=> 300)
+        document.getElementById('wishClear')?.addEventListener('click', async () => {
+            if (!confirm('Remove all events from your wishlist?')) return;
+            const cards = document.querySelectorAll('[id^="wcard-"]');
+            for (const card of cards) {
+                const id = card.id.replace('wcard-', '');
+                await axios.post(`/user/events/${id}/wishlist`).catch(() => {});
+                card.style.transition = 'all 0.3s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                await new Promise(r => setTimeout(r, 100));
             }
-        })
+            setTimeout(() => window.location.reload(), 500);
+        });
     </script>
 </body>
 </html>
