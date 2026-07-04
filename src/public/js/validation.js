@@ -32,42 +32,91 @@ function isForbiddenExempt(input) {
 }
 
 // ─── Error UI Helpers ────────────────────────────────────────────────────────
-function getErrorContainer(input) {
-    // Walk up to find a sensible container
-    const parent = input.parentElement;
-    // For password-group wrappers
-    if (parent.classList.contains('password-group') || parent.classList.contains('form-floating')) {
-        return parent;
+function getFieldWrapper(input) {
+    let el = input;
+    while (el.parentElement) {
+        const p = el.parentElement;
+        if (p.classList.contains('form-floating') || 
+            p.classList.contains('form-group') || 
+            p.classList.contains('password-group') || 
+            p.classList.contains('input-group') || 
+            p.classList.contains('position-relative') ||
+            p.classList.contains('referral-link-wrap')) {
+            el = p;
+        } else {
+            break;
+        }
     }
-    // For position-relative wrappers (inline icons)
-    if (parent.classList.contains('position-relative') || parent.classList.contains('referral-link-wrap')) {
-        return parent.parentElement || parent;
+    return el;
+}
+
+function getFeedbackEl(input, className) {
+    const wrapper = getFieldWrapper(input);
+    const parent = wrapper.parentElement || wrapper;
+    const fieldId = input.id || input.name || 'field';
+    return parent.querySelector(`.${className}[data-for="${fieldId}"]`);
+}
+
+function getOrCreateFeedbackEl(input, className) {
+    const wrapper = getFieldWrapper(input);
+    const parent = wrapper.parentElement || wrapper;
+    const fieldId = input.id || input.name || 'field';
+    
+    let el = parent.querySelector(`.${className}[data-for="${fieldId}"]`);
+    if (!el) {
+        el = document.createElement('span');
+        el.className = className;
+        el.setAttribute('data-for', fieldId);
+        // Insert right after the wrapper so the wrapper height NEVER expands!
+        if (wrapper.nextSibling) {
+            parent.insertBefore(el, wrapper.nextSibling);
+        } else {
+            parent.appendChild(el);
+        }
     }
-    return parent;
+    return el;
 }
 
 function showError(input, message) {
+    input.classList.remove('input-success');
     input.classList.add('input-error');
     input.setAttribute('aria-invalid', 'true');
 
-    const container = getErrorContainer(input);
-    let errorEl = container.querySelector('.ev-error-msg');
-    if (!errorEl) {
-        errorEl = document.createElement('span');
-        errorEl.className = 'ev-error-msg';
-        container.appendChild(errorEl);
-    }
-    errorEl.innerHTML = `<i class="fi fi-rr-info-circle"></i> ${message}`;
+    const successEl = getFeedbackEl(input, 'ev-success-msg');
+    if (successEl) successEl.remove();
+
+    let errorEl = getOrCreateFeedbackEl(input, 'ev-error-msg');
+    errorEl.innerHTML = `<i class="fi fi-rr-exclamation"></i> <span>${message}</span>`;
     errorEl.style.display = 'flex';
 }
 
 function clearError(input) {
     input.classList.remove('input-error');
+    input.classList.remove('input-success');
     input.removeAttribute('aria-invalid');
 
-    const container = getErrorContainer(input);
-    const errorEl = container.querySelector('.ev-error-msg');
-    if (errorEl) errorEl.style.display = 'none';
+    const errorEl = getFeedbackEl(input, 'ev-error-msg');
+    if (errorEl) errorEl.remove();
+    const successEl = getFeedbackEl(input, 'ev-success-msg');
+    if (successEl) successEl.remove();
+}
+
+function showSuccess(input, message) {
+    input.classList.remove('input-error');
+    input.classList.add('input-success');
+    input.removeAttribute('aria-invalid');
+
+    const errorEl = getFeedbackEl(input, 'ev-error-msg');
+    if (errorEl) errorEl.remove();
+
+    if (message) {
+        let successEl = getOrCreateFeedbackEl(input, 'ev-success-msg');
+        successEl.innerHTML = `<i class="fi fi-rr-check-circle"></i> <span>${message}</span>`;
+        successEl.style.display = 'flex';
+    } else {
+        const successEl = getFeedbackEl(input, 'ev-success-msg');
+        if (successEl) successEl.remove();
+    }
 }
 
 function showForbiddenError(input, msg) {
@@ -191,7 +240,11 @@ function validateField(input) {
         }
     }
 
-    clearError(input);
+    if (val !== '') {
+        showSuccess(input);
+    } else {
+        clearError(input);
+    }
     return true;
 }
 
@@ -209,8 +262,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const el = e.target;
         if (!['INPUT', 'TEXTAREA'].includes(el.tagName)) return;
 
-        // Clear error once user starts correcting
-        if (el.classList.contains('input-error')) {
+        // Real-time instant validation feedback when field has error or success state
+        if (el.dataset.rule && (el.classList.contains('input-error') || el.classList.contains('input-success'))) {
+            validateField(el);
+        } else if (el.classList.contains('input-error')) {
             clearError(el);
         }
 
@@ -291,6 +346,7 @@ window.EV = {
     validateField,
     showError,
     clearError,
+    showSuccess,
     validateForm(form) {
         let ok = true;
         let first = null;

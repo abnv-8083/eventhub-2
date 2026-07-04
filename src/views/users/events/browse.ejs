@@ -10,21 +10,21 @@
 
         <!-- Hero Search -->
         <div class="browse-hero animate stagger-1">
-            <p class="text-dim small text-uppercase fw-bold mb-2" style="letter-spacing:0.1em; color:var(--primary);">
-                <i class="fi fi-rr-sparkles me-1"></i> Discover Events
+            <p class="page-label">
+                <i class="fi fi-rr-sparkles"></i> Discover Events
             </p>
-            <h2 class="fw-bold text-white mb-1">Find Your Next Experience</h2>
+            <h2 class="fw-bold text-white mb-1" style="font-size:2rem;">Find Your Next Experience</h2>
             <p class="text-dim mb-4" style="font-size:0.95rem;"><%= total %> events available right now</p>
             <div class="hero-search-wrap">
                 <i class="fi fi-rr-search"></i>
-                <input type="text" id="evtSearch" class="input w-100" placeholder="Search events by name..." value="<%= filters.search %>">
+                <input type="text" id="evtSearch" placeholder="Search events by name..." value="<%= filters.search %>">
             </div>
         </div>
 
         <!-- Filter Toolbar -->
         <div class="filter-toolbar animate stagger-2">
-            <span class="text-dim d-none d-md-inline" style="font-size:0.8rem; white-space:nowrap;">Filter by:</span>
-            
+            <span class="text-dim d-none d-md-inline" style="font-size:0.8rem; white-space:nowrap; flex-shrink:0;">Filter by:</span>
+
             <div class="d-flex flex-wrap gap-2 flex-grow-1">
                 <select id="evtCategory" class="filter-select">
                     <option value="all" <%= filters.category === 'all' ? 'selected' : '' %>>All Categories</option>
@@ -44,7 +44,7 @@
                     <option value="all" <%= filters.priceRange === 'all' ? 'selected' : '' %>>Any Price</option>
                     <option value="free" <%= filters.priceRange === 'free' ? 'selected' : '' %>>Free</option>
                     <option value="under500" <%= filters.priceRange === 'under500' ? 'selected' : '' %>>Under &#8377;500</option>
-                    <option value="500-2000" <%= filters.priceRange === '500-2000' ? 'selected' : '' %>>&#8377;500 - &#8377;2000</option>
+                    <option value="500-2000" <%= filters.priceRange === '500-2000' ? 'selected' : '' %>>&#8377;500 – &#8377;2000</option>
                     <option value="above2000" <%= filters.priceRange === 'above2000' ? 'selected' : '' %>>Above &#8377;2000</option>
                 </select>
 
@@ -53,19 +53,21 @@
                     <option value="oldest" <%= filters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
                     <option value="date-asc" <%= filters.sort === 'date-asc' ? 'selected' : '' %>>Upcoming First</option>
                     <option value="date-desc" <%= filters.sort === 'date-desc' ? 'selected' : '' %>>Furthest First</option>
-                    <option value="price-asc" <%= filters.sort === 'price-asc' ? 'selected' : '' %>>Price: Low to High</option>
-                    <option value="price-desc" <%= filters.sort === 'price-desc' ? 'selected' : '' %>>Price: High to Low</option>
+                    <option value="price-asc" <%= filters.sort === 'price-asc' ? 'selected' : '' %>>Price: Low → High</option>
+                    <option value="price-desc" <%= filters.sort === 'price-desc' ? 'selected' : '' %>>Price: High → Low</option>
                 </select>
             </div>
 
-            <div class="d-flex gap-2">
-                <button id="applyBtn" class="btn btn-primary btn-sm px-4" style="height:38px; border-radius:8px; white-space:nowrap;">Apply</button>
-                <button id="clearBtn" class="btn btn-outline btn-sm px-3" style="height:38px; border-radius:8px; white-space:nowrap;">
-                    <i class="fi fi-rr-refresh me-1 d-none d-sm-inline"></i> Clear
+            <div class="d-flex gap-2 flex-shrink-0">
+                <button id="applyBtn" class="btn btn-primary btn-sm px-4" style="height:38px; border-radius:10px;">Apply</button>
+                <button id="clearBtn" class="btn btn-outline btn-sm px-3" style="height:38px; border-radius:10px;">
+                    <i class="fi fi-rr-refresh me-1 d-none d-sm-inline"></i>Clear
                 </button>
             </div>
-            
-            <span class="d-none d-lg-inline text-dim ms-2" style="font-size:0.82rem; white-space:nowrap;"><%= total %> result<%= total !== 1 ? 's' : '' %></span>
+
+            <span class="d-none d-lg-inline text-dim ms-1" style="font-size:0.82rem; white-space:nowrap; flex-shrink:0;">
+                <%= total %> result<%= total !== 1 ? 's' : '' %>
+            </span>
         </div>
 
         <!-- Events Grid -->
@@ -78,9 +80,9 @@
 
         <!-- Pagination -->
         <% if(totalPages > 1) { %>
-        <div class="d-flex justify-content-between align-items-center mt-5 pt-2">
+        <div class="pagination-wrap">
             <p class="text-dim mb-0 small">Page <strong class="text-white"><%= currentPage %></strong> of <%= totalPages %></p>
-            <div class="d-flex gap-2">
+            <div class="page-btns">
                 <% if(currentPage > 1) { %><button class="action-btn" onclick="changePage(<%= currentPage-1 %>)"><i class="fi fi-rr-angle-left"></i></button><% } %>
                 <% for(let i=1;i<=totalPages;i++) { %><button class="action-btn <%= i==currentPage?'active-page':'' %>" onclick="changePage(<%= i %>)"><%= i %></button><% } %>
                 <% if(currentPage < totalPages) { %><button class="action-btn" onclick="changePage(<%= currentPage+1 %>)"><i class="fi fi-rr-angle-right"></i></button><% } %>
@@ -90,10 +92,14 @@
 
         <% } else { %>
         <div class="empty-state animate stagger-3">
-            <div class="empty-icon"><i class="fi fi-rr-search"></i></div>
+            <div class="empty-icon">
+                <i class="fi fi-rr-search"></i>
+            </div>
             <h5 class="text-white mb-2">No Events Found</h5>
             <p class="text-dim mb-4">Try adjusting your search or clearing the filters.</p>
-            <button onclick="window.location.href=window.location.pathname" class="btn btn-outline px-4">Clear Filters</button>
+            <button onclick="window.location.href=window.location.pathname" class="btn btn-outline px-5">
+                <i class="fi fi-rr-refresh me-2"></i>Clear Filters
+            </button>
         </div>
         <% } %>
 
@@ -102,7 +108,6 @@
     <script>
         const IS_LOGGED_IN = <%= isLoggedIn %>;
 
-        // â”€â”€â”€ Wishlist Toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         async function toggleWishlist(e, eventId, btn) {
             e.stopPropagation();
             if (!IS_LOGGED_IN) {
@@ -129,7 +134,6 @@
             }
         }
 
-        // â”€â”€â”€ Filters & Pagination â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function changePage(p) {
             const url = new URL(window.location.href);
             url.searchParams.set('page', p);
@@ -142,13 +146,13 @@
             const dateRange = document.getElementById('evtDate').value;
             const priceRange = document.getElementById('evtPrice').value;
             const url = new URL(window.location.origin + window.location.pathname);
-            
+
             if (search) url.searchParams.set('search', search);
             if (category !== 'all') url.searchParams.set('category', category);
             if (sort !== 'newest') url.searchParams.set('sort', sort);
             if (dateRange !== 'all') url.searchParams.set('dateRange', dateRange);
             if (priceRange !== 'all') url.searchParams.set('priceRange', priceRange);
-            
+
             url.searchParams.set('page', 1);
             window.location.href = url.toString();
         }

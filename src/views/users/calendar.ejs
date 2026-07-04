@@ -2,6 +2,104 @@
 <html lang="en">
 <head>
     <%- include('../partials/head') %>
+    <style>
+        /* Modern FullCalendar Dark Theme Overrides */
+        .fc {
+            font-family: 'Inter', 'Outfit', sans-serif !important;
+            --fc-border-color: rgba(255, 255, 255, 0.08) !important;
+            --fc-page-bg-color: transparent !important;
+            --fc-neutral-bg-color: rgba(255, 255, 255, 0.02) !important;
+            --fc-list-event-hover-bg-color: rgba(255, 255, 255, 0.05) !important;
+            --fc-today-bg-color: rgba(230, 57, 70, 0.08) !important;
+        }
+        
+        .fc .fc-toolbar-title {
+            font-family: 'Outfit', sans-serif !important;
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
+            color: #fff !important;
+            letter-spacing: -0.5px !important;
+        }
+        
+        .fc .fc-button {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #fff !important;
+            font-weight: 600 !important;
+            font-size: 0.85rem !important;
+            padding: 0.5rem 1rem !important;
+            border-radius: 10px !important;
+            text-transform: capitalize !important;
+            transition: all 0.2s ease !important;
+            box-shadow: none !important;
+        }
+        
+        .fc .fc-button:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            transform: translateY(-1px) !important;
+        }
+        
+        .fc .fc-button-active {
+            background: var(--primary) !important;
+            border-color: var(--primary) !important;
+            color: #fff !important;
+            box-shadow: 0 4px 15px rgba(230, 57, 70, 0.3) !important;
+        }
+        
+        .fc .fc-button-primary:not(:disabled).fc-button-active:focus,
+        .fc .fc-button-primary:not(:disabled):active:focus {
+            box-shadow: 0 4px 15px rgba(230, 57, 70, 0.3) !important;
+        }
+        
+        .fc .fc-col-header-cell-cushion {
+            color: rgba(255, 255, 255, 0.6) !important;
+            font-weight: 700 !important;
+            font-size: 0.85rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            padding: 12px 0 !important;
+        }
+        
+        .fc .fc-daygrid-day-number {
+            color: rgba(255, 255, 255, 0.8) !important;
+            font-weight: 600 !important;
+            font-size: 0.95rem !important;
+            padding: 8px !important;
+        }
+        
+        .fc .fc-day-today .fc-daygrid-day-number {
+            color: var(--primary) !important;
+            font-weight: 800 !important;
+        }
+        
+        .fc-event {
+            border: none !important;
+            border-radius: 8px !important;
+            padding: 4px 8px !important;
+            font-size: 0.85rem !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: transform 0.2s, box-shadow 0.2s !important;
+            background: linear-gradient(135deg, var(--primary), #d81b60) !important;
+            box-shadow: 0 4px 10px rgba(230, 57, 70, 0.25) !important;
+        }
+        
+        .fc-event:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 15px rgba(230, 57, 70, 0.4) !important;
+        }
+        
+        .fc .fc-list-event:hover td {
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+        
+        .fc .fc-list-day-cushion {
+            background: rgba(255, 255, 255, 0.03) !important;
+            color: white !important;
+            font-weight: 700 !important;
+        }
+    </style>
 </head>
 <body class="bg-mesh">
     <%- include('../partials/navbars/user-nav') %>
@@ -11,20 +109,26 @@
 
         <main class="dashboard-main">
 
-            <div class="d-flex justify-content-between align-items-center mb-4 animate stagger-1">
+            <div class="d-flex justify-content-between align-items-end mb-4 animate stagger-1 flex-wrap gap-3">
                 <div>
-                    <h2 class="fw-bold mb-1">My Event Calendar 📅</h2>
-                    <p class="text-dim m-0">Track all your booked and upcoming events.</p>
+                    <div class="page-label"><span class="label-line"></span>Schedule</div>
+                    <h1 class="text-white fw-bold mb-1" style="font-size: 2.2rem; letter-spacing: -1px;">Event Calendar</h1>
+                    <p class="text-dim m-0" style="font-size: 0.95rem;">Track and manage all your booked and upcoming events seamlessly.</p>
                 </div>
-                <a href="/user/events" class="btn btn-primary px-4">
-                    <i class="fi fi-rr-search me-2"></i>Browse Events
-                </a>
+                <div class="d-flex gap-3">
+                    <a href="/user/tickets" class="btn btn-outline px-4 py-2" style="border-radius: 12px; font-weight: 600;">
+                        <i class="fi fi-rr-ticket me-2"></i>My Tickets
+                    </a>
+                    <a href="/user/events" class="btn btn-primary px-4 py-2" style="border-radius: 12px; font-weight: 600; box-shadow: 0 8px 20px rgba(230,57,70,0.3);">
+                        <i class="fi fi-rr-search me-2"></i>Browse Events
+                    </a>
+                </div>
             </div>
 
             <!-- Calendar Section -->
             <section class="animate stagger-2">
-                <div class="glass-premium dynamic-card p-4 rounded-4">
-                    <div id="fullCalendar" style="min-height: 600px; color: white;"></div>
+                <div class="glass-premium dynamic-card p-4 rounded-4" style="border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+                    <div id="fullCalendar" style="min-height: 650px; color: white;"></div>
                 </div>
             </section>
 
