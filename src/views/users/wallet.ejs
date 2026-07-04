@@ -93,8 +93,17 @@
 
                         <div class="topup-divider"></div>
 
+                        <!-- Quick Amount Buttons -->
+                        <p class="topup-section-label">Select or Enter Amount</p>
+                        <div class="quick-amounts mb-3">
+                            <button type="button" class="amt-chip" onclick="setAmount(500, this)">+ &#8377;500</button>
+                            <button type="button" class="amt-chip" onclick="setAmount(1000, this)">+ &#8377;1,000</button>
+                            <button type="button" class="amt-chip" onclick="setAmount(2000, this)">+ &#8377;2,000</button>
+                            <button type="button" class="amt-chip" onclick="setAmount(5000, this)">+ &#8377;5,000</button>
+                            <button type="button" class="amt-chip" onclick="setAmount(10000, this)">+ &#8377;10,000</button>
+                        </div>
+
                         <!-- Amount Input -->
-                        <p class="topup-section-label">Amount</p>
                         <div class="topup-input-wrap mb-3">
                             <span class="topup-currency-prefix">&#8377;</span>
                             <input
@@ -205,20 +214,21 @@
     <style>
         .page-label { color: var(--primary); text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; }
         
-        .wallet-balance-card { position: relative; background: linear-gradient(135deg, rgba(30,30,30,0.8), rgba(15,15,15,0.9)); border-radius: 20px; padding: 2rem; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
-        .wallet-orb { position: absolute; border-radius: 50%; filter: blur(50px); opacity: 0.4; z-index: 0; pointer-events: none; }
-        .wallet-orb-1 { width: 150px; height: 150px; background: var(--primary); top: -20px; right: -20px; }
-        .wallet-orb-2 { width: 120px; height: 120px; background: rgba(241,196,15,0.5); bottom: -30px; left: -20px; }
+        .wallet-balance-card { position: relative; background: linear-gradient(135deg, rgba(35, 18, 24, 0.9) 0%, rgba(18, 18, 24, 0.95) 50%, rgba(12, 12, 16, 0.98) 100%); border-radius: 24px; padding: 2.2rem; border: 1px solid rgba(255, 255, 255, 0.12); overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease; }
+        .wallet-balance-card:hover { transform: translateY(-4px); box-shadow: 0 25px 50px rgba(230, 57, 70, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+        .wallet-orb { position: absolute; border-radius: 50%; filter: blur(50px); z-index: 0; pointer-events: none; }
+        .wallet-orb-1 { width: 200px; height: 200px; background: radial-gradient(circle, var(--primary) 0%, transparent 70%); top: -50px; right: -50px; opacity: 0.5; }
+        .wallet-orb-2 { width: 180px; height: 180px; background: radial-gradient(circle, #8338ec 0%, transparent 70%); bottom: -40px; left: -40px; opacity: 0.4; }
         
         .wallet-card-inner { position: relative; z-index: 2; }
         .wallet-card-label { font-size: 1.1rem; color: rgba(255,255,255,0.7); margin-bottom: 0.2rem; }
         .wallet-card-sublabel { font-size: 0.85rem; color: rgba(255,255,255,0.4); margin: 0; }
-        .wallet-chip { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); padding: 0.4rem 0.8rem; border-radius: 100px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; font-weight: 500; backdrop-filter: blur(4px); }
-        .wallet-chip i { color: #4ECDC4; }
+        .wallet-chip { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); padding: 0.45rem 0.95rem; border-radius: 100px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #ffffff; backdrop-filter: blur(8px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .wallet-chip i { color: #00f5d4; font-size: 0.95rem; }
         
         .wallet-amount-display { margin: 2rem 0; display: flex; align-items: baseline; gap: 0.5rem; }
         .wallet-currency { font-size: 2rem; color: rgba(255,255,255,0.5); font-weight: 300; }
-        .wallet-amount-value { font-family: var(--font-display); font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; color: white; }
+        .wallet-amount-value { font-family: var(--font-display, 'Outfit', sans-serif); font-size: 3.5rem; font-weight: 800; letter-spacing: -1.5px; color: white; text-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         
         .wallet-card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem; }
         .wallet-stat { flex: 1; display: flex; flex-direction: column; gap: 0.3rem; }
@@ -232,17 +242,17 @@
         .topup-panel-header { display: flex; align-items: center; gap: 1rem; }
         .topup-icon-wrap { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: white; border: 1px solid rgba(255,255,255,0.1); }
         .topup-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 1.5rem 0; }
-        .topup-section-label { font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-bottom: 1rem; }
+        .topup-section-label { font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-bottom: 0.8rem; }
         
-        .quick-amounts { display: flex; flex-wrap: wrap; gap: 0.75rem; }
-        .amt-chip { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 0.7rem 1.2rem; border-radius: 12px; color: rgba(255,255,255,0.8); font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
-        .amt-chip:hover { background: rgba(255,255,255,0.1); color: white; transform: translateY(-2px); }
-        .amt-chip.active { background: var(--primary); border-color: var(--primary); color: white; box-shadow: 0 4px 15px rgba(230,57,70,0.4); }
+        .quick-amounts { display: flex; flex-wrap: wrap; gap: 0.65rem; }
+        .amt-chip { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); padding: 0.6rem 1.1rem; border-radius: 100px; color: rgba(255,255,255,0.85); font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        .amt-chip:hover { background: rgba(255,255,255,0.1); color: white; transform: translateY(-2px); border-color: rgba(255,255,255,0.25); }
+        .amt-chip.active, .amt-chip.selected { background: var(--primary); border-color: var(--primary); color: white; box-shadow: 0 4px 15px rgba(230,57,70,0.4); }
         
-        .topup-input-wrap { position: relative; display: flex; align-items: center; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; transition: border-color 0.3s, box-shadow 0.3s; }
-        .topup-input-wrap:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(230,57,70,0.1); }
-        .topup-currency-prefix { position: absolute; left: 1.2rem; color: rgba(255,255,255,0.5); font-size: 1.2rem; pointer-events: none; }
-        .topup-input { width: 100%; background: transparent; border: none; padding: 1rem 3rem 1rem 2.5rem; color: white; font-size: 1.2rem; font-weight: 500; -moz-appearance: textfield; }
+        .topup-input-wrap { position: relative; display: flex; align-items: center; background: rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 14px; transition: border-color 0.3s, box-shadow 0.3s; }
+        .topup-input-wrap:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(230,57,70,0.15); }
+        .topup-currency-prefix { position: absolute; left: 1.2rem; color: rgba(255,255,255,0.5); font-size: 1.3rem; pointer-events: none; font-weight: 600; }
+        .topup-input { width: 100%; background: transparent; border: none; padding: 1.1rem 3rem 1.1rem 2.5rem; color: white; font-size: 1.4rem; font-weight: 700; -moz-appearance: textfield; }
         .topup-input:focus { outline: none; }
         .topup-input::-webkit-outer-spin-button, .topup-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .topup-clear-btn { position: absolute; right: 0.5rem; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.5rem; padding: 0.5rem; cursor: pointer; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }

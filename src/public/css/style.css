@@ -4547,34 +4547,8 @@ body { background: #0a0a10; }
 /* ==========================================
    SIDEBAR FIXES
 ========================================== */
-.sidebar-toggle-btn {
-    position: absolute;
-    top: 1.5rem;
-    right: -15px;
-    width: 30px;
-    height: 30px;
-    background: var(--primary, #E63946);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(230, 57, 70, 0.4);
-    transition: transform 0.3s ease;
-    z-index: 100;
-}
-.sidebar-toggle-btn:hover { transform: scale(1.1); }
-.dashboard-layout.sidebar-collapsed .sidebar { width: 80px; padding: 2rem 0.5rem; }
-.dashboard-layout.sidebar-collapsed .sidebar-nav span, .dashboard-layout.sidebar-collapsed .sidebar-footer span { display: none; }
-.dashboard-layout.sidebar-collapsed .sidebar-nav a { justify-content: center; padding: 1rem 0; }
-.dashboard-layout.sidebar-collapsed .sidebar-nav a i { font-size: 1.25rem; margin: 0; }
-.dashboard-layout.sidebar-collapsed .dashboard-main { margin-left: 80px; }
-.dashboard-layout.sidebar-collapsed .sidebar-toggle-btn { transform: rotate(180deg); }
-.dashboard-layout.sidebar-collapsed .sidebar-toggle-btn:hover { transform: rotate(180deg) scale(1.1); }
-.sidebar { transition: width 0.3s ease; }
-.dashboard-main { transition: margin-left 0.3s ease; }
+.sidebar { transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1); overflow: visible !important; }
+.dashboard-main { transition: margin-left 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 .sidebar-nav { min-height: 0; padding-bottom: 2rem; }
 .sidebar-footer { background: var(--bg-surface); z-index: 10; position: relative; }
 
@@ -5286,37 +5260,82 @@ html {
     color: var(--primary);
 }
 
-/* Sidebar Toggle Button */
+/* ══════════════════════════════════════════════════════════════
+   SIDEBAR TOGGLE & COLLAPSED STATE (UNIFIED)
+══════════════════════════════════════════════════════════════ */
 .sidebar-toggle-btn {
     position: absolute;
-    top: 1.2rem;
+    top: 1.4rem;
     right: -14px;
     width: 28px;
     height: 28px;
-    background: var(--bg-surface);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: var(--primary, #E63946);
+    border: 2px solid #121212;
     border-radius: 50%;
-    color: var(--text-dim);
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 10;
-    transition: all 0.2s;
+    z-index: 1000;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     font-size: 0.75rem;
+    box-shadow: 0 4px 12px rgba(230, 57, 70, 0.5);
 }
-.sidebar-toggle-btn:hover { color: white; border-color: var(--primary); }
+.sidebar-toggle-btn:hover { 
+    transform: scale(1.15); 
+    box-shadow: 0 6px 18px rgba(230, 57, 70, 0.7);
+    color: white;
+}
 
-/* Collapsed Sidebar */
-.sidebar-collapsed .sidebar { width: 64px; }
+/* Unified Collapsed Sidebar */
+.dashboard-layout.sidebar-collapsed .sidebar,
+.sidebar-collapsed .sidebar { 
+    width: 78px !important; 
+    padding: 1.5rem 0.5rem !important; 
+}
+.dashboard-layout.sidebar-collapsed .sidebar-nav span,
+.dashboard-layout.sidebar-collapsed .sidebar-user-name,
+.dashboard-layout.sidebar-collapsed .sidebar-user-role,
+.dashboard-layout.sidebar-collapsed .sidebar-section-label,
+.dashboard-layout.sidebar-collapsed .sidebar-footer span,
 .sidebar-collapsed .sidebar-nav span,
 .sidebar-collapsed .sidebar-user-name,
 .sidebar-collapsed .sidebar-user-role,
-.sidebar-collapsed .sidebar-section-label { display: none; }
-.sidebar-collapsed .sidebar-user-info { justify-content: center; padding: 0.5rem; }
-.sidebar-collapsed .sidebar a { justify-content: center; padding: 0.75rem; }
-.sidebar-collapsed .sidebar-footer a { justify-content: center; padding: 0.75rem; }
-.sidebar-collapsed .dashboard-main { margin-left: 64px; }
+.sidebar-collapsed .sidebar-section-label,
+.sidebar-collapsed .sidebar-footer span { 
+    display: none !important; 
+}
+.dashboard-layout.sidebar-collapsed .sidebar-user-info,
+.sidebar-collapsed .sidebar-user-info { 
+    justify-content: center; 
+    padding: 0.6rem 0 !important; 
+    margin-bottom: 1.5rem;
+}
+.dashboard-layout.sidebar-collapsed .sidebar a,
+.dashboard-layout.sidebar-collapsed .sidebar-footer a,
+.sidebar-collapsed .sidebar a,
+.sidebar-collapsed .sidebar-footer a { 
+    justify-content: center; 
+    padding: 0.85rem 0 !important; 
+}
+.dashboard-layout.sidebar-collapsed .sidebar a i,
+.sidebar-collapsed .sidebar a i { 
+    font-size: 1.25rem !important; 
+    margin: 0 !important; 
+}
+.dashboard-layout.sidebar-collapsed .dashboard-main,
+.sidebar-collapsed .dashboard-main { 
+    margin-left: 78px !important; 
+}
+.dashboard-layout.sidebar-collapsed .sidebar-toggle-btn,
+.sidebar-collapsed .sidebar-toggle-btn { 
+    transform: rotate(180deg); 
+}
+.dashboard-layout.sidebar-collapsed .sidebar-toggle-btn:hover,
+.sidebar-collapsed .sidebar-toggle-btn:hover { 
+    transform: rotate(180deg) scale(1.15); 
+}
 
 /* ══════════════════════════════════════════════════════════════
    STAT CARDS — GRADIENT ICONS
