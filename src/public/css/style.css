@@ -5575,6 +5575,117 @@ html {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   MODERN INLINE VALIDATION STYLING & COLORFUL FEEDBACK
+══════════════════════════════════════════════════════════════ */
+
+/* Error State Input / Select / Textarea */
+input.input-error,
+textarea.input-error,
+select.input-error,
+.form-control.input-error,
+.form-floating input.input-error,
+.form-floating select.input-error,
+.form-floating textarea.input-error {
+    border-color: #ff3b5c !important;
+    background-color: rgba(255, 59, 92, 0.06) !important;
+    box-shadow: 0 0 0 3px rgba(255, 59, 92, 0.2), 0 4px 15px rgba(255, 59, 92, 0.15) !important;
+    color: #ffffff !important;
+    animation: evValidationShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes evValidationShake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+}
+
+/* Success State Input / Select / Textarea */
+input.input-success,
+textarea.input-success,
+select.input-success,
+.form-control.input-success,
+.form-floating input.input-success,
+.form-floating select.input-success,
+.form-floating textarea.input-success {
+    border-color: #00d26a !important;
+    background-color: rgba(0, 210, 106, 0.05) !important;
+    box-shadow: 0 0 0 3px rgba(0, 210, 106, 0.18), 0 4px 15px rgba(0, 210, 106, 0.1) !important;
+    color: #ffffff !important;
+    transition: all 0.25s ease-in-out !important;
+}
+
+/* Error Message Badge */
+.ev-error-msg {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    color: #ff3b5c;
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-top: 6px;
+    padding: 7px 14px;
+    background: linear-gradient(135deg, rgba(255, 59, 92, 0.15) 0%, rgba(255, 59, 92, 0.06) 100%);
+    border: 1px solid rgba(255, 59, 92, 0.3);
+    border-left: 3.5px solid #ff3b5c;
+    border-radius: 8px;
+    animation: evSlideDownFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    line-height: 1.4;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    z-index: 5;
+}
+
+.ev-error-msg i {
+    font-size: 1.05rem;
+    color: #ff3b5c;
+    flex-shrink: 0;
+    animation: evIconPulse 1.5s infinite;
+}
+
+@keyframes evIconPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.15); opacity: 0.8; }
+}
+
+/* Success Message Badge */
+.ev-success-msg {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    color: #00d26a;
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-top: 6px;
+    padding: 7px 14px;
+    background: linear-gradient(135deg, rgba(0, 210, 106, 0.14) 0%, rgba(0, 210, 106, 0.05) 100%);
+    border: 1px solid rgba(0, 210, 106, 0.28);
+    border-left: 3.5px solid #00d26a;
+    border-radius: 8px;
+    animation: evSlideDownFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    line-height: 1.4;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 5;
+}
+
+.ev-success-msg i {
+    font-size: 1.05rem;
+    color: #00d26a;
+    flex-shrink: 0;
+}
+
+@keyframes evSlideDownFade {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
    MOBILE RESPONSIVE
 ══════════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {

@@ -47,27 +47,58 @@ function getErrorContainer(input) {
 }
 
 function showError(input, message) {
+    input.classList.remove('input-success');
     input.classList.add('input-error');
     input.setAttribute('aria-invalid', 'true');
 
     const container = getErrorContainer(input);
+    const successEl = container.querySelector('.ev-success-msg');
+    if (successEl) successEl.style.display = 'none';
+
     let errorEl = container.querySelector('.ev-error-msg');
     if (!errorEl) {
         errorEl = document.createElement('span');
         errorEl.className = 'ev-error-msg';
         container.appendChild(errorEl);
     }
-    errorEl.innerHTML = `<i class="fi fi-rr-info-circle"></i> ${message}`;
+    errorEl.innerHTML = `<i class="fi fi-rr-exclamation"></i> <span>${message}</span>`;
     errorEl.style.display = 'flex';
 }
 
 function clearError(input) {
     input.classList.remove('input-error');
+    input.classList.remove('input-success');
     input.removeAttribute('aria-invalid');
 
     const container = getErrorContainer(input);
     const errorEl = container.querySelector('.ev-error-msg');
     if (errorEl) errorEl.style.display = 'none';
+    const successEl = container.querySelector('.ev-success-msg');
+    if (successEl) successEl.style.display = 'none';
+}
+
+function showSuccess(input, message) {
+    input.classList.remove('input-error');
+    input.classList.add('input-success');
+    input.removeAttribute('aria-invalid');
+
+    const container = getErrorContainer(input);
+    const errorEl = container.querySelector('.ev-error-msg');
+    if (errorEl) errorEl.style.display = 'none';
+
+    if (message) {
+        let successEl = container.querySelector('.ev-success-msg');
+        if (!successEl) {
+            successEl = document.createElement('span');
+            successEl.className = 'ev-success-msg';
+            container.appendChild(successEl);
+        }
+        successEl.innerHTML = `<i class="fi fi-rr-check-circle"></i> <span>${message}</span>`;
+        successEl.style.display = 'flex';
+    } else {
+        const successEl = container.querySelector('.ev-success-msg');
+        if (successEl) successEl.style.display = 'none';
+    }
 }
 
 function showForbiddenError(input, msg) {
@@ -191,7 +222,11 @@ function validateField(input) {
         }
     }
 
-    clearError(input);
+    if (val !== '') {
+        showSuccess(input);
+    } else {
+        clearError(input);
+    }
     return true;
 }
 
@@ -209,8 +244,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const el = e.target;
         if (!['INPUT', 'TEXTAREA'].includes(el.tagName)) return;
 
-        // Clear error once user starts correcting
-        if (el.classList.contains('input-error')) {
+        // Real-time instant validation feedback when field has error or success state
+        if (el.dataset.rule && (el.classList.contains('input-error') || el.classList.contains('input-success'))) {
+            validateField(el);
+        } else if (el.classList.contains('input-error')) {
             clearError(el);
         }
 
@@ -291,6 +328,7 @@ window.EV = {
     validateField,
     showError,
     clearError,
+    showSuccess,
     validateForm(form) {
         let ok = true;
         let first = null;
