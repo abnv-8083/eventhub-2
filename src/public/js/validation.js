@@ -32,18 +32,49 @@ function isForbiddenExempt(input) {
 }
 
 // ─── Error UI Helpers ────────────────────────────────────────────────────────
-function getErrorContainer(input) {
-    // Walk up to find a sensible container
-    const parent = input.parentElement;
-    // For password-group wrappers
-    if (parent.classList.contains('password-group') || parent.classList.contains('form-floating')) {
-        return parent;
+function getFieldWrapper(input) {
+    let el = input;
+    while (el.parentElement) {
+        const p = el.parentElement;
+        if (p.classList.contains('form-floating') || 
+            p.classList.contains('form-group') || 
+            p.classList.contains('password-group') || 
+            p.classList.contains('input-group') || 
+            p.classList.contains('position-relative') ||
+            p.classList.contains('referral-link-wrap')) {
+            el = p;
+        } else {
+            break;
+        }
     }
-    // For position-relative wrappers (inline icons)
-    if (parent.classList.contains('position-relative') || parent.classList.contains('referral-link-wrap')) {
-        return parent.parentElement || parent;
+    return el;
+}
+
+function getFeedbackEl(input, className) {
+    const wrapper = getFieldWrapper(input);
+    const parent = wrapper.parentElement || wrapper;
+    const fieldId = input.id || input.name || 'field';
+    return parent.querySelector(`.${className}[data-for="${fieldId}"]`);
+}
+
+function getOrCreateFeedbackEl(input, className) {
+    const wrapper = getFieldWrapper(input);
+    const parent = wrapper.parentElement || wrapper;
+    const fieldId = input.id || input.name || 'field';
+    
+    let el = parent.querySelector(`.${className}[data-for="${fieldId}"]`);
+    if (!el) {
+        el = document.createElement('span');
+        el.className = className;
+        el.setAttribute('data-for', fieldId);
+        // Insert right after the wrapper so the wrapper height NEVER expands!
+        if (wrapper.nextSibling) {
+            parent.insertBefore(el, wrapper.nextSibling);
+        } else {
+            parent.appendChild(el);
+        }
     }
-    return parent;
+    return el;
 }
 
 function showError(input, message) {
@@ -51,16 +82,10 @@ function showError(input, message) {
     input.classList.add('input-error');
     input.setAttribute('aria-invalid', 'true');
 
-    const container = getErrorContainer(input);
-    const successEl = container.querySelector('.ev-success-msg');
+    const successEl = getFeedbackEl(input, 'ev-success-msg');
     if (successEl) successEl.style.display = 'none';
 
-    let errorEl = container.querySelector('.ev-error-msg');
-    if (!errorEl) {
-        errorEl = document.createElement('span');
-        errorEl.className = 'ev-error-msg';
-        container.appendChild(errorEl);
-    }
+    let errorEl = getOrCreateFeedbackEl(input, 'ev-error-msg');
     errorEl.innerHTML = `<i class="fi fi-rr-exclamation"></i> <span>${message}</span>`;
     errorEl.style.display = 'flex';
 }
@@ -70,10 +95,9 @@ function clearError(input) {
     input.classList.remove('input-success');
     input.removeAttribute('aria-invalid');
 
-    const container = getErrorContainer(input);
-    const errorEl = container.querySelector('.ev-error-msg');
+    const errorEl = getFeedbackEl(input, 'ev-error-msg');
     if (errorEl) errorEl.style.display = 'none';
-    const successEl = container.querySelector('.ev-success-msg');
+    const successEl = getFeedbackEl(input, 'ev-success-msg');
     if (successEl) successEl.style.display = 'none';
 }
 
@@ -82,21 +106,15 @@ function showSuccess(input, message) {
     input.classList.add('input-success');
     input.removeAttribute('aria-invalid');
 
-    const container = getErrorContainer(input);
-    const errorEl = container.querySelector('.ev-error-msg');
+    const errorEl = getFeedbackEl(input, 'ev-error-msg');
     if (errorEl) errorEl.style.display = 'none';
 
     if (message) {
-        let successEl = container.querySelector('.ev-success-msg');
-        if (!successEl) {
-            successEl = document.createElement('span');
-            successEl.className = 'ev-success-msg';
-            container.appendChild(successEl);
-        }
+        let successEl = getOrCreateFeedbackEl(input, 'ev-success-msg');
         successEl.innerHTML = `<i class="fi fi-rr-check-circle"></i> <span>${message}</span>`;
         successEl.style.display = 'flex';
     } else {
-        const successEl = container.querySelector('.ev-success-msg');
+        const successEl = getFeedbackEl(input, 'ev-success-msg');
         if (successEl) successEl.style.display = 'none';
     }
 }
