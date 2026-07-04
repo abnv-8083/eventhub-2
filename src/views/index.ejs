@@ -5,6 +5,12 @@
 
 
 <body class="bg-mesh">
+    <!-- ── Dynamic Animated Background Orbs ── -->
+    <div class="hero-orb-container">
+        <div class="hero-glow-orb hero-glow-orb-1"></div>
+        <div class="hero-glow-orb hero-glow-orb-2"></div>
+        <div class="hero-glow-orb hero-glow-orb-3"></div>
+    </div>
     <div class="floating-blob" style="top: -100px; left: -100px; opacity: 0.18;"></div>
     <div class="floating-blob" style="bottom: -100px; right: -100px; width: 300px; height: 300px; animation-delay: -7s; opacity: 0.12;"></div>
 
@@ -23,15 +29,15 @@
             <div style="position: absolute; top: 10%; left: 50%; transform: translate(-50%, 0); width: 700px; height: 400px; background: radial-gradient(ellipse, rgba(230,57,70,0.12) 0%, transparent 70%); pointer-events: none; z-index: -1; filter: blur(20px);"></div>
 
             <!-- Badge -->
-            <div data-aos="fade-down" data-aos-delay="100" class="d-inline-flex align-items-center gap-2 mb-4" style="background: rgba(230,57,70,0.08); border: 1px solid rgba(230,57,70,0.2); border-radius: 100px; padding: 7px 20px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.8);">
+            <div data-aos="fade-down" data-aos-delay="100" class="d-inline-flex align-items-center gap-2 mb-4 hero-badge-shimmer" style="border-radius: 100px; padding: 7px 20px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.9);">
                 <span style="width: 7px; height: 7px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 8px var(--primary); animation: pulseDot 2s infinite; flex-shrink: 0;"></span>
                 Kozhikode's Premier Event Platform
             </div>
 
             <!-- Hero headline -->
-            <h1 data-aos="fade-up" data-aos-delay="200" style="font-size: clamp(2.2rem, 8vw, 5.5rem); line-height: 1; margin-bottom: 1.5rem; letter-spacing: -3px; font-weight: 800;">
+            <h1 data-aos="fade-up" data-aos-delay="200" style="font-size: clamp(2.2rem, 8vw, 5.5rem); line-height: 1.08; margin-bottom: 1.5rem; letter-spacing: -3px; font-weight: 800;">
                 Unforgettable Experiences,<br>
-                <span class="text-gradient glow-text">Just a Tap Away.</span>
+                <span class="animated-gradient-text glow-text">Just a Tap Away.</span>
             </h1>
 
             <!-- Sub-headline -->
@@ -56,20 +62,20 @@
             </div>
 
             <!-- Stats row -->
-            <div data-aos="fade-up" data-aos-delay="500" class="d-flex justify-center gap-4 flex-wrap" style="opacity: 0.65;">
-                <div class="text-center">
-                    <div style="font-size: 1.5rem; font-weight: 800; font-family: var(--font-display);">500+</div>
-                    <div style="font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em;">Events Hosted</div>
+            <div data-aos="fade-up" data-aos-delay="500" class="d-flex justify-center gap-4 flex-wrap" style="opacity: 0.85;">
+                <div class="text-center stat-item" style="cursor: default; padding: 0.5rem 1.2rem; border-radius: 12px; transition: background 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                    <div class="stat-number-glow" style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display);"><span class="counter-val" data-target="500">0</span>+</div>
+                    <div style="font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Events Hosted</div>
                 </div>
-                <div style="width: 1px; background: var(--border);"></div>
-                <div class="text-center">
-                    <div style="font-size: 1.5rem; font-weight: 800; font-family: var(--font-display);">12k+</div>
-                    <div style="font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em;">Happy Attendees</div>
+                <div style="width: 1px; background: var(--border); margin: auto 0; height: 40px;"></div>
+                <div class="text-center stat-item" style="cursor: default; padding: 0.5rem 1.2rem; border-radius: 12px; transition: background 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                    <div class="stat-number-glow" style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display);"><span class="counter-val" data-target="12">0</span>k+</div>
+                    <div style="font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Happy Attendees</div>
                 </div>
-                <div style="width: 1px; background: var(--border);"></div>
-                <div class="text-center">
-                    <div style="font-size: 1.5rem; font-weight: 800; font-family: var(--font-display);">99%</div>
-                    <div style="font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em;">Satisfaction Rate</div>
+                <div style="width: 1px; background: var(--border); margin: auto 0; height: 40px;"></div>
+                <div class="text-center stat-item" style="cursor: default; padding: 0.5rem 1.2rem; border-radius: 12px; transition: background 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                    <div class="stat-number-glow" style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display);"><span class="counter-val" data-target="99">0</span>%</div>
+                    <div style="font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Satisfaction Rate</div>
                 </div>
             </div>
         </section>
@@ -209,14 +215,12 @@
                     { icon: 'fi-rr-calendar-star', color: '#2ECC71', title: 'Event Calendar', desc: 'Never miss an event with your personal calendar.' }
                 ]; %>
                 <% features.forEach((f, index) => { %>
-                <div data-aos="fade-up" data-aos-delay="<%= index * 100 %>" class="glass-premium" style="border-radius: 16px; padding: 1.75rem; border: 1px solid rgba(255,255,255,0.07); transition: all 0.3s ease;"
-                     onmouseover="this.style.transform='translateY(-6px)'; this.style.borderColor='rgba(230,57,70,0.2)';"
-                     onmouseout="this.style.transform=''; this.style.borderColor='rgba(255,255,255,0.07)';">
-                    <div style="width: 48px; height: 48px; border-radius: 12px; background: <%= f.color %>1a; border: 1px solid <%= f.color %>33; display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; font-size: 1.2rem; color: <%= f.color %>;">
+                <div data-aos="fade-up" data-aos-delay="<%= index * 100 %>" class="feature-card-interactive" style="border-radius: 16px; padding: 2rem 1.75rem; --feature-color: <%= f.color %>; --feature-color-glow: <%= f.color %>33;">
+                    <div class="feature-icon-box" style="width: 52px; height: 52px; border-radius: 14px; background: <%= f.color %>1a; border: 1px solid <%= f.color %>33; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; font-size: 1.35rem; color: <%= f.color %>;">
                         <i class="fi <%= f.icon %>"></i>
                     </div>
-                    <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.3px;"><%= f.title %></h4>
-                    <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; margin: 0;"><%= f.desc %></p>
+                    <h4 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.6rem; letter-spacing: -0.3px; color: #fff;"><%= f.title %></h4>
+                    <p style="font-size: 0.88rem; color: var(--text-dim); line-height: 1.6; margin: 0;"><%= f.desc %></p>
                 </div>
                 <% }) %>
             </div>
@@ -224,16 +228,16 @@
 
         <!-- ── CTA Section ─────────────────────────────────────────── -->
         <section class="container section" style="padding-top: 0; padding-bottom: 8rem;">
-            <div data-aos="zoom-in" class="glass-premium" style="border-radius: 24px; padding: 4rem 2rem; text-align: center; background: linear-gradient(135deg, rgba(230,57,70,0.15) 0%, rgba(15,15,15,0.8) 100%); border: 1px solid rgba(230,57,70,0.2); position: relative; overflow: hidden;">
+            <div data-aos="zoom-in" class="glass-premium cta-banner-card" style="border-radius: 24px; padding: 4.5rem 2rem; text-align: center; background: linear-gradient(135deg, rgba(230,57,70,0.18) 0%, rgba(15,15,15,0.85) 100%); border: 1px solid rgba(230,57,70,0.25); position: relative; overflow: hidden;">
                 <!-- Decorative BG elements -->
-                <div style="position: absolute; top: -50px; left: -50px; width: 200px; height: 200px; background: var(--primary); filter: blur(100px); opacity: 0.15;"></div>
-                <div style="position: absolute; bottom: -50px; right: -50px; width: 200px; height: 200px; background: #4ECDC4; filter: blur(100px); opacity: 0.1;"></div>
+                <div style="position: absolute; top: -60px; left: -60px; width: 250px; height: 250px; background: var(--primary); filter: blur(100px); opacity: 0.2; animation: floatOrb1 15s infinite alternate;"></div>
+                <div style="position: absolute; bottom: -60px; right: -60px; width: 250px; height: 250px; background: #4ECDC4; filter: blur(100px); opacity: 0.15; animation: floatOrb2 18s infinite alternate;"></div>
                 
-                <h2 style="font-size: clamp(1.8rem, 5vw, 2.5rem); letter-spacing: -1px; margin-bottom: 1rem; position: relative; z-index: 1;">Ready to Host Your Own Event?</h2>
-                <p class="text-dim" style="max-width: 500px; margin: 0 auto 2.5rem; font-size: 1.05rem; position: relative; z-index: 1;">Join hundreds of organizers who use EventHub to sell tickets, manage attendees, and grow their community effortlessly.</p>
+                <h2 style="font-size: clamp(1.8rem, 5vw, 2.8rem); letter-spacing: -1px; margin-bottom: 1rem; position: relative; z-index: 1; font-weight: 800;">Ready to Host Your Own Event?</h2>
+                <p class="text-dim" style="max-width: 540px; margin: 0 auto 2.5rem; font-size: 1.1rem; line-height: 1.7; position: relative; z-index: 1;">Join hundreds of organizers who use EventHub to sell tickets, manage attendees, and grow their community effortlessly.</p>
                 
-                <a href="/organizer/apply" class="btn btn-primary" style="position: relative; z-index: 1; height: 56px; padding: 0 3rem; font-size: 1.1rem; border-radius: 100px; font-weight: 600;">
-                    Become an Organizer
+                <a href="/organizer/apply" class="btn btn-primary btn-pulse-glow" style="position: relative; z-index: 1; height: 56px; padding: 0 3.2rem; font-size: 1.1rem; border-radius: 100px; font-weight: 600; display: inline-flex; align-items: center; gap: 10px;">
+                    Become an Organizer <i class="fi fi-rr-arrow-small-right" style="font-size: 1.3rem;"></i>
                 </a>
             </div>
         </section>
@@ -278,6 +282,40 @@
                 }
             }
         }
+
+        // ── Number Counter Animation when scrolled into view ──
+        document.addEventListener('DOMContentLoaded', () => {
+            const counters = document.querySelectorAll('.counter-val');
+            const speed = 150;
+
+            const animateCounter = (counter) => {
+                const target = +counter.getAttribute('data-target');
+                let count = 0;
+                const inc = Math.max(1, Math.ceil(target / speed));
+
+                const updateCount = () => {
+                    count += inc;
+                    if (count < target) {
+                        counter.innerText = count;
+                        setTimeout(updateCount, 20);
+                    } else {
+                        counter.innerText = target;
+                    }
+                };
+                updateCount();
+            };
+
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        animateCounter(entry.target);
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            counters.forEach(counter => observer.observe(counter));
+        });
     </script>
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
     <script>AOS.init({ duration: 800, once: true, offset: 50 });</script>
