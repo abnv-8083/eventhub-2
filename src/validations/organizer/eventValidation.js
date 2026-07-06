@@ -135,21 +135,28 @@ export const eventValidationSchema = Joi.object({
         'any.required': 'At least one ticket tier is required'
     })
 }).custom((value, helpers) => {
-    // Cross-field: when startDate === endDate, endTime must be strictly after startTime
     const { startDate, startTime, endDate, endTime } = value;
-    if (startDate && startTime && endDate && endTime) {
+    if (startDate && endDate) {
         const startDateStr = new Date(startDate).toISOString().split('T')[0];
         const endDateStr   = new Date(endDate).toISOString().split('T')[0];
 
-        if (startDateStr === endDateStr && endTime <= startTime) {
+        if (endDateStr < startDateStr) {
             return helpers.error('any.invalid', {
-                message: 'End time must be after start time when the event starts and ends on the same day'
+                message: 'End date cannot be earlier than start date'
             });
+        }
+
+        if (startDateStr === endDateStr && startTime && endTime) {
+            if (endTime <= startTime) {
+                return helpers.error('any.invalid', {
+                    message: 'End time must be after start time when the event starts and ends on the same day'
+                });
+            }
         }
     }
     return value;
 }).messages({
-    'any.invalid': 'End time must be after start time when the event starts and ends on the same day'
+    'any.invalid': '{{#message}}'
 }).options({ allowUnknown: true, stripUnknown: true });
 
 // For updating events, we remove the min(today) restriction since events might already be ongoing.
