@@ -627,6 +627,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label">Cover Banners <span class="text-danger">*</span> <span class="text-secondary small">(Max 2 images, 16:9 ratio)</span></label>
                                     <input type="file" class="form-control" name="banners" id="eventBanners" accept="image/*" multiple required>
+                                    <div id="bannerPreviewContainer" class="mt-3 d-flex flex-column gap-2"></div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Promo Video URL <span class="text-secondary small">(YouTube / Vimeo teaser)</span></label>
@@ -911,6 +912,33 @@
                     </div>
                 </form>
             </main>
+        </div>
+    </div>
+
+    <!-- Cover Banner Cropper Modal -->
+    <div class="modal-overlay" id="bannerCropModal" style="z-index: 999999;">
+        <div class="modal-container" style="max-width: 800px; width: 95%;">
+            <div class="modal-header">
+                <h5 class="fw-bold m-0 text-white"><i class="fi fi-rr-crop me-2 text-primary"></i>Crop Cover Banner (16:9 Ratio)</h5>
+                <i class="fi fi-rr-cross modal-close" onclick="closeBannerCropModal()"></i>
+            </div>
+            <div class="modal-body text-center">
+                <p class="text-secondary small mb-3">Adjust and crop your image to fit the 16:9 widescreen ratio perfectly.</p>
+                <div class="img-container" style="max-height: 500px; width: 100%; background: #000; overflow: hidden; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                    <img id="bannerImageToCrop" src="" alt="Banner to crop" style="max-width: 100%; display: block;">
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="rotateBanner(-90)" title="Rotate Left"><i class="fi fi-rr-rotate-left"></i> Rotate Left</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="rotateBanner(90)" title="Rotate Right"><i class="fi fi-rr-rotate-right"></i> Rotate Right</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetBannerCrop()" title="Reset"><i class="fi fi-rr-refresh"></i> Reset</button>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn text-dim" style="background: transparent;" onclick="closeBannerCropModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary px-4" id="applyBannerCropBtn"><i class="fi fi-rr-check me-1"></i> Apply Crop</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1215,6 +1243,156 @@
             e.preventDefault();
             submitForReview();
         });
+
+        // --- COVER BANNER PREVIEW & CROP LOGIC ---
+        let bannerCropper = null;
+        let selectedBannerFiles = [];
+        let activeCropIndex = -1;
+
+        const eventBannersInput = document.getElementById('eventBanners');
+        const bannerPreviewContainer = document.getElementById('bannerPreviewContainer');
+        const bannerCropModal = document.getElementById('bannerCropModal');
+        const bannerImageToCrop = document.getElementById('bannerImageToCrop');
+        const applyBannerCropBtn = document.getElementById('applyBannerCropBtn');
+
+        if (eventBannersInput) {
+            eventBannersInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                if (!files || files.length === 0) return;
+
+                if (files.length > 2) {
+                    alert('You can upload a maximum of 2 cover banners.');
+                }
+
+                selectedBannerFiles = files.slice(0, 2);
+                syncBannerInput();
+                renderBannerPreviews();
+            });
+        }
+
+        function syncBannerInput() {
+            const dt = new DataTransfer();
+            selectedBannerFiles.forEach(file => dt.items.add(file));
+            eventBannersInput.files = dt.files;
+        }
+
+        function renderBannerPreviews() {
+            if (!bannerPreviewContainer) return;
+            bannerPreviewContainer.innerHTML = '';
+            if (selectedBannerFiles.length === 0) return;
+
+            selectedBannerFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const previewCard = document.createElement('div');
+                    previewCard.className = 'p-3 rounded-3 d-flex align-items-center justify-content-between gap-3';
+                    previewCard.style.background = 'rgba(255, 255, 255, 0.03)';
+                    previewCard.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+
+                    previewCard.innerHTML = `
+                        <div class="d-flex align-items-center gap-3" style="min-width: 0; flex: 1;">
+                            <div style="width: 100px; height: 56px; border-radius: 6px; overflow: hidden; background: #000; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.15);">
+                                <img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div style="min-width: 0;">
+                                <h6 class="text-white mb-1 small text-truncate fw-bold">${file.name}</h6>
+                                <span class="text-dim" style="font-size: 0.75rem;">${(file.size / (1024 * 1024)).toFixed(2)} MB &middot; 16:9 ratio</span>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 flex-shrink-0">
+                            <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" onclick="openBannerCrop(${index})" style="border-radius: 6px; padding: 0.35rem 0.65rem; font-size: 0.8rem;">
+                                <i class="fi fi-rr-crop me-1"></i> Crop / Adjust
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center" onclick="removeBannerFile(${index})" style="border-radius: 6px; width: 32px; height: 32px; padding: 0;" title="Remove">
+                                <i class="fi fi-rr-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    bannerPreviewContainer.appendChild(previewCard);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        window.openBannerCrop = function(index) {
+            if (!selectedBannerFiles[index]) return;
+            activeCropIndex = index;
+            const file = selectedBannerFiles[index];
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                bannerImageToCrop.src = e.target.result;
+                bannerCropModal.classList.add('active');
+                if (bannerCropper) {
+                    bannerCropper.destroy();
+                }
+                bannerCropper = new Cropper(bannerImageToCrop, {
+                    aspectRatio: 16 / 9,
+                    viewMode: 1,
+                    background: false,
+                    zoomable: true,
+                    guides: true,
+                    autoCropArea: 1,
+                });
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.closeBannerCropModal = function() {
+            if (bannerCropModal) {
+                bannerCropModal.classList.remove('active');
+            }
+            if (bannerCropper) {
+                bannerCropper.destroy();
+                bannerCropper = null;
+            }
+            activeCropIndex = -1;
+        };
+
+        window.rotateBanner = function(degree) {
+            if (bannerCropper) {
+                bannerCropper.rotate(degree);
+            }
+        };
+
+        window.resetBannerCrop = function() {
+            if (bannerCropper) {
+                bannerCropper.reset();
+            }
+        };
+
+        if (applyBannerCropBtn) {
+            applyBannerCropBtn.addEventListener('click', () => {
+                if (!bannerCropper || activeCropIndex === -1) return;
+
+                const canvas = bannerCropper.getCroppedCanvas({ width: 1280, height: 720 });
+                if (!canvas) return;
+
+                canvas.toBlob((blob) => {
+                    const originalFile = selectedBannerFiles[activeCropIndex];
+                    const croppedFile = new File([blob], originalFile.name, {
+                        type: originalFile.type || 'image/jpeg',
+                        lastModified: Date.now()
+                    });
+
+                    selectedBannerFiles[activeCropIndex] = croppedFile;
+                    syncBannerInput();
+                    renderBannerPreviews();
+                    closeBannerCropModal();
+                }, selectedBannerFiles[activeCropIndex].type || 'image/jpeg', 0.92);
+            });
+        }
+
+        window.removeBannerFile = function(index) {
+            selectedBannerFiles.splice(index, 1);
+            syncBannerInput();
+            renderBannerPreviews();
+        };
+
+        window.removeExistingBanner = function(idx) {
+            const el = document.getElementById(`existing-banner-${idx}`);
+            if (el) el.remove();
+        };
     </script>
 </body>
 </html>
