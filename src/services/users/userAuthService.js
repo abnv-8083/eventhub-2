@@ -107,8 +107,14 @@ export const verifyAndCreateUser = async (email, otp, tempUserData)=>{
 
 
 export const verifyLogin = async (email, password) =>{
+    if (!email || !password) {
+        throw new AppError('Please enter both email and password.', HTTP_STATUS.BAD_REQUEST);
+    }
     const existingUser = await User.findOne({email:email}).select('+password')
     if(existingUser){
+        if (!existingUser.password || typeof existingUser.password !== 'string') {
+            throw new AppError('No password set for this account. Please sign in with Google or click Forgot Password to set one.', HTTP_STATUS.BAD_REQUEST);
+        }
         const checkPassword = await argon2.verify(existingUser.password, password)
         if(checkPassword){
             if(existingUser.role == 'admin'){
@@ -169,9 +175,14 @@ export const resetUserPassword = async (newPassword,confirmPassword, email)=>{
 
     const getuser = await User.findOne({email:email}).select('+password')
 
-    const comparePassword = await argon2.verify(getuser.password, newPassword)
-    if(comparePassword){
-        throw new AppError('This Password is currently Using Please give another Password', HTTP_STATUS.BAD_REQUEST)
+    if (!getuser) {
+        throw new AppError('User Not Found', HTTP_STATUS.NOT_FOUND);
+    }
+    if (getuser.password && typeof getuser.password === 'string') {
+        const comparePassword = await argon2.verify(getuser.password, newPassword);
+        if (comparePassword) {
+            throw new AppError('This password is currently in use. Please enter a different password.', HTTP_STATUS.BAD_REQUEST);
+        }
     }
 
     const hashPassword = await argon2.hash(newPassword)
