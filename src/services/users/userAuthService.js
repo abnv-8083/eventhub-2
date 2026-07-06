@@ -12,23 +12,24 @@ import { sendNotification, notifyAllAdmins } from '../../utils/notify.js';
 import { generateUniqueReferralCode, validateReferralCode } from './referralService.js';
 
 export const findUser = async (userdata)=>{
+    const anyExistingUser = await User.findOne({ email: userdata.email });
+
     if(userdata.role == 'organizer'){
-        const resubmitExistingUser = await User.findOne({email: userdata.email, role: 'organizer', status: 'rejected'})
-        const existingUser = await User.findOne({email: userdata.email, role: 'organizer',status: {$in: ['pending','approved']}})
-        
-        if(resubmitExistingUser){
-            const otp = generateOTP()
-            await OTP.create({ email: userdata.email, code: otp })
-            await sendOtpEmail(userdata.email, otp, 'Verify Email OTP')
-            // FIX: Tell the controller this is a re-registration
-            return { success: true, action: 'organizerReregister' }; 
-        }else if(existingUser){
-            throw new AppError('Organizer Already Registered', HTTP_STATUS.BAD_REQUEST)
+        if(anyExistingUser){
+            if (anyExistingUser.role === 'organizer' && anyExistingUser.status === 'rejected') {
+                const otp = generateOTP()
+                await OTP.create({ email: userdata.email, code: otp })
+                await sendOtpEmail(userdata.email, otp, 'Verify Email OTP')
+                return { success: true, action: 'organizerReregister' }; 
+            } else if (anyExistingUser.role === 'organizer') {
+                throw new AppError('An Organizer account with this email is already registered. Please sign in!', HTTP_STATUS.BAD_REQUEST);
+            } else {
+                throw new AppError('An account with this email already exists. Please sign in or use a different email!', HTTP_STATUS.BAD_REQUEST);
+            }
         } else {
             const otp = generateOTP()
             await OTP.create({ email: userdata.email, code: otp })
             await sendOtpEmail(userdata.email, otp, 'Verify Email OTP')
-            // FIX: Tell the controller this is a brand new creation
             return { success: true, action: 'userSignup' }; 
         }
     }else{
@@ -36,16 +37,18 @@ export const findUser = async (userdata)=>{
             await validateReferralCode(userdata.referralCode);
         }
 
-        const existingUser = await User.findOne({email: userdata.email, role: 'user'})
-        if(existingUser){
-            throw new AppError('User Already Registered', HTTP_STATUS.BAD_REQUEST)
+        if(anyExistingUser){
+            if (anyExistingUser.role === 'user') {
+                throw new AppError('A User account with this email is already registered. Please sign in!', HTTP_STATUS.BAD_REQUEST);
+            } else {
+                throw new AppError('An account with this email already exists. Please sign in or use a different email!', HTTP_STATUS.BAD_REQUEST);
+            }
         }
 
         const otp = generateOTP()
         await OTP.create({ email: userdata.email, code: otp })
         await sendOtpEmail(userdata.email, otp, 'Verify Email OTP')
         
-        // FIX: Tell the controller this is a brand new creation
         return { success: true, action: 'userSignup' }; 
     }
 }
@@ -55,6 +58,11 @@ export const verifyAndCreateUser = async (email, otp, tempUserData)=>{
 
     if(!otpRecord){
         throw new AppError('Invalid or Expired OTP', HTTP_STATUS.BAD_REQUEST)
+    }
+
+    const existingUser = await User.findOne({email: tempUserData.email});
+    if (existingUser) {
+        throw new AppError(`An account with the email ${tempUserData.email} is already registered. Please sign in instead!`, HTTP_STATUS.BAD_REQUEST);
     }
 
 

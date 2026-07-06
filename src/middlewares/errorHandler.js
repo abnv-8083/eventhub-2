@@ -5,13 +5,42 @@ const errorHandler = (err, req, res, next) => {
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
 
+    // 1. ALWAYS format MongoDB Duplicate Key Error (code 11000) cleanly in ALL environments!
+    if (err.code === 11000 || err.code === 11001) {
+        const value = (err.errmsg || err.message).match(/(["'])(\\?.)*?\1/)?.[0] || 'this value';
+        if (err.message.includes('email') || err.keyPattern?.email || err.keyValue?.email) {
+            err.message = `An account with the email ${value} already exists. Please sign in instead!`;
+        } else if (err.message.includes('organizationName') || err.keyPattern?.organizationName || err.keyValue?.organizationName) {
+            err.message = `The organization name ${value} is already taken. Please choose another name!`;
+        } else if (err.message.includes('referralCode') || err.keyPattern?.referralCode || err.keyValue?.referralCode) {
+            err.message = `This referral code is already taken.`;
+        } else {
+            err.message = `Duplicate field value: ${value}. This value is already registered!`;
+        }
+        err.statusCode = 400;
+        err.isOperational = true;
+    }
+
+    // 2. ALWAYS format Mongoose CastError / ValidationError cleanly in ALL environments!
+    if (err.name === 'CastError') {
+        err.message = `Invalid ${err.path}: ${err.value}.`;
+        err.statusCode = 400;
+        err.isOperational = true;
+    }
+    if (err.name === 'ValidationError') {
+        const errors = Object.values(err.errors).map(el => el.message);
+        err.message = `Invalid input data: ${errors.join('. ')}`;
+        err.statusCode = 400;
+        err.isOperational = true;
+    }
+
     // Development vs Production Error Responses
     if (process.env.NODE_ENV === 'development') {
         // In development, we want to see all the details and the stack trace to fix bugs
         console.error('💥 ERROR:', err);
         
         // If the request was an API call (expects JSON), send JSON back
-        if (req.originalUrl.includes('/user/signup') || req.originalUrl.includes('/user/login') || req.xhr || req.headers?.accept?.indexOf('json') > -1) {
+        if (req.originalUrl.includes('/user/signup') || req.originalUrl.includes('/user/login') || req.originalUrl.includes('/user/verify-otp') || req.xhr || req.headers?.accept?.indexOf('json') > -1) {
             return res.status(err.statusCode || 500).json({
                 success: false, 
                 message: err.message,
@@ -29,17 +58,8 @@ const errorHandler = (err, req, res, next) => {
         // In production, we don't want to leak sensitive stack traces to the user
         let error = { ...err };
         error.message = err.message;
-
-        // Handle specific MongoDB errors nicely
-        if (err.name === 'CastError') {
-            error.message = `Invalid ${err.path}: ${err.value}.`;
-            error.statusCode = 400;
-        }
-        if (err.code === 11000) { // MongoDB duplicate key error
-            const value = err.errmsg.match(/(["'])(\\?.)*?\1/)[0];
-            error.message = `Duplicate field value: ${value}. Please use another value!`;
-            error.statusCode = 400;
-        }
+        error.statusCode = err.statusCode;
+        error.isOperational = err.isOperational;
 
         // Operational, trusted error: send message to client
         if (error.isOperational) {
