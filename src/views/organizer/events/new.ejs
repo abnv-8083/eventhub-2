@@ -1279,6 +1279,10 @@
 
             fetch('/organizer/events', {
                 method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: formData
             })
             .then(res => res.json())

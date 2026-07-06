@@ -131,8 +131,8 @@ export const createEvent = async (organizerId, eventData, bannerUrls, ticketData
             city:                 eventData.city,
             state:                eventData.state,
             pincode:              eventData.pincode,
-            lat:                  eventData.lat ? parseFloat(eventData.lat) : null,
-            lng:                  eventData.lng ? parseFloat(eventData.lng) : null,
+            lat:                  eventData.lat !== undefined && eventData.lat !== null && !isNaN(parseFloat(eventData.lat)) ? parseFloat(eventData.lat) : null,
+            lng:                  eventData.lng !== undefined && eventData.lng !== null && !isNaN(parseFloat(eventData.lng)) ? parseFloat(eventData.lng) : null,
             parkingAvailable:     eventData.parkingAvailable === true || eventData.parkingAvailable === 'true',
             wheelchairAccessible: eventData.wheelchairAccessible === true || eventData.wheelchairAccessible === 'true'
         },
@@ -144,7 +144,7 @@ export const createEvent = async (organizerId, eventData, bannerUrls, ticketData
         schedule:   parseArray(eventData.schedule),
 
         isFeatured: eventData.isFeatured === true || eventData.isFeatured === 'true',
-        postStartRegistrationLimit: eventData.postStartRegistrationLimit !== undefined && eventData.postStartRegistrationLimit !== '' ? parseInt(eventData.postStartRegistrationLimit, 10) : null,
+        postStartRegistrationLimit: eventData.postStartRegistrationLimit !== undefined && eventData.postStartRegistrationLimit !== '' && !isNaN(parseInt(eventData.postStartRegistrationLimit, 10)) ? parseInt(eventData.postStartRegistrationLimit, 10) : null,
         banners:    bannerUrls,
         thumbnail:     eventData.thumbnail,
         galleryImages: parseArray(eventData.galleryImages),
@@ -271,8 +271,8 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
         city:                 eventData.city,
         state:                eventData.state,
         pincode:              eventData.pincode,
-        lat:                  eventData.lat ? parseFloat(eventData.lat) : null,
-        lng:                  eventData.lng ? parseFloat(eventData.lng) : null,
+        lat:                  eventData.lat !== undefined && eventData.lat !== null && !isNaN(parseFloat(eventData.lat)) ? parseFloat(eventData.lat) : null,
+        lng:                  eventData.lng !== undefined && eventData.lng !== null && !isNaN(parseFloat(eventData.lng)) ? parseFloat(eventData.lng) : null,
         parkingAvailable:     eventData.parkingAvailable === true || eventData.parkingAvailable === 'true',
         wheelchairAccessible: eventData.wheelchairAccessible === true || eventData.wheelchairAccessible === 'true'
     };
@@ -284,7 +284,7 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
     event.schedule  = parseArray(eventData.schedule);
 
     event.isFeatured = eventData.isFeatured === true || eventData.isFeatured === 'true';
-    event.postStartRegistrationLimit = eventData.postStartRegistrationLimit !== undefined && eventData.postStartRegistrationLimit !== '' ? parseInt(eventData.postStartRegistrationLimit, 10) : null;
+    event.postStartRegistrationLimit = eventData.postStartRegistrationLimit !== undefined && eventData.postStartRegistrationLimit !== '' && !isNaN(parseInt(eventData.postStartRegistrationLimit, 10)) ? parseInt(eventData.postStartRegistrationLimit, 10) : null;
     
     if (eventData.thumbnail) event.thumbnail = eventData.thumbnail;
     if (eventData.galleryImages) event.galleryImages = parseArray(eventData.galleryImages);

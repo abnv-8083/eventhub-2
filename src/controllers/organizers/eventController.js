@@ -175,19 +175,20 @@ export const createEvent = async (req, res, next) => {
             return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: 'Invalid tickets format' });
         }
 
+        const limitVal = parseInt(req.body.postStartRegistrationLimit, 10);
+        const postStartRegistrationLimit = !isNaN(limitVal) && limitVal >= 0 ? limitVal : null;
+        const latVal = parseFloat(req.body.lat);
+        const lngVal = parseFloat(req.body.lng);
+
         const eventData = {
-            title:       req.body.title,
-            description: req.body.description,
-            category:    req.body.category,
-            address:     req.body.address,
-            lat:         req.body.lat ? parseFloat(req.body.lat) : null,
-            lng:         req.body.lng ? parseFloat(req.body.lng) : null,
-            startDate:   req.body.startDate,
-            startTime:   req.body.startTime,
-            endDate:     req.body.endDate,
-            endTime:     req.body.endTime,
-            isFeatured:  req.body.isFeatured === 'true',
-            postStartRegistrationLimit: req.body.postStartRegistrationLimit !== undefined && req.body.postStartRegistrationLimit !== '' ? parseInt(req.body.postStartRegistrationLimit, 10) : null,
+            ...req.body,
+            lat: !isNaN(latVal) ? latVal : null,
+            lng: !isNaN(lngVal) ? lngVal : null,
+            isFeatured: req.body.isFeatured === 'true' || req.body.isFeatured === true,
+            isOnline: req.body.isOnline === 'true' || req.body.isOnline === true,
+            parkingAvailable: req.body.parkingAvailable === 'true' || req.body.parkingAvailable === true,
+            wheelchairAccessible: req.body.wheelchairAccessible === 'true' || req.body.wheelchairAccessible === true,
+            postStartRegistrationLimit,
             tickets
         };
 
@@ -265,19 +266,20 @@ export const updateEvent = async (req, res, next) => {
             return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: 'Invalid tickets format' });
         }
 
+        const limitVal = parseInt(req.body.postStartRegistrationLimit, 10);
+        const postStartRegistrationLimit = !isNaN(limitVal) && limitVal >= 0 ? limitVal : null;
+        const latVal = parseFloat(req.body.lat);
+        const lngVal = parseFloat(req.body.lng);
+
         const eventData = {
-            title:       req.body.title,
-            description: req.body.description,
-            category:    req.body.category,
-            address:     req.body.address,
-            lat:         req.body.lat ? parseFloat(req.body.lat) : null,
-            lng:         req.body.lng ? parseFloat(req.body.lng) : null,
-            startDate:   req.body.startDate,
-            startTime:   req.body.startTime,
-            endDate:     req.body.endDate,
-            endTime:     req.body.endTime,
-            isFeatured:  req.body.isFeatured === 'true',
-            postStartRegistrationLimit: req.body.postStartRegistrationLimit !== undefined && req.body.postStartRegistrationLimit !== '' ? parseInt(req.body.postStartRegistrationLimit, 10) : null,
+            ...req.body,
+            lat: !isNaN(latVal) ? latVal : null,
+            lng: !isNaN(lngVal) ? lngVal : null,
+            isFeatured: req.body.isFeatured === 'true' || req.body.isFeatured === true,
+            isOnline: req.body.isOnline === 'true' || req.body.isOnline === true,
+            parkingAvailable: req.body.parkingAvailable === 'true' || req.body.parkingAvailable === true,
+            wheelchairAccessible: req.body.wheelchairAccessible === 'true' || req.body.wheelchairAccessible === true,
+            postStartRegistrationLimit,
             existingBanners: req.body.existingBanners || [],
             tickets
         };

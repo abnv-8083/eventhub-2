@@ -150,7 +150,7 @@ export const eventValidationSchema = Joi.object({
     return value;
 }).messages({
     'any.invalid': 'End time must be after start time when the event starts and ends on the same day'
-});
+}).options({ allowUnknown: true, stripUnknown: true });
 
 // For updating events, we remove the min(today) restriction since events might already be ongoing.
 export const updateEventValidationSchema = eventValidationSchema.keys({
@@ -158,7 +158,7 @@ export const updateEventValidationSchema = eventValidationSchema.keys({
         'date.base': 'Start date must be a valid date',
         'any.required': 'Start date is required'
     })
-});
+}).options({ allowUnknown: true, stripUnknown: true });
 
 // Draft Validation Schema - allow everything as optional
 export const draftEventValidationSchema = Joi.object({
@@ -233,4 +233,4 @@ export const draftEventValidationSchema = Joi.object({
             stadiumSide: Joi.string().allow('', null).optional()
         })
     ).optional().default([])
-});
+}).options({ allowUnknown: true, stripUnknown: true });

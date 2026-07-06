@@ -34,13 +34,16 @@ const errorHandler = (err, req, res, next) => {
         err.isOperational = true;
     }
 
+    // Check if request expects a JSON response (API calls, AJAX/fetch requests, form submissions)
+    const isApiOrAjax = req.originalUrl.startsWith('/api') || req.xhr || req.headers?.['x-requested-with'] === 'XMLHttpRequest' || req.headers?.accept?.indexOf('json') > -1 || req.headers?.['content-type']?.includes('multipart/form-data') || req.headers?.['content-type']?.includes('application/json') || ((req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH' || req.method === 'DELETE') && (req.originalUrl.startsWith('/organizer') || req.originalUrl.startsWith('/admin') || req.originalUrl.startsWith('/user')));
+
     // Development vs Production Error Responses
     if (process.env.NODE_ENV === 'development') {
         // In development, we want to see all the details and the stack trace to fix bugs
         console.error('💥 ERROR:', err);
         
-        // If the request was an API call (expects JSON), send JSON back
-        if (req.originalUrl.includes('/user/signup') || req.originalUrl.includes('/user/login') || req.originalUrl.includes('/user/verify-otp') || req.xhr || req.headers?.accept?.indexOf('json') > -1) {
+        // If the request was an API call or AJAX (expects JSON), send JSON back
+        if (isApiOrAjax) {
             return res.status(err.statusCode || 500).json({
                 success: false, 
                 message: err.message,
@@ -63,7 +66,7 @@ const errorHandler = (err, req, res, next) => {
 
         // Operational, trusted error: send message to client
         if (error.isOperational) {
-            if (req.originalUrl.startsWith('/api') || req.xhr || req.headers?.accept?.indexOf('json') > -1) {
+            if (isApiOrAjax) {
                 return res.status(error.statusCode || 500).json({
                     success: false,
                     status: error.status || 'error',
@@ -80,7 +83,7 @@ const errorHandler = (err, req, res, next) => {
         } else {
             console.error('💥 FATAL ERROR:', err);
             
-            if (req.originalUrl.startsWith('/api') || req.xhr || req.headers?.accept?.indexOf('json') > -1) {
+            if (isApiOrAjax) {
                 return res.status(500).json({
                     success: false,
                     status: 'error',
