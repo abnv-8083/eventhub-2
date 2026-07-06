@@ -12,303 +12,436 @@
         <main class="dashboard-main">
 
             <%# ── Page Header ── %>
-            <div class="mb-4 animate stagger-1">
-                <p class="page-label">Finance</p>
-                <h2 class="fw-bold mb-1">My Wallet</h2>
-                <p class="text-dim m-0">Secure digital wallet for booking events instantly.</p>
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 animate stagger-1">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="page-label m-0">Finance</span>
+                        <span class="text-dim">/</span>
+                        <span class="text-white fw-semibold" style="font-size: 0.85rem;">My Wallet</span>
+                    </div>
+                    <h2 class="fw-bold mb-1 text-white">Digital Wallet</h2>
+                    <p class="text-dim m-0">Manage your balance, add funds, and track event transactions seamlessly.</p>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="live-status-pill" title="Real-time WebSocket sync active">
+                        <span class="pulse-dot"></span>
+                        <span class="live-text">Live Sync Active</span>
+                    </div>
+                </div>
             </div>
 
             <%# ── Top Section: Balance Card + Add Money ── %>
-            <div class="row g-4 mb-4">
+            <div class="row g-4 mb-5">
 
-                <%# Balance Card %>
-                <div class="col-lg-5 animate stagger-2">
-                    <div class="wallet-balance-card">
-                        <!-- Decorative orbs -->
-                        <div class="wallet-orb wallet-orb-1"></div>
-                        <div class="wallet-orb wallet-orb-2"></div>
+                <%# Left Column: Holographic Digital Wallet Card + Quick Stats %>
+                <div class="col-lg-5 col-xl-5 animate stagger-2 d-flex flex-column gap-4">
+                    
+                    <!-- Holographic Digital Card -->
+                    <div class="digital-wallet-card">
+                        <div class="card-glow-bg"></div>
+                        <div class="card-orb orb-1"></div>
+                        <div class="card-orb orb-2"></div>
 
-                        <div class="wallet-card-inner">
-                            <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div class="card-content">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="card-logo-icon">
+                                        <i class="fi fi-rr-wallet"></i>
+                                    </div>
+                                    <span class="card-brand">EventHub Pay</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="fi fi-rr-rss card-contactless" title="Contactless Enabled"></i>
+                                    <div class="card-chip">
+                                        <div class="chip-line"></div>
+                                        <div class="chip-line"></div>
+                                        <div class="chip-line"></div>
+                                        <div class="chip-line"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-balance-section mb-4">
+                                <span class="balance-label">Available Balance</span>
+                                <div class="balance-amount">
+                                    <span class="currency-symbol">&#8377;</span>
+                                    <span class="amount-val" id="liveBalance"><%= balance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-end mt-auto pt-2 border-top border-white border-opacity-10">
                                 <div>
-                                    <p class="wallet-card-label">Available Balance</p>
-                                    <p class="wallet-card-sublabel"><%= transactions.length %> transaction<%= transactions.length !== 1 ? 's' : '' %> total</p>
+                                    <span class="holder-label">Card Holder</span>
+                                    <p class="holder-name m-0"><%= userName ? userName.toUpperCase() : 'VALUED MEMBER' %></p>
                                 </div>
-                                <div class="wallet-chip">
-                                    <i class="fi fi-rr-shield-check"></i> Secured
+                                <div class="text-end">
+                                    <span class="holder-label">Card Number</span>
+                                    <p class="card-number m-0">&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; <%= (userEmail || '8842').replace(/[^0-9]/g, '').slice(-4) || '8842' %></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Summary Stats Below Card -->
+                    <div class="wallet-stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-icon-wrap credit-bg">
+                                <i class="fi fi-rr-arrow-small-down credit-text"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <span class="stat-label">Total Credits</span>
+                                <h6 class="stat-val credit-text m-0 text-truncate">+&#8377;<%= transactions.filter(t=>t.type==='credit').reduce((s,t)=>s+t.amount,0).toLocaleString('en-IN') %></h6>
+                            </div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-icon-wrap debit-bg">
+                                <i class="fi fi-rr-arrow-small-up debit-text"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <span class="stat-label">Total Debits</span>
+                                <h6 class="stat-val debit-text m-0 text-truncate">-&#8377;<%= transactions.filter(t=>t.type==='debit').reduce((s,t)=>s+t.amount,0).toLocaleString('en-IN') %></h6>
+                            </div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-icon-wrap info-bg">
+                                <i class="fi fi-rr-calendar info-text"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <span class="stat-label">This Month</span>
+                                <%
+                                const now = new Date();
+                                const thisMonthAmt = transactions.filter(t => {
+                                    const d = new Date(t.date);
+                                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.type === 'credit';
+                                }).reduce((s,t)=>s+t.amount, 0);
+                                %>
+                                <h6 class="stat-val info-text m-0 text-truncate">&#8377;<%= thisMonthAmt.toLocaleString('en-IN') %></h6>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <%# Right Column: Add Money Panel %>
+                <div class="col-lg-7 col-xl-7 animate stagger-3">
+                    <div class="wallet-topup-panel h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="topup-panel-header">
+                                <div class="topup-icon-wrap">
+                                    <i class="fi fi-rr-add"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold text-white m-0">Add Funds to Wallet</h5>
+                                    <p class="text-dim m-0" style="font-size:0.85rem;">Instant top-up · Zero transaction fees · Max &#8377;50,000</p>
                                 </div>
                             </div>
 
-                            <div class="wallet-amount-display">
-                                <span class="wallet-currency">&#8377;</span>
-                                <span class="wallet-amount-value" id="liveBalance"><%= balance.toLocaleString('en-IN', {minimumFractionDigits:2}) %></span>
+                            <div class="topup-divider"></div>
+
+                            <!-- Quick Amount Chips -->
+                            <p class="topup-section-label"><i class="fi fi-rr-zap me-1 text-warning"></i> Select Quick Top-Up Amount</p>
+                            <div class="quick-amounts mb-4">
+                                <button type="button" class="amt-chip" onclick="setAmount(500, this)">+ &#8377;500</button>
+                                <button type="button" class="amt-chip" onclick="setAmount(1000, this)">+ &#8377;1,000</button>
+                                <button type="button" class="amt-chip" onclick="setAmount(2000, this)">+ &#8377;2,000</button>
+                                <button type="button" class="amt-chip" onclick="setAmount(5000, this)">+ &#8377;5,000</button>
+                                <button type="button" class="amt-chip" onclick="setAmount(10000, this)">+ &#8377;10,000</button>
+                                <button type="button" class="amt-chip" onclick="setAmount(25000, this)">+ &#8377;25,000</button>
                             </div>
 
-                            <div class="wallet-card-footer">
-                                <div class="wallet-stat">
-                                    <p class="wallet-stat-label">Credits</p>
-                                    <p class="wallet-stat-value credit">
-                                        +&#8377;<%= transactions.filter(t=>t.type==='credit').reduce((s,t)=>s+t.amount,0).toLocaleString('en-IN') %>
-                                    </p>
-                                </div>
-                                <div class="wallet-stat-divider"></div>
-                                <div class="wallet-stat">
-                                    <p class="wallet-stat-label">Debits</p>
-                                    <p class="wallet-stat-value debit">
-                                        -&#8377;<%= transactions.filter(t=>t.type==='debit').reduce((s,t)=>s+t.amount,0).toLocaleString('en-IN') %>
-                                    </p>
-                                </div>
-                                <div class="wallet-stat-divider"></div>
-                                <div class="wallet-stat">
-                                    <p class="wallet-stat-label">This Month</p>
-                                    <p class="wallet-stat-value">
-                                        <%
-                                        const now = new Date();
-                                        const thisMonthTxns = transactions.filter(t => {
-                                            const d = new Date(t.date);
-                                            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.type === 'credit';
-                                        });
-                                        const thisMonthAmt = thisMonthTxns.reduce((s,t)=>s+t.amount, 0);
-                                        %>
-                                        &#8377;<%= thisMonthAmt.toLocaleString('en-IN') %>
-                                    </p>
-                                </div>
+                            <!-- Custom Amount Input -->
+                            <p class="topup-section-label mb-2">Or Enter Custom Amount</p>
+                            <div class="topup-input-wrap mb-3">
+                                <span class="topup-currency-prefix">&#8377;</span>
+                                <input
+                                    type="number"
+                                    id="amountInput"
+                                    class="topup-input"
+                                    placeholder="0.00"
+                                    min="1"
+                                    max="50000"
+                                    inputmode="decimal"
+                                >
+                                <button class="topup-clear-btn" onclick="clearAmount()" title="Clear amount">
+                                    <i class="fi fi-rr-cross-small"></i>
+                                </button>
+                            </div>
+
+                            <p id="amtError" class="topup-error" style="display:none;"></p>
+                        </div>
+
+                        <div>
+                            <!-- Pay Button -->
+                            <button class="topup-submit-btn" onclick="handleTopUp()" id="topUpBtn">
+                                <i class="fi fi-rr-credit-card me-2"></i>
+                                <span id="btnLabel">Add Money via Razorpay</span>
+                            </button>
+
+                            <div class="topup-secure-footer">
+                                <span class="secure-badge"><i class="fi fi-rr-shield-check text-success me-1"></i> 256-bit SSL</span>
+                                <span class="meta-dot">&bull;</span>
+                                <span class="secure-badge"><i class="fi fi-rr-lock text-info me-1"></i> Secured by Razorpay</span>
+                                <span class="meta-dot">&bull;</span>
+                                <span class="secure-badge"><i class="fi fi-rr-check-circle text-primary me-1"></i> Instant Credit</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <%# Add Money Panel %>
-                <div class="col-lg-7 animate stagger-3">
-                    <div class="wallet-topup-panel h-100">
-                        <div class="topup-panel-header">
-                            <div class="topup-icon-wrap">
-                                <i class="fi fi-rr-add"></i>
-                            </div>
-                            <div>
-                                <h5 class="fw-bold text-white m-0">Add Money</h5>
-                                <p class="text-dim m-0" style="font-size:0.8rem;">Max &#8377;50,000 per transaction</p>
-                            </div>
-                        </div>
+            </div>
 
-                        <div class="topup-divider"></div>
-
-                        <!-- Quick Amount Buttons -->
-                        <p class="topup-section-label">Select or Enter Amount</p>
-                        <div class="quick-amounts mb-3">
-                            <button type="button" class="amt-chip" onclick="setAmount(500, this)">+ &#8377;500</button>
-                            <button type="button" class="amt-chip" onclick="setAmount(1000, this)">+ &#8377;1,000</button>
-                            <button type="button" class="amt-chip" onclick="setAmount(2000, this)">+ &#8377;2,000</button>
-                            <button type="button" class="amt-chip" onclick="setAmount(5000, this)">+ &#8377;5,000</button>
-                            <button type="button" class="amt-chip" onclick="setAmount(10000, this)">+ &#8377;10,000</button>
-                        </div>
-
-                        <!-- Amount Input -->
-                        <div class="topup-input-wrap mb-3">
-                            <span class="topup-currency-prefix">&#8377;</span>
-                            <input
-                                type="number"
-                                id="amountInput"
-                                class="topup-input"
-                                placeholder="0.00"
-                                min="1"
-                                max="50000"
-                                inputmode="decimal"
-                            >
-                            <button class="topup-clear-btn" onclick="clearAmount()" title="Clear">
+            <%# ── Transaction History with Filters & Pagination ── %>
+            <div class="wallet-txn-panel animate stagger-5">
+                
+                <!-- Toolbar Header -->
+                <div class="txn-toolbar-header">
+                    <div class="mb-2 mb-md-0">
+                        <p class="page-label m-0">History</p>
+                        <h5 class="fw-bold m-0 text-white">Transactions</h5>
+                    </div>
+                    
+                    <!-- Search & Filter Controls -->
+                    <div class="txn-toolbar-controls">
+                        <!-- Search Box -->
+                        <div class="txn-search-wrap">
+                            <i class="fi fi-rr-search search-icon"></i>
+                            <input type="text" id="txnSearchInput" class="txn-search-input" placeholder="Search description..." oninput="onSearchChange()">
+                            <button type="button" class="search-clear-btn" id="searchClearBtn" onclick="clearSearch()" style="display:none;" title="Clear search">
                                 <i class="fi fi-rr-cross-small"></i>
                             </button>
                         </div>
 
-                        <p id="amtError" class="topup-error" style="display:none;"></p>
-
-                        <!-- Pay Button -->
-                        <button class="topup-submit-btn" onclick="handleTopUp()" id="topUpBtn">
-                            <i class="fi fi-rr-credit-card me-2"></i>
-                            <span id="btnLabel">Add Money via Razorpay</span>
-                        </button>
-
-                        <p class="topup-secure-note">
-                            <i class="fi fi-rr-lock me-1"></i>
-                            256-bit SSL &nbsp;·&nbsp; Secured by Razorpay &nbsp;·&nbsp; PCI DSS Compliant
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <%# ── Transaction History ── %>
-            <div class="wallet-txn-panel animate stagger-5">
-                <div class="txn-panel-header">
-                    <div>
-                        <p class="page-label">History</p>
-                        <h5 class="fw-bold m-0">Transactions</h5>
-                    </div>
-                    <div class="d-flex align-items-center gap-3 flex-wrap justify-content-end">
-                        <!-- Modern Date Filter Pill -->
+                        <!-- Date Filter Pill -->
                         <div class="wallet-date-filter" title="Filter transactions by date">
                             <div class="date-filter-inner">
                                 <i class="fi fi-rr-calendar-lines date-icon"></i>
-                                <input type="date" id="dateFilter" class="date-input" onchange="applyFilters()">
+                                <input type="date" id="dateFilter" class="date-input" onchange="onDateChange()">
                                 <button type="button" id="clearDateBtn" class="date-clear-btn" onclick="clearDateFilter()" title="Clear date filter" style="display: none;">
                                     <i class="fi fi-rr-cross-small"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Type Filter Pills -->
-                        <div class="txn-filter-wrap d-flex align-items-center" id="txnFilterWrap">
+                        <!-- Type Filter Tabs -->
+                        <div class="txn-filter-wrap" id="txnFilterWrap">
                             <button class="txn-filter-btn active" data-filter="all" onclick="setTypeFilter('all', this)">All</button>
                             <button class="txn-filter-btn" data-filter="credit" onclick="setTypeFilter('credit', this)">Credits</button>
                             <button class="txn-filter-btn" data-filter="debit" onclick="setTypeFilter('debit', this)">Debits</button>
                         </div>
-                        <span class="text-dim" style="font-size:0.8rem; white-space: nowrap;"><%= transactions.length %> total</span>
+
+                        <!-- Items Per Page -->
+                        <div class="items-per-page-wrap">
+                            <select id="itemsPerPageSelect" class="items-select" onchange="onItemsPerPageChange()" title="Items per page">
+                                <option value="5">5 / page</option>
+                                <option value="8" selected>8 / page</option>
+                                <option value="15">15 / page</option>
+                                <option value="25">25 / page</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <% if(transactions && transactions.length > 0) { %>
-                <div class="txn-list" id="txnList">
-                    <% transactions.forEach((txn, idx) => {
-                        const isCredit = txn.type === 'credit';
-                        const dateObj  = new Date(txn.date);
-                        const dateStr  = dateObj.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
-                        const timeStr  = dateObj.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-                        
-                        // YYYY-MM-DD for accurate filtering (taking local timezone into account properly)
-                        const localDateStr = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-                    %>
-                    <div class="txn-item" data-type="<%= txn.type %>" data-date="<%= localDateStr %>">
-                        <div class="txn-icon-wrap <%= isCredit ? 'txn-credit-icon' : 'txn-debit-icon' %>">
-                            <i class="fi fi-rr-<%= isCredit ? 'arrow-small-down' : 'arrow-small-up' %>"></i>
-                        </div>
-                        <div class="txn-info">
-                            <p class="txn-description"><%= txn.description %></p>
-                            <p class="txn-meta">
-                                <span><i class="fi fi-rr-calendar me-1"></i><%= dateStr %></span>
-                                <span class="txn-meta-dot">·</span>
-                                <span><i class="fi fi-rr-clock me-1"></i><%= timeStr %></span>
-                                <span class="txn-meta-dot">·</span>
-                                <span class="txn-type-badge <%= isCredit ? 'badge-credit' : 'badge-debit' %>">
-                                    <%= isCredit ? 'Credit' : 'Debit' %>
-                                </span>
-                            </p>
-                        </div>
-                        <div class="txn-amount-col">
-                            <span class="txn-amount-val <%= isCredit ? 'amount-credit' : 'amount-debit' %>">
-                                <%= isCredit ? '+' : '-' %>&#8377;<%= txn.amount.toLocaleString('en-IN', {minimumFractionDigits:2}) %>
-                            </span>
-                        </div>
-                    </div>
-                    <% }) %>
+                <!-- Transaction List Container -->
+                <div class="txn-list" id="txnListContainer">
+                    <!-- Dynamically injected via client-side pagination JS -->
                 </div>
-                <% } else { %>
-                <div class="txn-empty-state">
+
+                <!-- Empty State (Hidden by default, shown via JS when no results) -->
+                <div class="txn-empty-state" id="txnEmptyState" style="display: none;">
                     <div class="txn-empty-icon">
                         <i class="fi fi-rr-receipt"></i>
                     </div>
-                    <h6 class="text-white mb-2">No Transactions Yet</h6>
-                    <p class="text-dim mb-0" style="font-size:0.85rem;">Add money to your wallet to get started.</p>
+                    <h6 class="text-white mb-2" id="emptyStateTitle">No Transactions Found</h6>
+                    <p class="text-dim mb-0" style="font-size:0.85rem;" id="emptyStateDesc">You don't have any transactions matching the selected filters.</p>
                 </div>
-                <% } %>
+
+                <!-- Pagination Footer Bar -->
+                <div class="txn-pagination-footer" id="txnPaginationFooter" style="display: none;">
+                    <div class="pagination-info" id="paginationInfoText">
+                        Showing 0 to 0 of 0 transactions
+                    </div>
+                    <div class="pagination-controls">
+                        <button type="button" class="page-nav-btn" id="prevPageBtn" onclick="changePage(currentPage - 1)" disabled>
+                            <i class="fi fi-rr-angle-small-left"></i> Prev
+                        </button>
+                        <div class="page-numbers-wrap" id="pageNumbersWrap">
+                            <!-- Page number buttons injected dynamically -->
+                        </div>
+                        <button type="button" class="page-nav-btn" id="nextPageBtn" onclick="changePage(currentPage + 1)" disabled>
+                            Next <i class="fi fi-rr-angle-small-right"></i>
+                        </button>
+                    </div>
+                </div>
+
             </div>
 
-    <style>
-        .page-label { color: var(--primary); text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; }
-        
-        .wallet-balance-card { position: relative; background: linear-gradient(135deg, rgba(35, 18, 24, 0.9) 0%, rgba(18, 18, 24, 0.95) 50%, rgba(12, 12, 16, 0.98) 100%); border-radius: 24px; padding: 2.2rem; border: 1px solid rgba(255, 255, 255, 0.12); overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease; }
-        .wallet-balance-card:hover { transform: translateY(-4px); box-shadow: 0 25px 50px rgba(230, 57, 70, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
-        .wallet-orb { position: absolute; border-radius: 50%; filter: blur(50px); z-index: 0; pointer-events: none; }
-        .wallet-orb-1 { width: 200px; height: 200px; background: radial-gradient(circle, var(--primary) 0%, transparent 70%); top: -50px; right: -50px; opacity: 0.5; }
-        .wallet-orb-2 { width: 180px; height: 180px; background: radial-gradient(circle, #8338ec 0%, transparent 70%); bottom: -40px; left: -40px; opacity: 0.4; }
-        
-        .wallet-card-inner { position: relative; z-index: 2; }
-        .wallet-card-label { font-size: 1.1rem; color: rgba(255,255,255,0.7); margin-bottom: 0.2rem; }
-        .wallet-card-sublabel { font-size: 0.85rem; color: rgba(255,255,255,0.4); margin: 0; }
-        .wallet-chip { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); padding: 0.45rem 0.95rem; border-radius: 100px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #ffffff; backdrop-filter: blur(8px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .wallet-chip i { color: #00f5d4; font-size: 0.95rem; }
-        
-        .wallet-amount-display { margin: 2rem 0; display: flex; align-items: baseline; gap: 0.5rem; }
-        .wallet-currency { font-size: 2rem; color: rgba(255,255,255,0.5); font-weight: 300; }
-        .wallet-amount-value { font-family: var(--font-display, 'Outfit', sans-serif); font-size: 3.5rem; font-weight: 800; letter-spacing: -1.5px; color: white; text-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        
-        .wallet-card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem; }
-        .wallet-stat { flex: 1; display: flex; flex-direction: column; gap: 0.3rem; }
-        .wallet-stat-divider { width: 1px; height: 30px; background: rgba(255,255,255,0.1); margin: 0 1rem; }
-        .wallet-stat-label { font-size: 0.8rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
-        .wallet-stat-value { font-size: 1.1rem; font-weight: 700; margin: 0; color: white; }
-        .wallet-stat-value.credit { color: #2ecc71; }
-        .wallet-stat-value.debit { color: #e74c3c; }
+        </main>
+    </div>
 
-        .wallet-topup-panel { background: rgba(20,20,20,0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 20px; padding: 2rem; border: 1px solid rgba(255,255,255,0.05); }
+    <!-- ── Styles for Modern Wallet & Pagination ── -->
+    <style>
+        .page-label { color: var(--primary); text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.8rem; font-weight: 700; }
+        
+        /* Live Indicator Pill */
+        .live-status-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); padding: 0.4rem 0.9rem; border-radius: 100px; font-size: 0.8rem; font-weight: 600; color: #2ecc71; backdrop-filter: blur(8px); box-shadow: 0 4px 15px rgba(46, 204, 113, 0.15); }
+        .pulse-dot { width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; box-shadow: 0 0 8px #2ecc71; animation: pulseGlow 2s infinite; }
+        @keyframes pulseGlow { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.6; } }
+
+        /* Holographic Digital Card */
+        .digital-wallet-card { position: relative; background: linear-gradient(135deg, rgba(30, 15, 22, 0.95) 0%, rgba(18, 18, 26, 0.98) 50%, rgba(10, 10, 16, 1) 100%); border-radius: 24px; padding: 2rem; border: 1px solid rgba(255, 255, 255, 0.15); overflow: hidden; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.25); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease; }
+        .digital-wallet-card:hover { transform: translateY(-5px); box-shadow: 0 28px 55px rgba(230, 57, 70, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+        .card-glow-bg { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at 70% 30%, rgba(230, 57, 70, 0.18) 0%, rgba(131, 56, 236, 0.12) 40%, transparent 70%); z-index: 0; pointer-events: none; animation: floatGlow 10s ease-in-out infinite alternate; }
+        @keyframes floatGlow { 0% { transform: translate(0, 0) rotate(0deg); } 100% { transform: translate(-5%, 5%) rotate(10deg); } }
+        .card-orb { position: absolute; border-radius: 50%; filter: blur(45px); z-index: 0; pointer-events: none; }
+        .orb-1 { width: 160px; height: 160px; background: var(--primary); top: -40px; right: -40px; opacity: 0.45; }
+        .orb-2 { width: 140px; height: 140px; background: #3a86ff; bottom: -40px; left: -40px; opacity: 0.35; }
+        
+        .card-content { position: relative; z-index: 2; display: flex; flex-direction: column; height: 100%; min-height: 220px; }
+        .card-logo-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(230, 57, 70, 0.2); border: 1px solid rgba(230, 57, 70, 0.5); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.1rem; }
+        .card-brand { font-family: var(--font-display, 'Outfit', sans-serif); font-weight: 700; font-size: 1.1rem; letter-spacing: 0.5px; color: white; }
+        .card-contactless { font-size: 1.3rem; color: rgba(255, 255, 255, 0.7); transform: rotate(90deg); }
+        .card-chip { width: 38px; height: 28px; background: linear-gradient(135deg, #ffd700 0%, #cca625 100%); border-radius: 6px; position: relative; overflow: hidden; border: 1px solid rgba(0,0,0,0.3); display: flex; flex-direction: column; justify-content: space-evenly; padding: 2px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        .chip-line { height: 1px; width: 100%; background: rgba(0,0,0,0.4); }
+        
+        .card-balance-section { margin-top: 1rem; }
+        .balance-label { font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; display: block; margin-bottom: 0.2rem; }
+        .balance-amount { display: flex; align-items: baseline; gap: 0.3rem; }
+        .currency-symbol { font-size: 2rem; color: rgba(255, 255, 255, 0.6); font-weight: 300; }
+        .amount-val { font-family: var(--font-display, 'Outfit', sans-serif); font-size: 3.2rem; font-weight: 800; letter-spacing: -1px; color: white; text-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+        
+        .holder-label { font-size: 0.68rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 2px; }
+        .holder-name { font-size: 0.95rem; font-weight: 700; color: white; letter-spacing: 1px; }
+        .card-number { font-family: monospace; font-size: 1.05rem; font-weight: 600; color: rgba(255, 255, 255, 0.85); letter-spacing: 2px; }
+
+        /* Quick Summary Stats Grid */
+        .wallet-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.85rem; }
+        .stat-box { background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 16px; padding: 1rem; display: flex; align-items: center; gap: 0.85rem; transition: transform 0.25s, border-color 0.25s; }
+        .stat-box:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.15); }
+        .stat-icon-wrap { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+        .credit-bg { background: rgba(46, 204, 113, 0.12); }
+        .credit-text { color: #2ecc71; }
+        .debit-bg { background: rgba(231, 76, 60, 0.12); }
+        .debit-text { color: #e74c3c; }
+        .info-bg { background: rgba(58, 134, 255, 0.12); }
+        .info-text { color: #3a86ff; }
+        .stat-label { font-size: 0.72rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px; font-weight: 600; }
+        .stat-val { font-size: 1.05rem; font-weight: 700; }
+
+        /* Add Money Panel */
+        .wallet-topup-panel { background: rgba(20, 20, 20, 0.65); backdrop-filter: blur(16px); border-radius: 24px; padding: 2.2rem; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
         .topup-panel-header { display: flex; align-items: center; gap: 1rem; }
-        .topup-icon-wrap { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: white; border: 1px solid rgba(255,255,255,0.1); }
-        .topup-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 1.5rem 0; }
-        .topup-section-label { font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-bottom: 0.8rem; }
+        .topup-icon-wrap { width: 50px; height: 50px; border-radius: 14px; background: rgba(230, 57, 70, 0.15); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--primary); border: 1px solid rgba(230, 57, 70, 0.4); }
+        .topup-divider { height: 1px; background: rgba(255, 255, 255, 0.06); margin: 1.5rem 0; }
+        .topup-section-label { font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         
         .quick-amounts { display: flex; flex-wrap: wrap; gap: 0.65rem; }
-        .amt-chip { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); padding: 0.6rem 1.1rem; border-radius: 100px; color: rgba(255,255,255,0.85); font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
-        .amt-chip:hover { background: rgba(255,255,255,0.1); color: white; transform: translateY(-2px); border-color: rgba(255,255,255,0.25); }
-        .amt-chip.active, .amt-chip.selected { background: var(--primary); border-color: var(--primary); color: white; box-shadow: 0 4px 15px rgba(230,57,70,0.4); }
+        .amt-chip { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.12); padding: 0.6rem 1.1rem; border-radius: 100px; color: rgba(255, 255, 255, 0.85); font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        .amt-chip:hover { background: rgba(255, 255, 255, 0.1); color: white; transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.3); }
+        .amt-chip.selected { background: var(--primary); border-color: var(--primary); color: white; box-shadow: 0 4px 15px rgba(230, 57, 70, 0.4); }
         
-        .topup-input-wrap { position: relative; display: flex; align-items: center; background: rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 14px; transition: border-color 0.3s, box-shadow 0.3s; }
-        .topup-input-wrap:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(230,57,70,0.15); }
-        .topup-currency-prefix { position: absolute; left: 1.2rem; color: rgba(255,255,255,0.5); font-size: 1.3rem; pointer-events: none; font-weight: 600; }
-        .topup-input { width: 100%; background: transparent; border: none; padding: 1.1rem 3rem 1.1rem 2.5rem; color: white; font-size: 1.4rem; font-weight: 700; -moz-appearance: textfield; }
+        .topup-input-wrap { position: relative; display: flex; align-items: center; background: rgba(0, 0, 0, 0.4); border: 1.5px solid rgba(255, 255, 255, 0.12); border-radius: 16px; transition: border-color 0.3s, box-shadow 0.3s; }
+        .topup-input-wrap:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.18); }
+        .topup-currency-prefix { position: absolute; left: 1.4rem; color: rgba(255, 255, 255, 0.6); font-size: 1.4rem; pointer-events: none; font-weight: 600; }
+        .topup-input { width: 100%; background: transparent; border: none; padding: 1.2rem 3.5rem 1.2rem 2.8rem; color: white; font-size: 1.5rem; font-weight: 700; -moz-appearance: textfield; }
         .topup-input:focus { outline: none; }
         .topup-input::-webkit-outer-spin-button, .topup-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        .topup-clear-btn { position: absolute; right: 0.5rem; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.5rem; padding: 0.5rem; cursor: pointer; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }
+        .topup-clear-btn { position: absolute; right: 0.8rem; background: transparent; border: none; color: rgba(255, 255, 255, 0.4); font-size: 1.5rem; padding: 0.5rem; cursor: pointer; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }
         .topup-clear-btn:hover { color: white; }
         
-        .topup-submit-btn { width: 100%; padding: 1rem; font-size: 1.1rem; font-weight: 600; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: transform 0.2s, box-shadow 0.2s; background: var(--primary); color: white; border: none; cursor: pointer; }
-        .topup-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(230,57,70,0.4); }
-        .topup-submit-btn:disabled { opacity: 0.5; pointer-events: none; }
+        .topup-error { display: flex; align-items: center; gap: 8px; color: #ff526f; background: rgba(230, 57, 70, 0.1); border: 1px solid rgba(230, 57, 70, 0.3); padding: 0.75rem 1rem; border-radius: 12px; font-size: 0.85rem; font-weight: 500; margin-bottom: 1rem; }
         
-        .topup-secure-note { display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 1rem; }
+        .topup-submit-btn { width: 100%; padding: 1.1rem; font-size: 1.1rem; font-weight: 700; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 0.6rem; transition: transform 0.25s, box-shadow 0.25s; background: var(--primary); color: white; border: none; cursor: pointer; box-shadow: 0 6px 20px rgba(230, 57, 70, 0.35); }
+        .topup-submit-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(230, 57, 70, 0.5); }
+        .topup-submit-btn:active { transform: translateY(0); }
         
-        .wallet-txn-panel { margin-top: 2rem; background: rgba(20,20,20,0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 20px; padding: 2rem; border: 1px solid rgba(255,255,255,0.05); }
-        .txn-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-        .txn-filter-wrap { display: flex; gap: 0.25rem; background: rgba(255,255,255,0.03); padding: 0.25rem; border-radius: 100px; border: 1px solid rgba(255,255,255,0.05); }
-        .txn-filter-btn { background: transparent; border: none; color: rgba(255,255,255,0.6); padding: 0.4rem 1rem; border-radius: 100px; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; font-weight: 600; }
-        .txn-filter-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(230,57,70,0.4); }
+        .topup-secure-footer { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.5rem; font-size: 0.78rem; color: rgba(255, 255, 255, 0.5); margin-top: 1.25rem; }
+        .secure-badge { display: inline-flex; align-items: center; font-weight: 500; }
+        .meta-dot { color: rgba(255, 255, 255, 0.2); }
 
-        /* ── Modern Date Filter Pill ── */
+        /* Transaction Panel & Toolbar */
+        .wallet-txn-panel { background: rgba(20, 20, 20, 0.65); backdrop-filter: blur(16px); border-radius: 24px; padding: 2.2rem; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
+        .txn-toolbar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1.2rem; border-bottom: 1px solid rgba(255, 255, 255, 0.06); padding-bottom: 1.5rem; }
+        .txn-toolbar-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 0.85rem; }
+        
+        /* Search Box */
+        .txn-search-wrap { position: relative; display: flex; align-items: center; width: 220px; }
+        .search-icon { position: absolute; left: 0.9rem; color: rgba(255, 255, 255, 0.4); font-size: 0.95rem; pointer-events: none; }
+        .txn-search-input { width: 100%; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 100px; padding: 0.45rem 2.2rem 0.45rem 2.4rem; color: white; font-size: 0.85rem; outline: none; transition: all 0.25s; }
+        .txn-search-input:focus { border-color: var(--primary); background: rgba(255, 255, 255, 0.06); box-shadow: 0 0 15px rgba(230, 57, 70, 0.2); width: 260px; }
+        .search-clear-btn { position: absolute; right: 0.6rem; background: transparent; border: none; color: rgba(255, 255, 255, 0.4); font-size: 1.2rem; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; }
+        .search-clear-btn:hover { color: white; }
+
+        /* Date Filter Pill */
         .wallet-date-filter { position: relative; display: inline-flex; align-items: center; }
-        .date-filter-inner { display: flex; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 100px; padding: 0.35rem 0.9rem; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); backdrop-filter: blur(10px); height: 40px; }
-        .date-filter-inner:hover, .date-filter-inner:focus-within { background: rgba(255, 255, 255, 0.07); border-color: var(--primary); box-shadow: 0 0 20px rgba(230, 57, 70, 0.25); transform: translateY(-1px); }
-        .date-icon { color: var(--primary); font-size: 0.95rem; margin-right: 0.5rem; transition: transform 0.2s; display: flex; align-items: center; }
-        .date-filter-inner:hover .date-icon { transform: scale(1.1); }
-        .date-input { background: transparent; border: none; color: #ffffff; font-size: 0.85rem; font-family: inherit; font-weight: 500; outline: none; cursor: pointer; color-scheme: dark; padding: 0; width: 120px; }
-        .date-input::-webkit-calendar-picker-indicator { filter: invert(1) opacity(0.7); cursor: pointer; transition: opacity 0.2s, transform 0.2s; }
-        .date-input::-webkit-calendar-picker-indicator:hover { opacity: 1; transform: scale(1.1); }
-        .date-clear-btn { background: rgba(230, 57, 70, 0.2); border: none; color: #ff526f; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; margin-left: 0.5rem; cursor: pointer; transition: all 0.2s; padding: 0; flex-shrink: 0; }
-        .date-clear-btn:hover { background: var(--primary); color: white; transform: scale(1.15) rotate(90deg); }
+        .date-filter-inner { display: flex; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 100px; padding: 0.45rem 0.9rem; transition: all 0.25s; height: 38px; }
+        .date-filter-inner:hover, .date-filter-inner:focus-within { background: rgba(255, 255, 255, 0.07); border-color: var(--primary); box-shadow: 0 0 15px rgba(230, 57, 70, 0.2); }
+        .date-icon { color: var(--primary); font-size: 0.95rem; margin-right: 0.5rem; }
+        .date-input { background: transparent; border: none; color: #ffffff; font-size: 0.85rem; font-family: inherit; font-weight: 500; outline: none; cursor: pointer; color-scheme: dark; padding: 0; width: 115px; }
+        .date-clear-btn { background: rgba(230, 57, 70, 0.2); border: none; color: #ff526f; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; margin-left: 0.4rem; cursor: pointer; transition: all 0.2s; }
+        .date-clear-btn:hover { background: var(--primary); color: white; }
 
-        .txn-list { display: flex; flex-direction: column; gap: 1rem; }
-        .txn-item { display: flex; align-items: center; gap: 1rem; padding: 1.25rem; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px solid rgba(255,255,255,0.04); transition: transform 0.2s, background 0.2s; }
-        .txn-item:hover { background: rgba(255,255,255,0.04); transform: translateX(4px); }
+        /* Type Filter Tabs */
+        .txn-filter-wrap { display: flex; gap: 0.2rem; background: rgba(255, 255, 255, 0.03); padding: 0.25rem; border-radius: 100px; border: 1px solid rgba(255, 255, 255, 0.08); }
+        .txn-filter-btn { background: transparent; border: none; color: rgba(255, 255, 255, 0.6); padding: 0.35rem 0.95rem; border-radius: 100px; cursor: pointer; transition: all 0.2s; font-size: 0.82rem; font-weight: 600; }
+        .txn-filter-btn:hover { color: white; }
+        .txn-filter-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(230, 57, 70, 0.4); }
+
+        /* Items Per Page Select */
+        .items-select { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.8); border-radius: 100px; padding: 0.45rem 1rem; font-size: 0.82rem; font-weight: 500; outline: none; cursor: pointer; transition: all 0.2s; height: 38px; color-scheme: dark; }
+        .items-select:hover, .items-select:focus { border-color: var(--primary); background: rgba(255, 255, 255, 0.07); }
+
+        /* Transaction List Items */
+        .txn-list { display: flex; flex-direction: column; gap: 0.85rem; min-height: 250px; }
+        .txn-item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem 1.5rem; background: rgba(255, 255, 255, 0.02); border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.05); transition: transform 0.25s, background 0.25s, border-color 0.25s; animation: fadeIn 0.3s ease; }
+        .txn-item:hover { background: rgba(255, 255, 255, 0.05); transform: translateX(5px); border-color: rgba(255, 255, 255, 0.12); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         
-        .txn-icon-wrap { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
-        .txn-credit-icon { background: rgba(46,204,113,0.1); color: #2ecc71; }
-        .txn-debit-icon { background: rgba(231,76,60,0.1); color: #e74c3c; }
+        .txn-icon-wrap { width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+        .txn-credit-icon { background: rgba(46, 204, 113, 0.12); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.3); }
+        .txn-debit-icon { background: rgba(231, 76, 60, 0.12); color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.3); }
         
         .txn-info { flex: 1; min-width: 0; }
-        .txn-description { font-weight: 500; color: white; margin: 0 0 0.3rem 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 1rem; }
-        .txn-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; font-size: 0.8rem; color: rgba(255,255,255,0.4); margin: 0; }
-        .txn-meta-dot { font-size: 0.5rem; opacity: 0.5; }
+        .txn-description { font-weight: 600; color: white; margin: 0 0 0.3rem 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 1.02rem; }
+        .txn-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem; font-size: 0.82rem; color: rgba(255, 255, 255, 0.45); margin: 0; }
+        .txn-meta-dot { font-size: 0.5rem; opacity: 0.4; }
         
-        .txn-type-badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
-        .badge-credit { background: rgba(46,204,113,0.1); color: #2ecc71; }
-        .badge-debit { background: rgba(231,76,60,0.1); color: #e74c3c; }
+        .txn-type-badge { padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-credit { background: rgba(46, 204, 113, 0.12); color: #2ecc71; }
+        .badge-debit { background: rgba(231, 76, 60, 0.12); color: #e74c3c; }
         
-        .txn-amount-col { text-align: right; }
-        .txn-amount-val { font-weight: 700; font-size: 1.1rem; }
+        .txn-amount-col { text-align: right; flex-shrink: 0; }
+        .txn-amount-val { font-weight: 800; font-size: 1.2rem; font-family: var(--font-display, 'Outfit', sans-serif); letter-spacing: -0.5px; }
         .amount-credit { color: #2ecc71; }
         .amount-debit { color: #e74c3c; }
         
-        .empty-state { text-align: center; padding: 4rem 2rem; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px dashed rgba(255,255,255,0.1); }
-        .empty-state i { font-size: 3rem; color: rgba(255,255,255,0.2); margin-bottom: 1rem; display: block; }
+        /* Empty State */
+        .txn-empty-state { text-align: center; padding: 4.5rem 2rem; background: rgba(255, 255, 255, 0.015); border-radius: 20px; border: 1px dashed rgba(255, 255, 255, 0.12); my-3; }
+        .txn-empty-icon { width: 70px; height: 70px; border-radius: 50%; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; color: rgba(255, 255, 255, 0.3); margin: 0 auto 1.2rem; }
+
+        /* Pagination Footer */
+        .txn-pagination-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+        .pagination-info { font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); font-weight: 500; }
+        .pagination-controls { display: flex; align-items: center; gap: 0.5rem; }
+        .page-nav-btn { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); color: white; padding: 0.45rem 0.9rem; border-radius: 10px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s; }
+        .page-nav-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.25); transform: translateY(-1px); }
+        .page-nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .page-numbers-wrap { display: flex; align-items: center; gap: 4px; }
+        .page-num-btn { width: 34px; height: 34px; border-radius: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+        .page-num-btn:hover { background: rgba(255, 255, 255, 0.1); color: white; }
+        .page-num-btn.active { background: var(--primary); border-color: var(--primary); color: white; box-shadow: 0 4px 12px rgba(230, 57, 70, 0.4); font-weight: 700; }
+
+        @media (max-width: 768px) {
+            .wallet-stats-grid { grid-template-columns: 1fr; }
+            .txn-toolbar-header { flex-direction: column; align-items: flex-start; }
+            .txn-toolbar-controls { width: 100%; flex-direction: column; align-items: stretch; }
+            .txn-search-wrap, .txn-search-input:focus { width: 100%; }
+            .wallet-date-filter, .date-filter-inner, .items-per-page-wrap, .items-select { width: 100%; }
+            .txn-filter-wrap { justify-content: center; }
+            .txn-item { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+            .txn-amount-col { align-self: flex-end; }
+            .txn-pagination-footer { flex-direction: column; align-items: center; text-align: center; }
+        }
     </style>
-        </main>
-    </div>
 
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
@@ -421,44 +554,211 @@
         if (e.key === 'Enter') handleTopUp();
     });
 
-    // ── Transaction filter ──────────────────────────────────────────────────────
+    // ── Client-Side Transactions & Pagination Engine ────────────────────────────
+    let allTransactions = JSON.parse('<%- JSON.stringify(transactions || []).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '\\"') %>');
     let currentTypeFilter = 'all';
+    let currentDateFilter = '';
+    let currentSearchQuery = '';
+    let currentPage = 1;
+    let itemsPerPage = 8;
 
     function setTypeFilter(type, btn) {
         document.querySelectorAll('.txn-filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentTypeFilter = type;
-        applyFilters();
+        currentPage = 1; // Reset to page 1 on filter change
+        renderTransactions();
     }
 
-    function applyFilters() {
-        const dateFilterVal = document.getElementById('dateFilter').value;
+    function onDateChange() {
+        currentDateFilter = document.getElementById('dateFilter').value;
         const clearBtn = document.getElementById('clearDateBtn');
-        if (clearBtn) {
-            clearBtn.style.display = dateFilterVal ? 'inline-flex' : 'none';
-        }
-        let visibleCount = 0;
-        
-        document.querySelectorAll('.txn-item').forEach(item => {
-            const typeMatch = (currentTypeFilter === 'all' || item.dataset.type === currentTypeFilter);
-            const dateMatch = (!dateFilterVal || item.dataset.date === dateFilterVal);
-            
-            if (typeMatch && dateMatch) {
-                item.style.display = '';
-                visibleCount++;
-            } else {
-                item.style.display = 'none';
-            }
-        });
+        if (clearBtn) clearBtn.style.display = currentDateFilter ? 'inline-flex' : 'none';
+        currentPage = 1;
+        renderTransactions();
     }
 
     function clearDateFilter() {
         const dateInput = document.getElementById('dateFilter');
         if (dateInput) {
             dateInput.value = '';
-            applyFilters();
+            currentDateFilter = '';
+            document.getElementById('clearDateBtn').style.display = 'none';
+            currentPage = 1;
+            renderTransactions();
         }
     }
+
+    function onSearchChange() {
+        currentSearchQuery = document.getElementById('txnSearchInput').value.trim().toLowerCase();
+        const clearBtn = document.getElementById('searchClearBtn');
+        if (clearBtn) clearBtn.style.display = currentSearchQuery ? 'inline-flex' : 'none';
+        currentPage = 1;
+        renderTransactions();
+    }
+
+    function clearSearch() {
+        document.getElementById('txnSearchInput').value = '';
+        currentSearchQuery = '';
+        document.getElementById('searchClearBtn').style.display = 'none';
+        currentPage = 1;
+        renderTransactions();
+    }
+
+    function onItemsPerPageChange() {
+        itemsPerPage = parseInt(document.getElementById('itemsPerPageSelect').value) || 8;
+        currentPage = 1;
+        renderTransactions();
+    }
+
+    function changePage(newPage) {
+        currentPage = newPage;
+        renderTransactions();
+        // Smooth scroll to transactions header
+        document.querySelector('.wallet-txn-panel')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function renderTransactions() {
+        const container = document.getElementById('txnListContainer');
+        const emptyState = document.getElementById('txnEmptyState');
+        const footer = document.getElementById('txnPaginationFooter');
+        const infoText = document.getElementById('paginationInfoText');
+        const pageNumbersWrap = document.getElementById('pageNumbersWrap');
+        const prevBtn = document.getElementById('prevPageBtn');
+        const nextBtn = document.getElementById('nextPageBtn');
+
+        if (!container) return;
+
+        // 1. Filter Transactions
+        const filtered = allTransactions.filter(txn => {
+            // Type match
+            const typeMatch = (currentTypeFilter === 'all' || txn.type === currentTypeFilter);
+            // Date match (YYYY-MM-DD)
+            let dateMatch = true;
+            if (currentDateFilter) {
+                const dateObj = new Date(txn.date);
+                const localDateStr = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                dateMatch = (localDateStr === currentDateFilter);
+            }
+            // Search match
+            let searchMatch = true;
+            if (currentSearchQuery) {
+                const desc = (txn.description || '').toLowerCase();
+                const amt = (txn.amount || '').toString();
+                searchMatch = desc.includes(currentSearchQuery) || amt.includes(currentSearchQuery);
+            }
+            return typeMatch && dateMatch && searchMatch;
+        });
+
+        // 2. Handle Empty State
+        if (filtered.length === 0) {
+            container.innerHTML = '';
+            container.style.display = 'none';
+            emptyState.style.display = 'block';
+            footer.style.display = 'none';
+            
+            // Adjust empty state text if filters are active
+            const title = document.getElementById('emptyStateTitle');
+            const desc = document.getElementById('emptyStateDesc');
+            if (currentTypeFilter !== 'all' || currentDateFilter || currentSearchQuery) {
+                if (title) title.textContent = 'No Matching Transactions';
+                if (desc) desc.textContent = 'Try clearing your search or filters to see more results.';
+            } else {
+                if (title) title.textContent = 'No Transactions Yet';
+                if (desc) desc.textContent = 'Add money to your wallet to get started with seamless booking.';
+            }
+            return;
+        }
+
+        // 3. Calculate Pagination
+        const totalItems = filtered.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        if (currentPage > totalPages) currentPage = totalPages || 1;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIdx = (currentPage - 1) * itemsPerPage;
+        const endIdx = Math.min(startIdx + itemsPerPage, totalItems);
+        const pageItems = filtered.slice(startIdx, endIdx);
+
+        // 4. Render Items
+        emptyState.style.display = 'none';
+        container.style.display = 'flex';
+        footer.style.display = 'flex';
+
+        let html = '';
+        pageItems.forEach(txn => {
+            const isCredit = txn.type === 'credit';
+            const dateObj  = new Date(txn.date);
+            const dateStr  = dateObj.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+            const timeStr  = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+            html += `
+                <div class="txn-item">
+                    <div class="d-flex align-items-center gap-3 min-w-0">
+                        <div class="txn-icon-wrap ${isCredit ? 'txn-credit-icon' : 'txn-debit-icon'}">
+                            <i class="fi fi-rr-${isCredit ? 'arrow-small-down' : 'arrow-small-up'}"></i>
+                        </div>
+                        <div class="txn-info">
+                            <p class="txn-description">${txn.description || 'Transaction'}</p>
+                            <p class="txn-meta">
+                                <span><i class="fi fi-rr-calendar me-1"></i>${dateStr}</span>
+                                <span class="txn-meta-dot">&bull;</span>
+                                <span><i class="fi fi-rr-clock me-1"></i>${timeStr}</span>
+                                <span class="txn-meta-dot">&bull;</span>
+                                <span class="txn-type-badge ${isCredit ? 'badge-credit' : 'badge-debit'}">
+                                    ${isCredit ? 'Credit' : 'Debit'}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="txn-amount-col">
+                        <span class="txn-amount-val ${isCredit ? 'amount-credit' : 'amount-debit'}">
+                            ${isCredit ? '+' : '-'}&#8377;${parseFloat(txn.amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </span>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+
+        // 5. Update Footer Text & Buttons
+        if (infoText) {
+            infoText.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${totalItems} transaction${totalItems !== 1 ? 's' : ''}`;
+        }
+        if (prevBtn) prevBtn.disabled = (currentPage <= 1);
+        if (nextBtn) nextBtn.disabled = (currentPage >= totalPages);
+
+        // 6. Render Page Numbers
+        if (pageNumbersWrap) {
+            let numHtml = '';
+            // Simple smart pagination display: show up to 5 page numbers around currentPage
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            if (startPage > 1) {
+                numHtml += `<button type="button" class="page-num-btn" onclick="changePage(1)">1</button>`;
+                if (startPage > 2) numHtml += `<span class="text-dim px-1">&hellip;</span>`;
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                numHtml += `<button type="button" class="page-num-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) numHtml += `<span class="text-dim px-1">&hellip;</span>`;
+                numHtml += `<button type="button" class="page-num-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
+            }
+            pageNumbersWrap.innerHTML = numHtml;
+        }
+    }
+
+    // Initial render on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        renderTransactions();
+    });
 
     // ── Live Wallet Balance Update via Socket ────────────────────────────────────
     if (window.socket) {
@@ -466,46 +766,22 @@
             // Update the balance display live
             const balEl = document.getElementById('liveBalance');
             if (balEl && data.newBalance !== undefined) {
-                balEl.textContent = parseFloat(data.newBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                balEl.textContent = parseFloat(data.newBalance).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             }
             // Show a toast notification
             if (data.transaction && typeof Toast !== 'undefined') {
                 Toast.success(`\u20b9${parseFloat(data.transaction.amount).toLocaleString('en-IN')} credited to your wallet!`);
             }
-            // Prepend new transaction to the list
+            // Prepend new transaction to the global array and re-paginate live
             if (data.transaction) {
-                const txnList = document.getElementById('txnList');
-                if (txnList) {
-                    const now = new Date();
-                    const dateStr = now.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-                    const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                    const localDateStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-                    const html = `
-                        <div class="txn-item" data-type="credit" data-date="${localDateStr}" style="background: rgba(46,204,113,0.05); transition: background 2s ease;">
-                            <div class="txn-icon-wrap txn-credit-icon">
-                                <i class="fi fi-rr-arrow-small-down"></i>
-                            </div>
-                            <div class="txn-info">
-                                <p class="txn-description">${data.transaction.description}</p>
-                                <p class="txn-meta">
-                                    <span><i class="fi fi-rr-calendar me-1"></i>${dateStr}</span>
-                                    <span class="txn-meta-dot">·</span>
-                                    <span><i class="fi fi-rr-clock me-1"></i>${timeStr}</span>
-                                    <span class="txn-meta-dot">·</span>
-                                    <span class="txn-type-badge badge-credit">Credit</span>
-                                </p>
-                            </div>
-                            <div class="txn-amount-col">
-                                <span class="txn-amount-val amount-credit">
-                                    +&#8377;${parseFloat(data.transaction.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                </span>
-                            </div>
-                        </div>
-                    `;
-                    txnList.insertAdjacentHTML('afterbegin', html);
-                    applyFilters();
-                    setTimeout(() => { const el = txnList.firstElementChild; if(el) el.style.background = 'transparent'; }, 3000);
-                }
+                const now = new Date();
+                allTransactions.unshift({
+                    type: data.transaction.type || 'credit',
+                    amount: data.transaction.amount || 0,
+                    description: data.transaction.description || 'Money added to wallet',
+                    date: now.toISOString()
+                });
+                renderTransactions();
             }
         });
     }
