@@ -38,10 +38,23 @@
             padding: 1.5rem;
             position: sticky;
             top: 100px;
+            align-self: start;
             height: fit-content;
             max-height: calc(100vh - 120px);
             overflow-y: auto;
             backdrop-filter: blur(16px);
+        }
+
+        .wizard-progress-card {
+            position: sticky;
+            top: -1.5rem;
+            z-index: 10;
+            background: #161616;
+            padding: 1.25rem 1.5rem;
+            margin: -1.5rem -1.5rem 1rem -1.5rem;
+            border-bottom: 1px solid var(--border-glass);
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
 
         .step-nav-item {
@@ -949,6 +962,7 @@
         let map, marker;
         let ticketTiers = [];
         let scheduleSlots = [];
+        let completedSteps = new Set([1]);
 
         // Initialize Map & Default Ticket Tier
         document.addEventListener('DOMContentLoaded', () => {
@@ -956,23 +970,22 @@
             addTicketTier('General Admission', 999, 100, 5, '#E63946');
             addTicketTier('VIP Front Row', 2499, 50, 4, '#f1c40f');
             updateProgress();
+            updateNavStyling();
         });
 
         function goToStep(step) {
             if (step > currentStep && !validateCurrentStep()) return;
-            document.querySelectorAll('.wizard-step-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.step-nav-item').forEach(el => el.classList.remove('active'));
             
-            document.getElementById(`step-${step}`).classList.add('active');
-            document.getElementById(`nav-step-${step}`).classList.add('active');
-
-            // Mark previous steps completed
-            for (let i = 1; i < step; i++) {
-                document.getElementById(`nav-step-${i}`).classList.add('completed');
+            if (validateCurrentStep()) {
+                completedSteps.add(currentStep);
             }
+
+            document.querySelectorAll('.wizard-step-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`step-${step}`).classList.add('active');
 
             currentStep = step;
             updateProgress();
+            updateNavStyling();
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
             if (step === 2) {
@@ -981,6 +994,18 @@
             if (step === 8) {
                 renderLivePreview();
             }
+        }
+
+        function updateNavStyling() {
+            document.querySelectorAll('.step-nav-item').forEach((el, index) => {
+                const stepNum = index + 1;
+                el.classList.remove('active', 'completed');
+                if (stepNum === currentStep) {
+                    el.classList.add('active');
+                } else if (completedSteps.has(stepNum)) {
+                    el.classList.add('completed');
+                }
+            });
         }
 
         function nextStep(step) { goToStep(step); }
@@ -1005,7 +1030,7 @@
                 }
             });
             if (!valid) {
-                alert('Please fill in all required fields marked with * before advancing.');
+                Toast.error('Please fill in all required fields marked with * before advancing.');
             }
             return valid;
         }
@@ -1090,7 +1115,7 @@
 
         function removeTicketTier(id) {
             if (ticketTiers.length <= 1) {
-                alert('You must have at least one ticket tier.');
+                Toast.error('You must have at least one ticket tier.');
                 return;
             }
             ticketTiers = ticketTiers.filter(t => t.id !== id);
@@ -1227,15 +1252,15 @@
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    alert(data.message);
-                    window.location.href = '/organizer/events';
+                    Toast.success(data.message);
+                    setTimeout(() => { window.location.href = '/organizer/events'; }, 1500);
                 } else {
-                    alert('Error: ' + data.message);
+                    Toast.error('Error: ' + data.message);
                 }
             })
             .catch(err => {
                 console.error(err);
-                alert('Something went wrong while submitting the event.');
+                Toast.error('Something went wrong while submitting the event.');
             });
         }
 
@@ -1261,7 +1286,7 @@
                 if (!files || files.length === 0) return;
 
                 if (files.length > 2) {
-                    alert('You can upload a maximum of 2 cover banners.');
+                    Toast.error('You can upload a maximum of 2 cover banners.');
                 }
 
                 selectedBannerFiles = files.slice(0, 2);

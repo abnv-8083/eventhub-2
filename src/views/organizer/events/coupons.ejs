@@ -334,7 +334,7 @@
                 }
                 window.location.reload();
             } catch (err) {
-                alert(err.response?.data?.message || 'Failed to save offer');
+                Toast.error(err.response?.data?.message || 'Failed to save offer');
             }
         }
 
@@ -343,7 +343,7 @@
                 await axios.patch(`/organizer/events/coupons/${id}/toggle`);
                 window.location.reload();
             } catch (err) {
-                alert('Failed to toggle status');
+                Toast.error('Failed to toggle status');
             }
         }
 
@@ -364,7 +364,7 @@
                         await axios.delete(`/organizer/events/coupons/${id}`);
                         window.location.reload();
                     } catch (err) {
-                        alert('Failed to delete offer');
+                        Toast.error('Failed to delete offer');
                     }
                 }
             });
