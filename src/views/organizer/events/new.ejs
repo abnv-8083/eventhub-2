@@ -566,19 +566,16 @@
                             <p class="text-secondary small mb-4">Configure dates, start/end times, doors open time, and last entry.</p>
 
                             <div class="row g-4 mb-4">
-                                <div class="col-md-6">
-                                    <label class="form-label">Primary Start Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="startDate" id="startDate" onchange="document.getElementById('endDate').min = this.value;" required>
+                                <div class="col-md-4">
+                                    <label class="form-label">Event Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="startDate" id="startDate" onchange="syncEndDate(); renderScheduleSlots();" required>
+                                    <input type="hidden" name="endDate" id="endDate">
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Primary End Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="endDate" id="endDate" required>
-                                </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <label class="form-label">Start Time <span class="text-danger">*</span></label>
                                     <input type="time" class="form-control" name="startTime" id="startTime" required>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <label class="form-label">End Time <span class="text-danger">*</span></label>
                                     <input type="time" class="form-control" name="endTime" id="endTime" required>
                                 </div>
@@ -588,11 +585,11 @@
 
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
-                                    <h6 class="fw-bold m-0">Multi-Day / Additional Schedule Slots</h6>
-                                    <small class="text-secondary">Add extra dates or specific doors open/last entry times</small>
+                                    <h6 class="fw-bold m-0">Additional Day Schedules</h6>
+                                    <small class="text-secondary">Add schedule slots for subsequent days of the event</small>
                                 </div>
                                 <button type="button" class="btn btn-outline-danger btn-sm px-3 py-2" onclick="addScheduleSlot()" style="border-radius: 10px;">
-                                    <i class="fi fi-rr-plus me-1"></i> Add Another Date
+                                    <i class="fi fi-rr-plus me-1"></i> Add Schedule for Another Day
                                 </button>
                             </div>
 
@@ -1067,35 +1064,32 @@
             }
 
             if (currentStep === 3) {
+                syncEndDate();
                 const sd = document.getElementById('startDate')?.value;
-                const ed = document.getElementById('endDate')?.value;
                 const st = document.getElementById('startTime')?.value;
                 const et = document.getElementById('endTime')?.value;
 
-                if (sd && ed) {
-                    if (ed < sd) {
-                        Toast.error('Primary End Date must be greater than or equal to Primary Start Date.');
-                        document.getElementById('endDate')?.classList.add('is-invalid');
-                        return false;
-                    } else {
-                        document.getElementById('endDate')?.classList.remove('is-invalid');
-                    }
-                    if (sd === ed && st && et) {
-                        if (et <= st) {
-                            Toast.error('When Start and End Date are the same, End Time must be greater than Start Time.');
-                            document.getElementById('endTime')?.classList.add('is-invalid');
-                            return false;
-                        } else {
-                            document.getElementById('endTime')?.classList.remove('is-invalid');
-                        }
-                    }
+                if (st && et && et <= st) {
+                    Toast.error('End Time must be greater than Start Time.');
+                    document.getElementById('endTime')?.classList.add('is-invalid');
+                    return false;
+                } else {
+                    document.getElementById('endTime')?.classList.remove('is-invalid');
                 }
 
                 for (let i = 0; i < scheduleSlots.length; i++) {
                     const slot = scheduleSlots[i];
+                    if (!slot.date || !slot.date.trim()) {
+                        Toast.error(`Additional Day #${i + 1}: Date is required.`);
+                        return false;
+                    }
+                    if (sd && slot.date <= sd) {
+                        Toast.error(`Additional Day #${i + 1}: Date (${slot.date}) must be greater than default Event Date (${sd}).`);
+                        return false;
+                    }
                     if (slot.startTime && slot.endTime) {
                         if (slot.endTime <= slot.startTime) {
-                            Toast.error(`Additional Date Slot #${i + 1}: End Time must be greater than Start Time.`);
+                            Toast.error(`Additional Day #${i + 1}: End Time must be greater than Start Time.`);
                             return false;
                         }
                     }
@@ -1132,27 +1126,50 @@
         }
 
         // ── Dynamic Schedule Builder ──
+        function syncEndDate() {
+            const sd = document.getElementById('startDate')?.value;
+            let maxDate = sd || '';
+            scheduleSlots.forEach(slot => {
+                if (slot.date && slot.date > maxDate) {
+                    maxDate = slot.date;
+                }
+            });
+            const edInput = document.getElementById('endDate');
+            if (edInput) edInput.value = maxDate;
+        }
+
+        function getMinAdditionalDate() {
+            const sd = document.getElementById('startDate')?.value;
+            if (!sd) return '';
+            const d = new Date(sd);
+            d.setDate(d.getDate() + 1);
+            return d.toISOString().split('T')[0];
+        }
+
         function addScheduleSlot() {
             const id = Date.now();
             scheduleSlots.push({ id, date: '', startTime: '', endTime: '', doorsOpenTime: '' });
             renderScheduleSlots();
+            syncEndDate();
         }
 
         function removeScheduleSlot(id) {
             scheduleSlots = scheduleSlots.filter(s => s.id !== id);
             renderScheduleSlots();
+            syncEndDate();
         }
 
         function renderScheduleSlots() {
+            const minDate = getMinAdditionalDate();
             const container = document.getElementById('scheduleSlotsContainer');
             container.innerHTML = scheduleSlots.map((slot, idx) => `
                 <div class="builder-card">
                     <button type="button" class="btn-remove" onclick="removeScheduleSlot(${slot.id})"><i class="fi fi-rr-trash"></i></button>
-                    <h6 class="fw-bold mb-3 text-secondary">Additional Date Slot #${idx + 1}</h6>
+                    <h6 class="fw-bold mb-3 text-secondary">Additional Day #${idx + 1}</h6>
                     <div class="row g-3">
                         <div class="col-md-3">
                             <label class="form-label small">Date</label>
-                            <input type="date" class="form-control" onchange="updateSchedule(${slot.id}, 'date', this.value)" value="${slot.date}">
+                            <input type="date" class="form-control" min="${minDate}" onchange="updateSchedule(${slot.id}, 'date', this.value); syncEndDate();" value="${slot.date}">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small">Start Time</label>
@@ -1174,6 +1191,7 @@
         function updateSchedule(id, field, val) {
             const slot = scheduleSlots.find(s => s.id === id);
             if (slot) slot[field] = val;
+            if (field === 'date') syncEndDate();
         }
 
         // ── Dynamic Ticket Builder ──
@@ -1285,6 +1303,7 @@
         }
 
         function submitWizardForm() {
+            syncEndDate();
             document.getElementById('ticketsJson').value = JSON.stringify(ticketTiers.map(({ id, ...t }) => ({
                 ...t,
                 benefits: typeof t.benefits === 'string' ? t.benefits.split(',').map(b => b.trim()).filter(Boolean) : t.benefits
