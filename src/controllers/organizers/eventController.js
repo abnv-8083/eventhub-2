@@ -366,6 +366,28 @@ export const duplicateEvent = async (req, res, next) => {
 };
 
 
+// ─── Withdraw Review ──────────────────────────────────────────────────────────
+export const withdrawReview = async (req, res, next) => {
+    try {
+        await organizerEventService.withdrawReview(req.params.id, req.session.organizer._id);
+        res.status(HTTP_STATUS.OK).json({ success: true, message: 'Event review withdrawn. Returned to draft status.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+// ─── Archive Event ────────────────────────────────────────────────────────────
+export const archiveEvent = async (req, res, next) => {
+    try {
+        await organizerEventService.archiveEvent(req.params.id, req.session.organizer._id);
+        res.status(HTTP_STATUS.OK).json({ success: true, message: 'Event archived successfully.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 // ─── COUPON MANAGEMENT ─────────────────────────────────────────
 
 // Get all coupons for a specific event

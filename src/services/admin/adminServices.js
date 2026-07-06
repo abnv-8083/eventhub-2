@@ -103,8 +103,8 @@ export const deleteUserById = async (userId) => {
     if (deletedUser.role === 'organizer') {
         const events = await Event.find({ organizer: userId });
         for (const event of events) {
-            await Booking.deleteMany({ event: event._id });
-            await event.deleteOne();
+            event.deleted = true;
+            await event.save();
         }
     } else {
         await Booking.deleteMany({ user: userId });
@@ -138,11 +138,11 @@ export const fetchOrganizerDetail = async (orgId) => {
     }
     
     // Fetch events created by this organizer
-    const events = await Event.find({ organizer: orgId })
+    const events = await Event.find({ organizer: orgId, deleted: { $ne: true } })
         .sort({ createdAt: -1 })
         .limit(10);
         
-    const totalEvents = await Event.countDocuments({ organizer: orgId });
+    const totalEvents = await Event.countDocuments({ organizer: orgId, deleted: { $ne: true } });
     
     // Basic stats for revenue could be aggregated, or just return events and let view handle basic info
     return { organizer, events, totalEvents };

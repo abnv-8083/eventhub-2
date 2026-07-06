@@ -39,7 +39,7 @@
                         <i class="fi fi-rr-money me-1"></i> Booking
                     </a>
                     <% } %>
-                    <% if(event.status === 'pending' || event.status === 'approved' || event.status === 'draft' || event.status === 'inactive') { %>
+                    <% if(event.status === 'pending' || event.status === 'approved' || event.status === 'draft' || event.status === 'inactive' || event.status === 'under_review' || event.status === 'published') { %>
                         <a href="/organizer/events/<%= event._id %>/edit" class="btn btn-outline-light me-2 mb-2" style="border-radius:12px;">
                         <i class="fi fi-rr-edit me-1"></i> <%= event.status === 'draft' ? 'Continue Editing' : 'Edit Event' %>
                         </a>
@@ -59,10 +59,16 @@
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <% if(event.isBlocked) { %>
                             <span class="status-badge status-rejected"><i class="fi fi-rr-ban me-1"></i>Blocked</span>
-                        <% } else if(event.status === 'pending') { %>
-                            <span class="status-badge status-pending"><i class="fi fi-rr-clock me-1"></i>Pending Approval</span>
-                        <% } else if(event.status === 'approved') { %>
+                        <% } else if(event.status === 'pending' || event.status === 'under_review') { %>
+                            <span class="status-badge status-pending"><i class="fi fi-rr-clock me-1"></i>Pending Review</span>
+                        <% } else if(event.status === 'approved' || event.status === 'published') { %>
                             <span class="status-badge status-approved"><i class="fi fi-rr-check me-1"></i>Live</span>
+                        <% } else if(event.status === 'cancelled') { %>
+                            <span class="status-badge status-rejected"><i class="fi fi-rr-ban me-1"></i>Cancelled</span>
+                        <% } else if(event.status === 'completed' || event.status === 'sales_closed') { %>
+                            <span class="status-badge" style="background:rgba(52,152,219,0.15);border:1px solid rgba(52,152,219,0.3);color:#3498db;"><i class="fi fi-rr-check-circle me-1"></i>Completed</span>
+                        <% } else if(event.status === 'archived') { %>
+                            <span class="status-badge" style="background:rgba(155,89,182,0.15);border:1px solid rgba(155,89,182,0.3);color:#9b59b6;"><i class="fi fi-rr-archive me-1"></i>Archived</span>
                         <% } else if(event.status === 'inactive') { %>
                             <span class="status-badge" style="background:rgba(108,117,125,0.15);border:1px solid rgba(108,117,125,0.3);color:#6c757d;"><i class="fi fi-rr-time-past me-1"></i>Inactive</span>
                         <% } else if(event.status === 'draft') { %>
@@ -367,12 +373,19 @@
                             <i class="fi fi-rr-settings text-primary"></i> Quick Actions
                         </h5>
                         <div class="d-flex flex-column gap-2">
-                            <% if(event.status === 'pending' || event.status === 'approved' || event.status === 'draft' || event.status === 'inactive') { %>
+                            <% if(event.status === 'pending' || event.status === 'approved' || event.status === 'draft' || event.status === 'inactive' || event.status === 'under_review' || event.status === 'published') { %>
                             <a href="/organizer/events/<%= event._id %>/edit" class="list-group-item list-group-item-action bg-transparent text-white" style="border-color:rgba(255,255,255,0.05);">
                                 <i class="fi fi-rr-edit me-2"></i> <%= event.status === 'draft' ? 'Continue Editing' : 'Edit Event Details' %>
                             </a>
                             <% } %>
-                            <% if(event.status === 'approved') { %>
+
+                            <% if(event.status === 'pending' || event.status === 'under_review') { %>
+                            <button onclick="withdrawReview('<%= event._id %>')" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;color:#3498db;border-color:rgba(52,152,219,0.4);">
+                                <i class="fi fi-rr-undo me-2"></i> Withdraw Review
+                            </button>
+                            <% } %>
+
+                            <% if(event.status === 'approved' || event.status === 'published') { %>
                             <button onclick="toggleBlockEvent('<%= event._id %>', <%= event.isBlocked %>)" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;<%= event.isBlocked ? 'color:#2ecc71;border-color:rgba(46,204,113,0.4);' : 'color:#f39c12;border-color:rgba(243,156,18,0.4);' %>">
                                 <i class="fi <%= event.isBlocked ? 'fi-rr-check' : 'fi-rr-ban' %> me-2"></i>
                                 <%= event.isBlocked ? 'Unblock Event' : 'Block Event' %>
@@ -381,15 +394,29 @@
                             <a href="/organizer/events/<%= event._id %>/manage-coupons" class="btn btn-outline-primary">
                                 <i class="fi fi-rr-ticket-alt me-2"></i> Manage Offers
                             </a>
+
+                            <button onclick="cancelEvent('<%= event._id %>')" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;color:#e67e22;border-color:rgba(230,126,34,0.4);">
+                                <i class="fi fi-rr-ban me-2"></i> Cancel Event
+                            </button>
                             <% } %>
+
                             <% if(event.status === 'rejected' || event.status === 'inactive') { %>
                             <button onclick="handleResubmit('<%= event._id %>')" class="list-group-item list-group-item-action bg-transparent text-success" style="border-color:rgba(255,255,255,0.05);">
                                 <i class="fi fi-rr-redo me-2"></i> Resubmit for Review
                             </button>
                             <% } %>
-                            <button onclick="deleteEvent('<%= event._id %>')" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;color:#E63946;border-color:rgba(230,57,70,0.4);">
-                                <i class="fi fi-rr-trash me-2"></i> Delete Event
+
+                            <% if(event.status === 'completed' || event.status === 'sales_closed' || event.status === 'cancelled') { %>
+                            <button onclick="archiveEvent('<%= event._id %>')" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;color:#9b59b6;border-color:rgba(155,89,182,0.4);">
+                                <i class="fi fi-rr-archive me-2"></i> Archive Event
                             </button>
+                            <% } %>
+
+                            <% if(event.status === 'draft') { %>
+                            <button onclick="deleteEvent('<%= event._id %>')" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;color:#E63946;border-color:rgba(230,57,70,0.4);">
+                                <i class="fi fi-rr-trash me-2"></i> Delete Draft
+                            </button>
+                            <% } %>
                         </div>
                     </div>
                 </div>
@@ -531,6 +558,51 @@
                 const res = await axios.post(`/organizer/events/${id}/resubmit`);
                 if (res.data.success) { Toast.success(res.data.message); setTimeout(() => location.reload(), 1200); }
             } catch (err) { Toast.error(err.response?.data?.message || 'Failed to resubmit'); }
+            finally { Loader.hide(); }
+        }
+
+        async function cancelEvent(id) {
+            const confirmed = await CustomConfirm.show({
+                title: 'Cancel Event?',
+                message: 'Are you sure you want to cancel this event? Active attendees will be automatically refunded and notified.',
+                confirmText: 'Yes, Cancel Event', actionType: 'danger', icon: 'fi-rr-ban'
+            });
+            if (!confirmed) return;
+            Loader.show('CANCELLING EVENT...');
+            try {
+                const res = await axios.post(`/organizer/events/${id}/cancel`);
+                if (res.data.success) { Toast.success(res.data.message); setTimeout(() => location.reload(), 1200); }
+            } catch (err) { Toast.error(err.response?.data?.message || 'Failed to cancel event'); }
+            finally { Loader.hide(); }
+        }
+
+        async function withdrawReview(id) {
+            const confirmed = await CustomConfirm.show({
+                title: 'Withdraw Review?',
+                message: 'Withdraw this event from admin review? It will be returned to draft status.',
+                confirmText: 'Yes, Withdraw', actionType: 'primary', icon: 'fi-rr-undo'
+            });
+            if (!confirmed) return;
+            Loader.show('WITHDRAWING...');
+            try {
+                const res = await axios.post(`/organizer/events/${id}/withdraw`);
+                if (res.data.success) { Toast.success(res.data.message); setTimeout(() => location.reload(), 1200); }
+            } catch (err) { Toast.error(err.response?.data?.message || 'Failed to withdraw review'); }
+            finally { Loader.hide(); }
+        }
+
+        async function archiveEvent(id) {
+            const confirmed = await CustomConfirm.show({
+                title: 'Archive Event?',
+                message: 'Archive this event? It will be moved to your archived events list.',
+                confirmText: 'Yes, Archive', actionType: 'primary', icon: 'fi-rr-archive'
+            });
+            if (!confirmed) return;
+            Loader.show('ARCHIVING...');
+            try {
+                const res = await axios.post(`/organizer/events/${id}/archive`);
+                if (res.data.success) { Toast.success(res.data.message); setTimeout(() => location.reload(), 1200); }
+            } catch (err) { Toast.error(err.response?.data?.message || 'Failed to archive event'); }
             finally { Loader.hide(); }
         }
     </script>

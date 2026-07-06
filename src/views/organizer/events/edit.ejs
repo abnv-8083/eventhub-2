@@ -382,6 +382,7 @@
 
             <!-- Main Wizard Content Area -->
             <main class="wizard-main">
+                <% const hasSoldTickets = (tickets || []).some(t => t.sold > 0); %>
                 <form id="eventWizardForm" enctype="multipart/form-data">
                     <input type="hidden" name="action" id="formAction" value="publish">
                     <input type="hidden" name="tickets" id="ticketsJson">
@@ -470,6 +471,16 @@
                         <div class="glass-card">
                             <h4 class="fw-bold mb-1">Step 2: Venue & Location</h4>
                             <p class="text-secondary small mb-4">Specify where attendees will experience your event.</p>
+
+                            <% if (hasSoldTickets) { %>
+                                <div class="alert alert-warning d-flex align-items-center gap-3 mb-4" style="background: rgba(243, 156, 18, 0.15); border: 1px solid rgba(243, 156, 18, 0.4); color: #f39c12; border-radius: 12px; padding: 16px;">
+                                    <i class="fi fi-rr-lock" style="font-size: 1.5rem;"></i>
+                                    <div>
+                                        <strong class="d-block">🔒 Venue & Location Locked</strong>
+                                        <span class="small">This section cannot be edited because tickets have already been sold. To change location, please request a reschedule or cancel the event.</span>
+                                    </div>
+                                </div>
+                            <% } %>
 
                             <div class="mb-4">
                                 <label class="form-label d-block mb-3">Event Type</label>
@@ -564,6 +575,16 @@
                         <div class="glass-card">
                             <h4 class="fw-bold mb-1">Step 3: Schedule & Timings</h4>
                             <p class="text-secondary small mb-4">Configure dates, start/end times, doors open time, and last entry.</p>
+
+                            <% if (hasSoldTickets) { %>
+                                <div class="alert alert-warning d-flex align-items-center gap-3 mb-4" style="background: rgba(243, 156, 18, 0.15); border: 1px solid rgba(243, 156, 18, 0.4); color: #f39c12; border-radius: 12px; padding: 16px;">
+                                    <i class="fi fi-rr-lock" style="font-size: 1.5rem;"></i>
+                                    <div>
+                                        <strong class="d-block">🔒 Dates & Timings Locked</strong>
+                                        <span class="small">This section cannot be edited because tickets have already been sold. To change dates or times, please request a reschedule or cancel the event.</span>
+                                    </div>
+                                </div>
+                            <% } %>
 
                             <div class="row g-4 mb-4">
                                 <div class="col-md-4">
@@ -988,6 +1009,30 @@
             updateNavStyling();
             document.addEventListener('input', () => updateNavStyling());
             document.addEventListener('change', () => updateNavStyling());
+
+            const hasSoldTickets = <%= hasSoldTickets ? 'true' : 'false' %>;
+            if (hasSoldTickets) {
+                document.querySelectorAll('#step-2 input, #step-2 select, #step-2 textarea, #step-3 input, #step-3 select, #step-3 textarea').forEach(el => {
+                    if (el.type === 'checkbox' || el.type === 'radio') {
+                        el.disabled = true;
+                    } else {
+                        el.readOnly = true;
+                        el.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                        el.style.cursor = 'not-allowed';
+                    }
+                });
+                if (typeof map !== 'undefined' && map) {
+                    map.dragging.disable();
+                    map.touchZoom.disable();
+                    map.doubleClickZoom.disable();
+                    map.scrollWheelZoom.disable();
+                    map.boxZoom.disable();
+                    map.keyboard.disable();
+                    if (map.tap) map.tap.disable();
+                    const mapEl = document.getElementById('venueMap');
+                    if (mapEl) mapEl.style.pointerEvents = 'none';
+                }
+            }
         });
 
         function goToStep(step) {
@@ -1276,6 +1321,11 @@
         }
 
         function removeTicketTier(id) {
+            const tier = ticketTiers.find(t => (t.id || t._id) == id);
+            if (tier && (tier.sold || 0) > 0) {
+                Toast.error(`Cannot remove ticket tier "${tier.name}" because ${tier.sold} tickets have already been sold.`);
+                return;
+            }
             if (ticketTiers.length <= 1) {
                 Toast.error('You must have at least one ticket tier.');
                 return;
@@ -1288,14 +1338,20 @@
             const container = document.getElementById('ticketTiersContainer');
             container.innerHTML = ticketTiers.map((tier, idx) => {
                 const tierId = tier.id || tier._id || idx;
+                const sold = tier.sold || 0;
                 const benefitsStr = Array.isArray(tier.benefits) ? tier.benefits.join(', ') : (tier.benefits || '');
                 return `
                 <div class="builder-card" style="border-left: 6px solid ${tier.colourBadge || '#E63946'};">
-                    <button type="button" class="btn-remove" onclick="removeTicketTier('${tierId}')"><i class="fi fi-rr-trash"></i></button>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            ${sold > 0 ? `<span class="badge bg-warning text-dark me-2" style="font-size: 0.8rem; padding: 5px 10px;">🎟️ Sold: ${sold}</span><span class="small text-secondary">Capacity cannot be reduced below sold count.</span>` : ''}
+                        </div>
+                        <button type="button" class="btn-remove" onclick="removeTicketTier('${tierId}')" ${sold > 0 ? 'disabled title="Cannot remove ticket tier with sold tickets"' : ''} style="${sold > 0 ? 'opacity: 0.4; cursor: not-allowed;' : ''}"><i class="fi fi-rr-trash"></i></button>
+                    </div>
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label small">Ticket Tier Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" placeholder="VIP / Early Bird / General" value="${tier.name || ''}" onchange="updateTicket('${tierId}', 'name', this.value)" required>
+                            <input type="text" class="form-control" placeholder="VIP / Early Bird / General" value="${tier.name || ''}" onchange="updateTicket('${tierId}', 'name', this.value)" ${sold > 0 ? 'readonly style="background: rgba(255,255,255,0.05); cursor: not-allowed;" title="Cannot rename tier after tickets are sold"' : ''} required>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label small">Price (₹) <span class="text-danger">*</span></label>
@@ -1303,7 +1359,7 @@
                         </div>
                         <div class="col-md-2">
                             <label class="form-label small">Total Tickets <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" placeholder="100" value="${tier.capacity || 10}" min="1" onchange="updateTicket('${tierId}', 'capacity', parseInt(this.value))" required>
+                            <input type="number" class="form-control" placeholder="100" value="${tier.capacity || 10}" min="${sold || 1}" onchange="updateTicket('${tierId}', 'capacity', parseInt(this.value))" required>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label small">Max/User</label>

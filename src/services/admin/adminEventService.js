@@ -9,7 +9,7 @@ import { sendNotification } from '../../utils/notify.js';
 export const getEvents = async ({ search = '', status = 'all', sort = 'newest', page = 1, limit = 10 }) => {
     const skip = (parseInt(page) - 1) * limit;
 
-    const query = {};
+    const query = { deleted: { $ne: true } };
     if (search) query.$or = [{ title: { $regex: search, $options: 'i' } }];
     if (status !== 'all') query.status = status;
 

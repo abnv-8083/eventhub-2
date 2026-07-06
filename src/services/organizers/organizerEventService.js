@@ -19,7 +19,7 @@ import { PAYMENT_STATUS } from '../../constant/paymentConstants.js';
 export const getOrganizerEvents = async (organizerId, { search = '', status = 'all', sort = 'newest', page = 1, limit = 10 }) => {
     const skip = (parseInt(page) - 1) * limit;
 
-    const query = { organizer: organizerId };
+    const query = { organizer: organizerId, deleted: { $ne: true } };
     if (search) query.title = { $regex: search, $options: 'i' };
     if (status === 'blocked') {
         query.isBlocked = true;
@@ -45,7 +45,7 @@ export const getOrganizerEvents = async (organizerId, { search = '', status = 'a
 
 // ─── Get Event View Data ─────────────────────────────────────────────────────
 export const getEventViewData = async (eventId, organizerId) => {
-    const event = await Event.findOne({ _id: eventId, organizer: organizerId }).lean();
+    const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } }).lean();
 
     if (!event) {
         return null; // Return null so the controller knows to redirect
@@ -192,7 +192,7 @@ export const createEvent = async (organizerId, eventData, bannerUrls, ticketData
 // ─── Get Event for Edit Page ──────────────────────────────────────────────────
 // Tickets are part of the event document, no extra query needed.
 export const getEventForEdit = async (eventId, organizerId) => {
-    const event = await Event.findOne({ _id: eventId, organizer: organizerId });
+    const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } });
     if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
 
     // Return event.tickets directly as the "tickets" variable for the edit form
@@ -202,7 +202,7 @@ export const getEventForEdit = async (eventId, organizerId) => {
 
 // ─── Duplicate Event ──────────────────────────────────────────────────────────
 export const duplicateEvent = async (eventId, organizerId) => {
-    const originalEvent = await Event.findOne({ _id: eventId, organizer: organizerId }).lean();
+    const originalEvent = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } }).lean();
     if (!originalEvent) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
 
     const { _id, createdAt, updatedAt, __v, ...eventCopy } = originalEvent;
@@ -210,6 +210,9 @@ export const duplicateEvent = async (eventId, organizerId) => {
     eventCopy.title = `${originalEvent.title} (Copy)`;
     eventCopy.status = 'draft';
     eventCopy.isBlocked = false;
+    eventCopy.deleted = false;
+    eventCopy.startDate = null;
+    eventCopy.endDate = null;
 
     if (eventCopy.tickets && Array.isArray(eventCopy.tickets)) {
         eventCopy.tickets = eventCopy.tickets.map(t => {
@@ -221,7 +224,7 @@ export const duplicateEvent = async (eventId, organizerId) => {
     if (eventCopy.schedule && Array.isArray(eventCopy.schedule)) {
         eventCopy.schedule = eventCopy.schedule.map(s => {
             const { _id: schedId, ...sCopy } = s;
-            return sCopy;
+            return { ...sCopy, date: null };
         });
     }
 
@@ -232,7 +235,7 @@ export const duplicateEvent = async (eventId, organizerId) => {
 
 // ─── Update Event ─────────────────────────────────────────────────────────────
 export const updateEvent = async (eventId, organizerId, eventData, newBannerFiles, ticketData, status = 'pending') => {
-    const event = await Event.findOne({ _id: eventId, organizer: organizerId });
+    const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } });
     if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
 
     let parseJSON = (val) => {
@@ -254,6 +257,10 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
         return [];
     };
 
+    const totalSold = (event.tickets || []).reduce((acc, t) => acc + t.sold, 0);
+    const activeBookingsCount = await Booking.countDocuments({ event: eventId, status: { $ne: 'cancelled' } });
+    const hasRegistrations = totalSold > 0 || activeBookingsCount > 0;
+
     event.title          = eventData.title;
     event.description    = eventData.description;
     event.category       = eventData.category;
@@ -264,30 +271,33 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
     event.shortSummary   = eventData.shortSummary;
     event.visibility     = eventData.visibility || 'public';
 
-    event.location = {
-        isOnline:             eventData.isOnline === true || eventData.isOnline === 'true',
-        onlinePlatform:       eventData.onlinePlatform || null,
-        onlineLink:           eventData.onlineLink,
-        venueName:            eventData.venueName,
-        address:              eventData.address,
-        landmark:             eventData.landmark,
-        city:                 eventData.city,
-        state:                eventData.state,
-        pincode:              eventData.pincode,
-        lat:                  eventData.lat !== undefined && eventData.lat !== null && !isNaN(parseFloat(eventData.lat)) ? parseFloat(eventData.lat) : null,
-        lng:                  eventData.lng !== undefined && eventData.lng !== null && !isNaN(parseFloat(eventData.lng)) ? parseFloat(eventData.lng) : null,
-        parkingAvailable:     eventData.parkingAvailable === true || eventData.parkingAvailable === 'true',
-        wheelchairAccessible: eventData.wheelchairAccessible === true || eventData.wheelchairAccessible === 'true'
-    };
+    if (!hasRegistrations) {
+        event.location = {
+            isOnline:             eventData.isOnline === true || eventData.isOnline === 'true',
+            onlinePlatform:       eventData.onlinePlatform || null,
+            onlineLink:           eventData.onlineLink,
+            venueName:            eventData.venueName,
+            address:              eventData.address,
+            landmark:             eventData.landmark,
+            city:                 eventData.city,
+            state:                eventData.state,
+            pincode:              eventData.pincode,
+            lat:                  eventData.lat !== undefined && eventData.lat !== null && !isNaN(parseFloat(eventData.lat)) ? parseFloat(eventData.lat) : null,
+            lng:                  eventData.lng !== undefined && eventData.lng !== null && !isNaN(parseFloat(eventData.lng)) ? parseFloat(eventData.lng) : null,
+            parkingAvailable:     eventData.parkingAvailable === true || eventData.parkingAvailable === 'true',
+            wheelchairAccessible: eventData.wheelchairAccessible === true || eventData.wheelchairAccessible === 'true'
+        };
 
-    event.startDate = eventData.startDate;
-    event.startTime = eventData.startTime;
-    event.endDate   = eventData.endDate;
-    event.endTime   = eventData.endTime;
-    if (eventData.doorsOpenTime !== undefined) event.doorsOpenTime = eventData.doorsOpenTime || null;
-    if (eventData.bookingOpenTime !== undefined) event.bookingOpenTime = eventData.bookingOpenTime || null;
-    if (eventData.bookingCloseTime !== undefined) event.bookingCloseTime = eventData.bookingCloseTime || null;
-    event.schedule  = parseArray(eventData.schedule);
+        event.startDate = eventData.startDate;
+        event.startTime = eventData.startTime;
+        event.endDate   = eventData.endDate;
+        event.endTime   = eventData.endTime;
+        if (eventData.doorsOpenTime !== undefined) event.doorsOpenTime = eventData.doorsOpenTime || null;
+        if (eventData.bookingOpenTime !== undefined) event.bookingOpenTime = eventData.bookingOpenTime || null;
+        if (eventData.bookingCloseTime !== undefined) event.bookingCloseTime = eventData.bookingCloseTime || null;
+        event.schedule  = parseArray(eventData.schedule);
+        if (eventData.venueLayout) event.venueLayout = eventData.venueLayout;
+    }
 
     event.isFeatured = eventData.isFeatured === true || eventData.isFeatured === 'true';
     event.postStartRegistrationLimit = eventData.postStartRegistrationLimit !== undefined && eventData.postStartRegistrationLimit !== '' && !isNaN(parseInt(eventData.postStartRegistrationLimit, 10)) ? parseInt(eventData.postStartRegistrationLimit, 10) : null;
@@ -329,6 +339,9 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
     const freshTiers = ticketData.map(t => {
         const existingSold = soldTiers.find(s => s.name === t.name);
         if (existingSold) {
+            if (t.capacity < existingSold.sold) {
+                throw new AppError(`Cannot reduce capacity of ticket "${t.name}" below tickets already sold (${existingSold.sold})`, HTTP_STATUS.BAD_REQUEST);
+            }
             existingSold.price       = t.price;
             existingSold.capacity    = t.capacity;
             existingSold.maxPerUser  = t.maxPerUser;
@@ -368,10 +381,14 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
 
 
 // ─── Delete Event ─────────────────────────────────────────────────────────────
-// Prevent permanent deletion if registrations exist; prompt organizer to cancel instead.
+// Implement soft deletion and restrict to draft events without registrations
 export const deleteEvent = async (eventId, organizerId) => {
-    const event = await Event.findOne({ _id: eventId, organizer: organizerId });
+    const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } });
     if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
+
+    if (event.status !== 'draft') {
+        throw new AppError('Only draft events can be deleted. For published or completed events, please use Cancel Event or Archive instead.', HTTP_STATUS.BAD_REQUEST);
+    }
 
     const totalSold = (event.tickets || []).reduce((acc, t) => acc + t.sold, 0);
     const activeBookingsCount = await Booking.countDocuments({ event: eventId, status: { $ne: 'cancelled' } });
@@ -380,14 +397,14 @@ export const deleteEvent = async (eventId, organizerId) => {
         throw new AppError('Cannot delete an event that has registrations. Please use Cancel Event instead to refund attendees and mark the event cancelled.', HTTP_STATUS.BAD_REQUEST);
     }
 
-    await Booking.deleteMany({ event: eventId });
-    await event.deleteOne();
+    event.deleted = true;
+    await event.save();
 };
 
 
 // ─── Cancel Event ─────────────────────────────────────────────────────────────
 export const cancelEvent = async (eventId, organizerId) => {
-    const event = await Event.findOne({ _id: eventId, organizer: organizerId });
+    const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } });
     if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
 
     if (event.status === 'cancelled') {
@@ -437,7 +454,7 @@ export const cancelEvent = async (eventId, organizerId) => {
 
 // ─── Toggle Block Event ───────────────────────────────────────────────────────
 export const toggleBlockEvent = async (eventId, organizerId) => {
-    const event = await Event.findOne({ _id: eventId, organizer: organizerId });
+    const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } });
     if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
 
     event.isBlocked = !event.isBlocked;
@@ -448,7 +465,7 @@ export const toggleBlockEvent = async (eventId, organizerId) => {
 
 // ─── Resubmit Event for Review ────────────────────────────────────────────────
 export const resubmitEvent = async (eventId, organizerId) => {
-    const event = await Event.findOne({ _id: eventId, organizer: organizerId });
+    const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } });
     if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
 
     if (event.status !== 'rejected' && event.status !== 'inactive') {
@@ -461,9 +478,39 @@ export const resubmitEvent = async (eventId, organizerId) => {
 };
 
 
+// ─── Withdraw Review ──────────────────────────────────────────────────────────
+export const withdrawReview = async (eventId, organizerId) => {
+    const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } });
+    if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
+
+    if (event.status !== 'pending' && event.status !== 'under_review') {
+        throw new AppError('Only events pending review can be withdrawn.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    event.status = 'draft';
+    await event.save();
+    return event;
+};
+
+
+// ─── Archive Event ────────────────────────────────────────────────────────────
+export const archiveEvent = async (eventId, organizerId) => {
+    const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } });
+    if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
+
+    if (event.status !== 'completed' && event.status !== 'published' && event.status !== 'sales_closed' && event.status !== 'cancelled') {
+        throw new AppError('Only completed, closed, or cancelled events can be archived.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    event.status = 'archived';
+    await event.save();
+    return event;
+};
+
+
 // ─── Get Sales Report for an Event ────────────────────────────────────────────
 export const getEventSalesReport = async (eventId, organizerId, { startDate, endDate } = {}) => {
-    const event = await Event.findOne({ _id: eventId, organizer: organizerId }).lean();
+    const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } }).lean();
 
     if (!event) return null;
 
@@ -647,7 +694,7 @@ export const getEventSalesReport = async (eventId, organizerId, { startDate, end
 // ─── Get Global Sales Report (All Events) ─────────────────────────────────────
 export const getGlobalSalesReport = async (organizerId, { startDate, endDate } = {}) => {
     // 1. Fetch ALL events belonging to organizer
-    const events = await Event.find({ organizer: organizerId }).lean();
+    const events = await Event.find({ organizer: organizerId, deleted: { $ne: true } }).lean();
     if (!events.length) return null;
 
     const eventIds = events.map(e => e._id);

@@ -133,7 +133,8 @@ const eventSchema = new mongoose.Schema({
         enum: ['draft', 'pending', 'under_review', 'changes_requested', 'approved', 'scheduled', 'published', 'sales_closed', 'completed', 'archived', 'rejected', 'inactive', 'cancelled'], 
         default: 'draft' 
     },
-    isBlocked: { type: Boolean, default: false }
+    isBlocked: { type: Boolean, default: false },
+    deleted:   { type: Boolean, default: false, index: true }
 }, { timestamps: true });
 
 

@@ -111,10 +111,14 @@
                                     <span class="status-badge status-rejected" style="font-size:0.7rem;"><i class="fi fi-rr-ban me-1"></i>Blocked</span>
                                 <% } else if(event.status==='draft') { %>
                                     <span class="status-badge" style="font-size:0.7rem;background:rgba(155,89,182,0.15);color:#9b59b6;border:1px solid rgba(155,89,182,0.3);"><i class="fi fi-rr-disk me-1"></i>Draft</span>
-                                <% } else if(event.status==='pending') { %>
-                                    <span class="status-badge status-pending" style="font-size:0.7rem;"><i class="fi fi-rr-clock me-1"></i>Pending</span>
-                                <% } else if(event.status==='approved') { %>
+                                <% } else if(event.status==='pending' || event.status==='under_review') { %>
+                                    <span class="status-badge status-pending" style="font-size:0.7rem;"><i class="fi fi-rr-clock me-1"></i>Pending Review</span>
+                                <% } else if(event.status==='approved' || event.status==='published') { %>
                                     <span class="status-badge status-approved" style="font-size:0.7rem;"><i class="fi fi-rr-check me-1"></i>Live</span>
+                                <% } else if(event.status==='completed' || event.status==='sales_closed') { %>
+                                    <span class="status-badge" style="font-size:0.7rem;background:rgba(52,152,219,0.15);color:#3498db;border:1px solid rgba(52,152,219,0.3);"><i class="fi fi-rr-check-circle me-1"></i>Completed</span>
+                                <% } else if(event.status==='archived') { %>
+                                    <span class="status-badge" style="font-size:0.7rem;background:rgba(155,89,182,0.15);color:#9b59b6;border:1px solid rgba(155,89,182,0.3);"><i class="fi fi-rr-archive me-1"></i>Archived</span>
                                 <% } else if(event.status==='inactive') { %>
                                     <span class="status-badge" style="font-size:0.7rem;background:rgba(108,117,125,0.15);color:#6c757d;border:1px solid rgba(108,117,125,0.3);"><i class="fi fi-rr-time-past me-1"></i>Inactive</span>
                                 <% } else if(event.status==='cancelled') { %>
@@ -153,7 +157,7 @@
                                     <i class="fi fi-rr-chart-histogram"></i>
                                 </a>
                                 <% } %>
-                                <% if(event.status==='pending' || event.status==='approved' || event.status==='draft' || event.status==='inactive') { %>
+                                <% if(event.status==='pending' || event.status==='approved' || event.status==='draft' || event.status==='inactive' || event.status==='under_review' || event.status==='published') { %>
                                 <a href="/organizer/events/<%= event._id %>/edit" class="action-icon-btn" title="<%= event.status === 'draft' ? 'Continue' : 'Edit' %>">
                                     <i class="fi fi-rr-edit"></i>
                                 </a>
@@ -161,12 +165,17 @@
                                 <button onclick="duplicateEvent('<%= event._id %>')" class="action-icon-btn" title="Duplicate Event" style="color:#3498db;border-color:rgba(52,152,219,0.2);">
                                     <i class="fi fi-rr-copy"></i>
                                 </button>
+                                <% if(event.status==='pending' || event.status==='under_review') { %>
+                                <button onclick="withdrawReview('<%= event._id %>')" class="action-icon-btn" title="Withdraw Review" style="color:#3498db;border-color:rgba(52,152,219,0.2);">
+                                    <i class="fi fi-rr-undo"></i>
+                                </button>
+                                <% } %>
                                 <% if(event.status==='rejected' || event.status==='inactive') { %>
                                 <button onclick="handleResubmit('<%= event._id %>')" class="action-icon-btn success" title="Resubmit">
                                     <i class="fi fi-rr-redo"></i>
                                 </button>
                                 <% } %>
-                                <% if(event.status==='approved') { %>
+                                <% if(event.status==='approved' || event.status==='published') { %>
                                 <button onclick="toggleBlockEvent('<%= event._id %>', <%= event.isBlocked %>)" class="action-icon-btn" title="<%= event.isBlocked ? 'Unblock' : 'Block' %>">
                                     <i class="fi <%= event.isBlocked ? 'fi-rr-check' : 'fi-rr-ban' %>"></i>
                                 </button>
@@ -174,9 +183,16 @@
                                     <i class="fi fi-rr-cross-circle"></i>
                                 </button>
                                 <% } %>
-                                <button onclick="deleteEvent('<%= event._id %>')" class="action-icon-btn danger" title="Delete">
+                                <% if(event.status==='completed' || event.status==='sales_closed' || event.status==='cancelled') { %>
+                                <button onclick="archiveEvent('<%= event._id %>')" class="action-icon-btn" title="Archive Event" style="color:#9b59b6;border-color:rgba(155,89,182,0.2);">
+                                    <i class="fi fi-rr-archive"></i>
+                                </button>
+                                <% } %>
+                                <% if(event.status==='draft') { %>
+                                <button onclick="deleteEvent('<%= event._id %>')" class="action-icon-btn danger" title="Delete Draft">
                                     <i class="fi fi-rr-trash"></i>
                                 </button>
+                                <% } %>
                             </div>
                         </div>
                     </div>
@@ -240,6 +256,18 @@
             const c=await CustomConfirm.show({title:'Cancel Event?',message:'Are you sure you want to cancel this event? All registered attendees will be automatically refunded to their wallet.',confirmText:'Yes, Cancel Event',actionType:'danger',icon:'fi-rr-cross-circle'});
             if(!c) return; Loader.show('CANCELLING EVENT & REFUNDING...');
             try { const r=await axios.post(`/organizer/events/${id}/cancel`); if(r.data.success){Toast.success(r.data.message);setTimeout(()=>location.reload(),1200);} }
+            catch(e){Toast.error(e.response?.data?.message||'Failed');} finally{Loader.hide();}
+        }
+        async function withdrawReview(id) {
+            const c=await CustomConfirm.show({title:'Withdraw Review?',message:'Withdraw this event from admin review? It will be returned to draft status.',confirmText:'Yes, Withdraw',actionType:'primary',icon:'fi-rr-undo'});
+            if(!c) return; Loader.show('WITHDRAWING...');
+            try { const r=await axios.post(`/organizer/events/${id}/withdraw`); if(r.data.success){Toast.success(r.data.message);setTimeout(()=>location.reload(),1000);} }
+            catch(e){Toast.error(e.response?.data?.message||'Failed');} finally{Loader.hide();}
+        }
+        async function archiveEvent(id) {
+            const c=await CustomConfirm.show({title:'Archive Event?',message:'Archive this event? It will be moved to your archived events list.',confirmText:'Yes, Archive',actionType:'primary',icon:'fi-rr-archive'});
+            if(!c) return; Loader.show('ARCHIVING...');
+            try { const r=await axios.post(`/organizer/events/${id}/archive`); if(r.data.success){Toast.success(r.data.message);setTimeout(()=>location.reload(),1000);} }
             catch(e){Toast.error(e.response?.data?.message||'Failed');} finally{Loader.hide();}
         }
         async function handleResubmit(id) {
