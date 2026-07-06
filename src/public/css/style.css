@@ -1049,7 +1049,13 @@ input:-webkit-autofill:active{
 /* 3. Add the sleek new hover/focus effect (No backgrounds, just text styling) */
 .form-floating > .form-control:focus ~ label,
 .form-floating > .form-control:not(:placeholder-shown) ~ label,
-.form-floating > .input:-webkit-autofill ~ label {
+.form-floating > .input:focus ~ label,
+.form-floating > .input:not(:placeholder-shown) ~ label,
+.form-floating > input:focus ~ label,
+.form-floating > input:not(:placeholder-shown) ~ label,
+.form-floating > .input:-webkit-autofill ~ label,
+.form-floating > input:-webkit-autofill ~ label,
+.form-floating > .form-control:-webkit-autofill ~ label {
     color: #E63946 !important; /* Your EventHub Red */
     transform: scale(0.85) translateY(-0.75rem) translateX(0.5rem) !important;
     font-weight: 600 !important;
@@ -1079,7 +1085,13 @@ input:-webkit-autofill:active{
 /* 3. Active state (When clicked/focused, or when text is inside) */
 .form-floating > .form-control:focus ~ label,
 .form-floating > .form-control:not(:placeholder-shown) ~ label,
-.form-floating > .input:-webkit-autofill ~ label {
+.form-floating > .input:focus ~ label,
+.form-floating > .input:not(:placeholder-shown) ~ label,
+.form-floating > input:focus ~ label,
+.form-floating > input:not(:placeholder-shown) ~ label,
+.form-floating > .input:-webkit-autofill ~ label,
+.form-floating > input:-webkit-autofill ~ label,
+.form-floating > .form-control:-webkit-autofill ~ label {
     /* Adjust translateY to keep it inside the rounded box */
     transform: scale(0.82) translateY(-0.6rem) translateX(0.1rem) !important; 
     color: #E63946 !important; 
@@ -1203,8 +1215,13 @@ input:-webkit-autofill:active{
 /* 4. The precise active state (shrinks and snaps to the top-left inside the box) */
 .form-floating > .form-control:focus ~ label,
 .form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .input:focus ~ label,
+.form-floating > .input:not(:placeholder-shown) ~ label,
+.form-floating > input:focus ~ label,
+.form-floating > input:not(:placeholder-shown) ~ label,
 .form-floating > .input:-webkit-autofill ~ label,
-.form-floating > input:-webkit-autofill ~ label {
+.form-floating > input:-webkit-autofill ~ label,
+.form-floating > .form-control:-webkit-autofill ~ label {
     top: 0.6rem !important; 
     transform: translateY(0) scale(0.82) !important; 
     color: #E63946 !important; 
@@ -4528,16 +4545,24 @@ body { background: #0a0a10; }
 /* ==========================================
    FORM FLOATING TEXTAREA FIX (Bio)
 ========================================== */
-.form-floating > textarea.form-control {
+.form-floating > textarea.form-control,
+.form-floating > textarea.input,
+.form-floating > textarea {
     height: auto !important;
     padding-top: 1.8rem !important;
 }
-.form-floating > textarea.form-control ~ label {
+.form-floating > textarea.form-control ~ label,
+.form-floating > textarea.input ~ label,
+.form-floating > textarea ~ label {
     top: 1rem !important;
     transform: none !important;
 }
 .form-floating > textarea.form-control:focus ~ label,
-.form-floating > textarea.form-control:not(:placeholder-shown) ~ label {
+.form-floating > textarea.form-control:not(:placeholder-shown) ~ label,
+.form-floating > textarea.input:focus ~ label,
+.form-floating > textarea.input:not(:placeholder-shown) ~ label,
+.form-floating > textarea:focus ~ label,
+.form-floating > textarea:not(:placeholder-shown) ~ label {
     top: 0.5rem !important;
     transform: scale(0.82) !important;
 }
