@@ -87,6 +87,175 @@
                     <p class="text-dim mb-0" style="line-height:1.9;white-space:pre-wrap;font-size:0.93rem;"><%= event.description %></p>
                 </div>
 
+                <% if(event.schedule && event.schedule.length > 0) { %>
+                <!-- Schedule / Itinerary -->
+                <div class="info-card animate stagger-3">
+                    <p class="section-label"><i class="fi fi-rr-calendar-clock me-1 text-primary"></i> Schedule & Itinerary</p>
+                    <div class="schedule-timeline d-flex flex-column gap-3">
+                        <% event.schedule.forEach((item, idx) => { %>
+                        <div class="schedule-item d-flex gap-3 p-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                            <div class="schedule-time text-end" style="min-width: 100px; flex-shrink: 0; border-right: 2px solid var(--primary); padding-right: 1rem;">
+                                <% if(item.date) { %>
+                                <div style="font-size: 0.75rem; color: var(--primary); font-weight: 700; text-transform: uppercase;"><%= new Date(item.date).toLocaleDateString(undefined, {month:'short', day:'numeric'}) %></div>
+                                <% } %>
+                                <div style="font-size: 0.9rem; color: white; font-weight: 600;"><%= item.startTime || '' %> <%= item.endTime ? '- ' + item.endTime : '' %></div>
+                            </div>
+                            <div class="schedule-info">
+                                <h6 class="text-white fw-bold mb-1" style="font-size: 0.95rem;"><%= item.title || 'Event Session' %></h6>
+                                <% if(item.description) { %>
+                                <p class="text-dim mb-0" style="font-size: 0.85rem; line-height: 1.5;"><%= item.description %></p>
+                                <% } %>
+                            </div>
+                        </div>
+                        <% }) %>
+                    </div>
+                </div>
+                <% } %>
+
+                <% if(event.artists || event.guests) { %>
+                <!-- Lineup -->
+                <div class="info-card animate stagger-3">
+                    <p class="section-label"><i class="fi fi-rr-star me-1 text-warning"></i> Artist & Guest Lineup</p>
+                    <div class="row g-3">
+                        <% if(event.artists) { %>
+                        <div class="col-md-6">
+                            <h6 class="text-white small fw-bold mb-2"><i class="fi fi-rr-mic me-1 text-primary"></i> Featured Artists</h6>
+                            <p class="text-dim mb-0" style="font-size: 0.9rem; white-space: pre-wrap;"><%= event.artists %></p>
+                        </div>
+                        <% } %>
+                        <% if(event.guests) { %>
+                        <div class="col-md-6">
+                            <h6 class="text-white small fw-bold mb-2"><i class="fi fi-rr-user-star me-1 text-warning"></i> Special Guests</h6>
+                            <p class="text-dim mb-0" style="font-size: 0.9rem; white-space: pre-wrap;"><%= event.guests %></p>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+                <% } %>
+
+                <% if(event.agenda || event.thingsToCarry || event.notAllowedItems || event.aboutEvent) { %>
+                <!-- Event Guide -->
+                <div class="info-card animate stagger-3">
+                    <p class="section-label"><i class="fi fi-rr-book-open-cover me-1 text-info"></i> Event Guide & Instructions</p>
+                    <% if(event.aboutEvent) { %>
+                        <div class="mb-4">
+                            <h6 class="text-white small fw-bold mb-1">Overview</h6>
+                            <p class="text-dim mb-0" style="font-size: 0.9rem; white-space: pre-wrap;"><%= event.aboutEvent %></p>
+                        </div>
+                    <% } %>
+                    <% if(event.agenda) { %>
+                        <div class="mb-4">
+                            <h6 class="text-white small fw-bold mb-1"><i class="fi fi-rr-list-check me-1 text-success"></i> Detailed Agenda</h6>
+                            <p class="text-dim mb-0" style="font-size: 0.9rem; white-space: pre-wrap;"><%= event.agenda %></p>
+                        </div>
+                    <% } %>
+                    <div class="row g-3">
+                        <% if(event.thingsToCarry) { %>
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-3" style="background: rgba(46, 204, 113, 0.05); border: 1px solid rgba(46, 204, 113, 0.15); height: 100%;">
+                                <h6 class="small fw-bold mb-2" style="color: #2ecc71;"><i class="fi fi-rr-check-circle me-1"></i> Things To Carry</h6>
+                                <p class="text-dim mb-0" style="font-size: 0.85rem; white-space: pre-wrap;"><%= event.thingsToCarry %></p>
+                            </div>
+                        </div>
+                        <% } %>
+                        <% if(event.notAllowedItems) { %>
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-3" style="background: rgba(230, 57, 70, 0.05); border: 1px solid rgba(230, 57, 70, 0.15); height: 100%;">
+                                <h6 class="small fw-bold mb-2" style="color: #e63946;"><i class="fi fi-rr-ban me-1"></i> Prohibited Items</h6>
+                                <p class="text-dim mb-0" style="font-size: 0.85rem; white-space: pre-wrap;"><%= event.notAllowedItems %></p>
+                            </div>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+                <% } %>
+
+                <% if(event.faqs) { %>
+                <!-- FAQs -->
+                <div class="info-card animate stagger-3">
+                    <p class="section-label"><i class="fi fi-rr-interrogation me-1 text-primary"></i> Frequently Asked Questions</p>
+                    <p class="text-dim mb-0" style="font-size: 0.9rem; white-space: pre-wrap; line-height: 1.7;"><%= event.faqs %></p>
+                </div>
+                <% } %>
+
+                <% if(event.policies || event.ageRestriction) { %>
+                <!-- Policies -->
+                <div class="info-card animate stagger-4">
+                    <p class="section-label"><i class="fi fi-rr-shield-check me-1 text-primary"></i> Policies & Terms</p>
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6 col-md-4">
+                            <div class="p-2 rounded-2" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); font-size: 0.82rem;">
+                                <span class="text-dim d-block" style="font-size: 0.72rem; text-transform: uppercase;">Age Limit</span>
+                                <strong class="text-white"><%= event.ageRestriction || 'All Ages' %></strong>
+                            </div>
+                        </div>
+                        <% if(event.policies && event.policies.cancellation) { %>
+                        <div class="col-sm-6 col-md-4">
+                            <div class="p-2 rounded-2" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); font-size: 0.82rem;">
+                                <span class="text-dim d-block" style="font-size: 0.72rem; text-transform: uppercase;">Refund Policy</span>
+                                <strong class="text-white">
+                                    <%= event.policies.cancellation === 'no_refund' ? 'Non-Refundable' : (event.policies.cancellation === '100_before_48' ? '100% Refund (48h prior)' : 'Partial Refund') %>
+                                </strong>
+                            </div>
+                        </div>
+                        <% } %>
+                        <% if(event.policies && event.policies.photographyConsent !== undefined) { %>
+                        <div class="col-sm-6 col-md-4">
+                            <div class="p-2 rounded-2" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); font-size: 0.82rem;">
+                                <span class="text-dim d-block" style="font-size: 0.72rem; text-transform: uppercase;">Photography</span>
+                                <strong class="text-white"><%= event.policies.photographyConsent ? 'Allowed / Consent' : 'Restricted' %></strong>
+                            </div>
+                        </div>
+                        <% } %>
+                    </div>
+                    <% if(event.policies && event.policies.terms) { %>
+                        <div class="mt-3">
+                            <h6 class="text-white small fw-bold mb-1">Terms & Conditions</h6>
+                            <p class="text-dim mb-2" style="font-size: 0.85rem; white-space: pre-wrap;"><%= event.policies.terms %></p>
+                        </div>
+                    <% } %>
+                    <% if(event.policies && event.policies.covidGuidelines) { %>
+                        <div class="mt-3">
+                            <h6 class="text-white small fw-bold mb-1">Safety & Health Guidelines</h6>
+                            <p class="text-dim mb-0" style="font-size: 0.85rem; white-space: pre-wrap;"><%= event.policies.covidGuidelines %></p>
+                        </div>
+                    <% } %>
+                </div>
+                <% } %>
+
+                <!-- Organizer Info -->
+                <div class="info-card animate stagger-4">
+                    <p class="section-label"><i class="fi fi-rr-user me-1 text-primary"></i> About The Organizer</p>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(230,57,70,0.15); border: 1px solid rgba(230,57,70,0.3); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: var(--primary); font-weight: 700; overflow: hidden; flex-shrink: 0;">
+                            <% if(event.organizerInfo && event.organizerInfo.logo) { %>
+                                <img src="<%= event.organizerInfo.logo %>" alt="Logo" style="width:100%; height:100%; object-fit:cover;">
+                            <% } else { %>
+                                <%= (event.organizerInfo?.name || event.organizer?.organizationName || event.organizer?.fullName || 'O').charAt(0).toUpperCase() %>
+                            <% } %>
+                        </div>
+                        <div>
+                            <h6 class="text-white fw-bold mb-1"><%= event.organizerInfo?.name || event.organizer?.organizationName || event.organizer?.fullName || 'Event Organizer' %></h6>
+                            <% if(event.organizerInfo?.email || event.organizer?.email) { %>
+                            <p class="text-dim mb-0 small"><i class="fi fi-rr-envelope me-1"></i><%= event.organizerInfo?.email || event.organizer?.email %></p>
+                            <% } %>
+                        </div>
+                    </div>
+                    <% if(event.organizerInfo && (event.organizerInfo.website || event.organizerInfo.instagram || event.organizerInfo.facebook || event.organizerInfo.twitter)) { %>
+                    <div class="d-flex gap-3 pt-2 border-top border-white border-opacity-10">
+                        <% if(event.organizerInfo.website) { %>
+                        <a href="<%= event.organizerInfo.website.startsWith('http') ? event.organizerInfo.website : 'https://' + event.organizerInfo.website %>' target="_blank" class="text-dim text-decoration-none small" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.6)'"><i class="fi fi-rr-globe me-1"></i>Website</a>
+                        <% } %>
+                        <% if(event.organizerInfo.instagram) { %>
+                        <a href="https://instagram.com/<%= event.organizerInfo.instagram.replace('@','') %>" target="_blank" class="text-dim text-decoration-none small" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.6)'"><i class="fi fi-brands-instagram me-1"></i>Instagram</a>
+                        <% } %>
+                        <% if(event.organizerInfo.twitter) { %>
+                        <a href="https://twitter.com/<%= event.organizerInfo.twitter.replace('@','') %>" target="_blank" class="text-dim text-decoration-none small" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.6)'"><i class="fi fi-brands-twitter me-1"></i>Twitter</a>
+                        <% } %>
+                    </div>
+                    <% } %>
+                </div>
+
                 <!-- Map -->
                 <div class="info-card animate stagger-4">
                     <p class="section-label">Venue Location</p>
@@ -95,7 +264,7 @@
                 </div>
             </div>
 
-            <!-- â”€â”€ Right Column: Ticket Panel â”€â”€ -->
+            <!-- ── Right Column: Ticket Panel ── -->
             <div class="col-lg-4 animate stagger-3">
                 <div class="ticket-panel text-center p-4">
                     <h5 class="text-white fw-bold mb-3" style="font-size: 1.4rem;">Ready to join?</h5>

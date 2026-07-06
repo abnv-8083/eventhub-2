@@ -68,16 +68,38 @@
             <% } else { %>
                 <h5 class="fw-bold text-white mb-4">Select Tickets</h5>
                 <% tickets.forEach(ticket => { %>
-                    <div class="ticket-selection-card glass-premium dynamic-card <%= ticket.capacity <= 0 ? 'sold-out' : '' %>" id="ticket-card-<%= ticket._id %>" style="padding: 1.5rem; border-radius: 16px; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.05);">
-                        <div class="ticket-info">
-                            <h6 class="fw-bold text-white mb-1"><%= ticket.name %></h6>
-                            <p class="text-dim small mb-0" id="ticket-capacity-<%= ticket._id %>">
+                    <div class="ticket-selection-card glass-premium dynamic-card <%= ticket.capacity <= 0 ? 'sold-out' : '' %>" id="ticket-card-<%= ticket._id %>" style="padding: 1.5rem; border-radius: 16px; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden; border-left: 5px solid <%= ticket.colourBadge || '#E63946' %>;">
+                        <div class="ticket-info" style="flex: 1; min-width: 0; padding-right: 1rem;">
+                            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                <h6 class="fw-bold text-white mb-0" style="font-size: 1.1rem;"><%= ticket.name %></h6>
+                                <% if(ticket.seatType) { %>
+                                    <span class="badge" style="background: rgba(255,255,255,0.1); color: white; font-size: 0.7rem; text-transform: uppercase;"><%= ticket.seatType %></span>
+                                <% } %>
+                                <% if(ticket.refundable !== undefined) { %>
+                                    <span class="badge" style="background: <%= ticket.refundable ? 'rgba(46, 204, 113, 0.15)' : 'rgba(255, 255, 255, 0.05)' %>; color: <%= ticket.refundable ? '#2ecc71' : 'rgba(255,255,255,0.5)' %>; font-size: 0.7rem;">
+                                        <%= ticket.refundable ? '✓ Refundable' : 'Non-Refundable' %>
+                                    </span>
+                                <% } %>
+                            </div>
+                            <% if(ticket.description) { %>
+                                <p class="text-dim small mb-2" style="font-size: 0.85rem; line-height: 1.4;"><%= ticket.description %></p>
+                            <% } %>
+                            <% if(ticket.benefits && ticket.benefits.length > 0) { %>
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    <% ticket.benefits.forEach(ben => { %>
+                                        <span style="font-size: 0.75rem; background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.25); color: #ff8fa3; padding: 2px 8px; border-radius: 100px;">
+                                            <i class="fi fi-rr-check me-1"></i><%= ben %>
+                                        </span>
+                                    <% }) %>
+                                </div>
+                            <% } %>
+                            <p class="text-dim small mb-0" id="ticket-capacity-<%= ticket._id %>" style="font-size: 0.8rem;">
                                 Max <%= ticket.maxPerUser %> per person &middot; 
                                 <%= ticket.capacity > 0 ? ticket.capacity + ' available' : 'Sold Out' %>
                             </p>
                         </div>
                         
-                        <div class="d-flex align-items-center gap-4">
+                        <div class="d-flex align-items-center gap-4 flex-shrink-0">
                             <span class="ticket-price-tag"><%= ticket.price === 0 ? 'Free' : '₹' + ticket.price.toLocaleString('en-IN') %></span>
                             
                             <div class="qty-controls">

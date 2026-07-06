@@ -274,6 +274,74 @@
                         </div>
                     </div>
 
+                    <% if((event.schedule && event.schedule.length > 0) || event.artists || event.guests) { %>
+                    <div class="glass-premium dynamic-card p-4 rounded-3">
+                        <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                            <i class="fi fi-rr-calendar-clock text-primary"></i> Schedule & Lineup
+                        </h5>
+                        <% if(event.schedule && event.schedule.length > 0) { %>
+                            <div class="mb-3">
+                                <span class="text-dim d-block mb-2" style="font-size:0.75rem;text-transform:uppercase;font-weight:700;">Itinerary</span>
+                                <div class="d-flex flex-column gap-2">
+                                <% event.schedule.forEach(item => { %>
+                                    <div class="p-2 rounded" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);font-size:0.85rem;">
+                                        <strong style="color:var(--primary);"><%= item.startTime || '' %> <%= item.endTime ? '- ' + item.endTime : '' %></strong>: <span class="text-white"><%= item.title %></span>
+                                    </div>
+                                <% }) %>
+                                </div>
+                            </div>
+                        <% } %>
+                        <% if(event.artists || event.guests) { %>
+                            <div class="info-grid mt-2">
+                                <% if(event.artists) { %>
+                                <div class="info-item">
+                                    <p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">Artists</p>
+                                    <span style="color:white;font-size:0.85rem;"><%= event.artists %></span>
+                                </div>
+                                <% } %>
+                                <% if(event.guests) { %>
+                                <div class="info-item">
+                                    <p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">Guests</p>
+                                    <span style="color:white;font-size:0.85rem;"><%= event.guests %></span>
+                                </div>
+                                <% } %>
+                            </div>
+                        <% } %>
+                    </div>
+                    <% } %>
+
+                    <% if(event.policies || event.thingsToCarry || event.notAllowedItems || event.faqs) { %>
+                    <div class="glass-premium dynamic-card p-4 rounded-3">
+                        <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                            <i class="fi fi-rr-shield-check text-primary"></i> Policies & Guidelines
+                        </h5>
+                        <div class="info-grid mb-3">
+                            <div class="info-item">
+                                <p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">Age Limit</p>
+                                <strong style="color:white;font-size:0.85rem;"><%= event.ageRestriction || 'All Ages' %></strong>
+                            </div>
+                            <% if(event.policies && event.policies.cancellation) { %>
+                            <div class="info-item">
+                                <p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">Refund Policy</p>
+                                <strong style="color:white;font-size:0.85rem;"><%= event.policies.cancellation === 'no_refund' ? 'Non-Refundable' : 'Refundable' %></strong>
+                            </div>
+                            <% } %>
+                        </div>
+                        <% if(event.thingsToCarry) { %>
+                        <div class="info-item mt-2">
+                            <p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">Things To Carry</p>
+                            <p class="m-0" style="color:white;font-size:0.85rem;"><%= event.thingsToCarry %></p>
+                        </div>
+                        <% } %>
+                        <% if(event.notAllowedItems) { %>
+                        <div class="info-item mt-2">
+                            <p class="text-dim m-0" style="font-size:0.72rem;text-transform:uppercase;font-weight:700;">Prohibited Items</p>
+                            <p class="m-0" style="color:#ff8fa3;font-size:0.85rem;"><%= event.notAllowedItems %></p>
+                        </div>
+                        <% } %>
+                    </div>
+                    <% } %>
+
                     <%# Banners %>
                     <div class="glass-premium dynamic-card p-4 rounded-3">
                         <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
