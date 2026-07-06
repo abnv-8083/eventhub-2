@@ -141,6 +141,8 @@ export const createEvent = async (organizerId, eventData, bannerUrls, ticketData
         startTime:  eventData.startTime,
         endDate:    eventData.endDate,
         endTime:    eventData.endTime,
+        doorsOpenTime: eventData.doorsOpenTime || null,
+        bookingCloseTime: eventData.bookingCloseTime || null,
         schedule:   parseArray(eventData.schedule),
 
         isFeatured: eventData.isFeatured === true || eventData.isFeatured === 'true',
@@ -281,6 +283,8 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
     event.startTime = eventData.startTime;
     event.endDate   = eventData.endDate;
     event.endTime   = eventData.endTime;
+    if (eventData.doorsOpenTime !== undefined) event.doorsOpenTime = eventData.doorsOpenTime || null;
+    if (eventData.bookingCloseTime !== undefined) event.bookingCloseTime = eventData.bookingCloseTime || null;
     event.schedule  = parseArray(eventData.schedule);
 
     event.isFeatured = eventData.isFeatured === true || eventData.isFeatured === 'true';

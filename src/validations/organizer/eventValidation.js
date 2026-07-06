@@ -90,6 +90,9 @@ export const eventValidationSchema = Joi.object({
             'any.required': 'End time is required'
         }),
 
+    doorsOpenTime: Joi.string().allow('', null).optional(),
+    bookingCloseTime: Joi.string().allow('', null).optional(),
+
     schedule: Joi.alternatives().try(Joi.array(), Joi.string(), Joi.object()).allow('', null).optional(),
 
     isFeatured: Joi.boolean().allow('', null, 'true', 'false').optional(),
@@ -201,6 +204,8 @@ export const draftEventValidationSchema = Joi.object({
     startTime: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).allow('', null).optional(),
     endDate: Joi.alternatives().try(Joi.date().iso(), Joi.string().valid('', null)).optional(),
     endTime: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).allow('', null).optional(),
+    doorsOpenTime: Joi.string().allow('', null).optional(),
+    bookingCloseTime: Joi.string().allow('', null).optional(),
     schedule: Joi.alternatives().try(Joi.array(), Joi.string(), Joi.object()).allow('', null).optional(),
 
     isFeatured: Joi.boolean().allow('', null, 'true', 'false').optional(),

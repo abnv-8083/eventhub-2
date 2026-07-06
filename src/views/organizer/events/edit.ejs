@@ -580,6 +580,16 @@
                                     <input type="time" class="form-control" name="endTime" id="endTime" value="<%= event.endTime || '' %>" required>
                                 </div>
                             </div>
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Doors Open Time <span class="text-secondary small">(Optional)</span></label>
+                                    <input type="time" class="form-control" name="doorsOpenTime" id="doorsOpenTime" value="<%= event.doorsOpenTime || '' %>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Close Booking Time <span class="text-secondary small">(Time on Event Date to close sales)</span></label>
+                                    <input type="time" class="form-control" name="bookingCloseTime" id="bookingCloseTime" value="<%= event.bookingCloseTime || '' %>">
+                                </div>
+                            </div>
 
                             <hr style="border-color: rgba(255,255,255,0.1); margin: 2rem 0;">
 
@@ -1162,7 +1172,7 @@
 
         function addScheduleSlot() {
             const id = Date.now();
-            scheduleSlots.push({ id, date: '', startTime: '', endTime: '', doorsOpenTime: '' });
+            scheduleSlots.push({ id, date: '', startTime: '', endTime: '', doorsOpenTime: '', bookingCloseTime: '' });
             renderScheduleSlots();
             syncEndDate();
         }
@@ -1183,22 +1193,28 @@
                 <div class="builder-card">
                     <button type="button" class="btn-remove" onclick="removeScheduleSlot('${slotId}')"><i class="fi fi-rr-trash"></i></button>
                     <h6 class="fw-bold mb-3 text-secondary">Additional Day #${idx + 1}</h6>
-                    <div class="row g-3">
-                        <div class="col-md-3">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
                             <label class="form-label small">Date</label>
                             <input type="date" class="form-control" min="${minDate}" onchange="updateSchedule('${slotId}', 'date', this.value); syncEndDate();" value="${slotDate}">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label small">Start Time</label>
                             <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'startTime', this.value)" value="${slot.startTime || ''}">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label small">End Time</label>
                             <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'endTime', this.value)" value="${slot.endTime || ''}">
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label small">Doors Open Time</label>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">Doors Open Time <span class="text-secondary">(Optional)</span></label>
                             <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'doorsOpenTime', this.value)" value="${slot.doorsOpenTime || ''}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">Close Booking Time <span class="text-secondary">(Time on Date to close sales)</span></label>
+                            <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'bookingCloseTime', this.value)" value="${slot.bookingCloseTime || ''}">
                         </div>
                     </div>
                 </div>

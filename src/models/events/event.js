@@ -31,6 +31,7 @@ const scheduleSubSchema = new mongoose.Schema({
     endTime:       { type: String },
     doorsOpenTime: { type: String },
     lastEntryTime: { type: String },
+    bookingCloseTime: { type: String },
     scheduleType:  { type: String, enum: ['single', 'multi', 'recurring'], default: 'single' }
 }, { _id: true });
 
@@ -66,6 +67,8 @@ const eventSchema = new mongoose.Schema({
     startTime: { type: String, required: function() { return this.status !== 'draft'; } },
     endDate:   { type: Date,   required: function() { return this.status !== 'draft'; } },
     endTime:   { type: String, required: function() { return this.status !== 'draft'; } },
+    doorsOpenTime:    { type: String },
+    bookingCloseTime: { type: String },
     schedule:  { type: [scheduleSubSchema], default: [] },
 
     banners: {
