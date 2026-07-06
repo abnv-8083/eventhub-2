@@ -111,6 +111,12 @@
             color: #000;
         }
 
+        .step-nav-item.partial .step-nav-icon {
+            background: #ffb703;
+            color: #000;
+            box-shadow: 0 0 12px rgba(255, 183, 3, 0.4);
+        }
+
 
 
         /* ── Form Steps & Glass Cards ── */
@@ -955,7 +961,7 @@
         let map, marker;
         let ticketTiers = [];
         let scheduleSlots = [];
-        let completedSteps = new Set([1]);
+        let completedSteps = new Set();
 
         // Initialize Map & Default Ticket Tier
         document.addEventListener('DOMContentLoaded', () => {
@@ -964,12 +970,13 @@
             addTicketTier('VIP Front Row', 2499, 50, 4, '#f1c40f');
             updateProgress();
             updateNavStyling();
+            document.addEventListener('input', () => updateNavStyling());
+            document.addEventListener('change', () => updateNavStyling());
         });
 
         function goToStep(step) {
-            if (step > currentStep && !validateCurrentStep()) return;
-            
-            if (validateCurrentStep()) {
+            if (step > currentStep) {
+                if (!validateCurrentStep()) return;
                 completedSteps.add(currentStep);
             }
 
@@ -992,12 +999,44 @@
         function updateNavStyling() {
             document.querySelectorAll('.step-nav-item').forEach((el, index) => {
                 const stepNum = index + 1;
-                el.classList.remove('active', 'completed');
+                el.classList.remove('active', 'completed', 'partial');
                 if (stepNum === currentStep) {
                     el.classList.add('active');
                 } else if (completedSteps.has(stepNum)) {
                     el.classList.add('completed');
+                } else if (isStepPartiallyFilled(stepNum)) {
+                    el.classList.add('partial');
                 }
+            });
+        }
+
+        function isStepPartiallyFilled(stepNum) {
+            if (stepNum === 3) {
+                const sd = document.getElementById('startDate')?.value;
+                const st = document.getElementById('startTime')?.value;
+                return (sd && sd.trim() !== '') || (st && st.trim() !== '') || scheduleSlots.length > 0;
+            }
+            if (stepNum === 4) {
+                return ticketTiers.length > 0;
+            }
+            if (stepNum === 5) {
+                const desc = document.getElementById('eventDescription')?.value;
+                const hasExistingBanners = document.querySelectorAll('[id^="existing-banner-"]').length > 0;
+                return (desc && desc.trim() !== '') || (typeof selectedBannerFiles !== 'undefined' && selectedBannerFiles.length > 0) || hasExistingBanners || (typeof agendaItems !== 'undefined' && agendaItems.length > 0) || (typeof faqItems !== 'undefined' && faqItems.length > 0);
+            }
+            
+            const stepEl = document.getElementById(`step-${stepNum}`);
+            if (!stepEl) return false;
+            
+            const inputs = Array.from(stepEl.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea'));
+            return inputs.some(inp => {
+                const val = inp.value;
+                if (!val) return false;
+                if (inp.id === 'eventLanguage' && val === 'English') return false;
+                if (inp.id === 'eventAge' && val === 'All Ages') return false;
+                if (inp.id === 'eventVisibility' && val === 'public') return false;
+                if (inp.id === 'cancellationPolicy') return false;
+                return val.trim() !== '';
             });
         }
 
