@@ -138,7 +138,7 @@ export const eventValidationSchema = Joi.object({
         'any.required': 'At least one ticket tier is required'
     })
 }).custom((value, helpers) => {
-    const { startDate, startTime, endDate, endTime } = value;
+    const { startDate, startTime, endDate, endTime, doorsOpenTime, schedule } = value;
     if (startDate && endDate) {
         const startDateStr = new Date(startDate).toISOString().split('T')[0];
         const endDateStr   = new Date(endDate).toISOString().split('T')[0];
@@ -157,6 +157,28 @@ export const eventValidationSchema = Joi.object({
             }
         }
     }
+
+    if (doorsOpenTime && startTime && endTime) {
+        if (doorsOpenTime < startTime || doorsOpenTime > endTime) {
+            return helpers.error('any.invalid', {
+                message: 'Doors open time must be between start time and end time'
+            });
+        }
+    }
+
+    if (schedule && Array.isArray(schedule)) {
+        for (let i = 0; i < schedule.length; i++) {
+            const slot = schedule[i];
+            if (slot && slot.doorsOpenTime && slot.startTime && slot.endTime) {
+                if (slot.doorsOpenTime < slot.startTime || slot.doorsOpenTime > slot.endTime) {
+                    return helpers.error('any.invalid', {
+                        message: `For Additional Day #${i + 1}, doors open time must be between start time and end time`
+                    });
+                }
+            }
+        }
+    }
+
     return value;
 }).messages({
     'any.invalid': '{{#message}}'

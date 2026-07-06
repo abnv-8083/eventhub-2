@@ -1078,6 +1078,7 @@
                 const sd = document.getElementById('startDate')?.value;
                 const st = document.getElementById('startTime')?.value;
                 const et = document.getElementById('endTime')?.value;
+                const dt = document.getElementById('doorsOpenTime')?.value;
 
                 if (st && et && et <= st) {
                     Toast.error('End Time must be greater than Start Time.');
@@ -1085,6 +1086,16 @@
                     return false;
                 } else {
                     document.getElementById('endTime')?.classList.remove('is-invalid');
+                }
+
+                if (dt && st && et) {
+                    if (dt < st || dt > et) {
+                        Toast.error('Doors Open Time must be between Start Time and End Time.');
+                        document.getElementById('doorsOpenTime')?.classList.add('is-invalid');
+                        return false;
+                    } else {
+                        document.getElementById('doorsOpenTime')?.classList.remove('is-invalid');
+                    }
                 }
 
                 for (let i = 0; i < scheduleSlots.length; i++) {
@@ -1100,6 +1111,12 @@
                     if (slot.startTime && slot.endTime) {
                         if (slot.endTime <= slot.startTime) {
                             Toast.error(`Additional Day #${i + 1}: End Time must be greater than Start Time.`);
+                            return false;
+                        }
+                    }
+                    if (slot.doorsOpenTime && slot.startTime && slot.endTime) {
+                        if (slot.doorsOpenTime < slot.startTime || slot.doorsOpenTime > slot.endTime) {
+                            Toast.error(`Additional Day #${i + 1}: Doors Open Time must be between Start Time and End Time.`);
                             return false;
                         }
                     }
