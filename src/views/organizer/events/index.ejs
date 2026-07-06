@@ -158,6 +158,9 @@
                                     <i class="fi fi-rr-edit"></i>
                                 </a>
                                 <% } %>
+                                <button onclick="duplicateEvent('<%= event._id %>')" class="action-icon-btn" title="Duplicate Event" style="color:#3498db;border-color:rgba(52,152,219,0.2);">
+                                    <i class="fi fi-rr-copy"></i>
+                                </button>
                                 <% if(event.status==='rejected' || event.status==='inactive') { %>
                                 <button onclick="handleResubmit('<%= event._id %>')" class="action-icon-btn success" title="Resubmit">
                                     <i class="fi fi-rr-redo"></i>
@@ -225,6 +228,12 @@
             const c=await CustomConfirm.show({title:'Delete Event?',message:'Permanently delete this event? This cannot be undone.',confirmText:'Yes, Delete',actionType:'danger',icon:'fi-rr-trash'});
             if(!c) return; Loader.show('DELETING...');
             try { const r=await axios.delete(`/organizer/events/${id}`); if(r.data.success){Toast.success(r.data.message);setTimeout(()=>location.reload(),1000);} }
+            catch(e){Toast.error(e.response?.data?.message||'Failed');} finally{Loader.hide();}
+        }
+        async function duplicateEvent(id) {
+            const c=await CustomConfirm.show({title:'Duplicate Event?',message:'Create a clone of this event as a draft?',confirmText:'Yes, Duplicate',actionType:'primary',icon:'fi-rr-copy'});
+            if(!c) return; Loader.show('DUPLICATING EVENT...');
+            try { const r=await axios.post(`/organizer/events/${id}/duplicate`); if(r.data.success){Toast.success(r.data.message);setTimeout(()=>location.reload(),1000);} }
             catch(e){Toast.error(e.response?.data?.message||'Failed');} finally{Loader.hide();}
         }
         async function cancelEvent(id) {

@@ -349,6 +349,21 @@ export const resubmitEvent = async (req, res, next) => {
 };
 
 
+// ─── Duplicate Event ──────────────────────────────────────────────────────────
+export const duplicateEvent = async (req, res, next) => {
+    try {
+        const newEvent = await organizerEventService.duplicateEvent(req.params.id, req.session.organizer._id);
+        res.status(HTTP_STATUS.CREATED).json({ 
+            success: true, 
+            message: 'Event duplicated successfully as draft.',
+            eventId: newEvent._id
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 // ─── COUPON MANAGEMENT ─────────────────────────────────────────
 
 // Get all coupons for a specific event

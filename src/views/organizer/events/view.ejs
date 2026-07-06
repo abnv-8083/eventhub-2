@@ -44,6 +44,9 @@
                         <i class="fi fi-rr-edit me-1"></i> <%= event.status === 'draft' ? 'Continue Editing' : 'Edit Event' %>
                         </a>
                     <% } %>
+                    <button type="button" onclick="duplicateEvent('<%= event._id %>')" class="btn btn-outline-info mb-2" style="border-radius:12px;">
+                        <i class="fi fi-rr-copy me-1"></i> Duplicate Event
+                    </button>
                 </div>
             </div>
 
@@ -545,6 +548,12 @@
             } finally {
                 Loader.hide();
             }
+        }
+        async function duplicateEvent(id) {
+            const c=await CustomConfirm.show({title:'Duplicate Event?',message:'Create a clone of this event as a draft?',confirmText:'Yes, Duplicate',actionType:'primary',icon:'fi-rr-copy'});
+            if(!c) return; Loader.show('DUPLICATING EVENT...');
+            try { const r=await axios.post(`/organizer/events/${id}/duplicate`); if(r.data.success){Toast.success(r.data.message);setTimeout(()=>window.location.href='/organizer/events',1000);} }
+            catch(e){Toast.error(e.response?.data?.message||'Failed');} finally{Loader.hide();}
         }
     </script>
 </body>

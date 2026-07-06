@@ -1,456 +1,1236 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <%- include('../../partials/head') %>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
-</head>
-<body class="bg-mesh">
-    <%- include('../../partials/navbars/organizer-nav') %>
-    <div class="dashboard-layout">
-        <%- include('../../partials/organizer-sidebar', { title: 'Manage Events' }) %>
-        <main class="dashboard-main">
+    <style>
+        :root {
+            --primary: #E63946;
+            --primary-glow: rgba(230, 57, 70, 0.4);
+            --bg-glass: rgba(20, 20, 25, 0.75);
+            --border-glass: rgba(255, 255, 255, 0.1);
+        }
 
-            <div class="d-flex align-items-center mb-4 animate stagger-1">
-                <a href="/organizer/events/<%= event._id %>" class="btn btn-outline btn-sm me-3 px-3" style="border-radius:10px;">
-                    <i class="fi fi-rr-arrow-left me-1"></i> Back
+        body {
+            background: #0a0a0c;
+            color: #f1f1f1;
+            font-family: 'Outfit', 'Inter', sans-serif;
+        }
+
+        /* ── Wizard Layout & Sidebar ── */
+        .wizard-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+            min-height: calc(100vh - 100px);
+        }
+
+        @media (max-width: 991px) {
+            .wizard-container { grid-template-columns: 1fr; }
+            .wizard-sidebar { display: none; }
+        }
+
+        .wizard-sidebar {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 1.5rem;
+            position: sticky;
+            top: 100px;
+            height: fit-content;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            backdrop-filter: blur(16px);
+        }
+
+        .step-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: rgba(255, 255, 255, 0.5);
+            border: 1px solid transparent;
+            margin-bottom: 8px;
+        }
+
+        .step-nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .step-nav-item.active {
+            background: linear-gradient(135deg, rgba(230, 57, 70, 0.2), rgba(230, 57, 70, 0.05));
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 20px rgba(230, 57, 70, 0.15);
+            transform: translateX(4px);
+        }
+
+        .step-nav-item.completed {
+            color: #2ecc71;
+        }
+
+        .step-nav-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .step-nav-item.active .step-nav-icon {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 0 12px var(--primary-glow);
+        }
+
+        .step-nav-item.completed .step-nav-icon {
+            background: #2ecc71;
+            color: #000;
+        }
+
+        /* ── Step Progress Bar ── */
+        .wizard-progress-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* ── Form Steps & Glass Cards ── */
+        .wizard-step-content {
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .wizard-step-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .glass-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 2.5rem;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            margin-bottom: 2rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            background: rgba(0, 0, 0, 0.5) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            color: #fff !important;
+            border-radius: 12px;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.2) !important;
+        }
+
+        .form-control::placeholder { color: rgba(255, 255, 255, 0.3); }
+
+        /* ── Dynamic Builders & Cards ── */
+        .builder-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .builder-card:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .btn-remove {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(230, 57, 70, 0.15);
+            color: #E63946;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-remove:hover { background: #E63946; color: white; }
+
+        /* ── Preview Phone Frame ── */
+        .mobile-preview-frame {
+            width: 320px;
+            height: 640px;
+            border: 12px solid #1a1a1e;
+            border-radius: 40px;
+            background: #0a0a0c;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+            margin: 0 auto;
+        }
+
+        .mobile-preview-frame::-webkit-scrollbar { width: 4px; }
+        .mobile-preview-frame::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+        /* ── Lifecycle Tracker ── */
+        .lifecycle-tracker {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .lifecycle-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 2;
+            width: 100px;
+            text-align: center;
+        }
+
+        .lifecycle-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #1a1a1e;
+            border: 2px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .lifecycle-step.active .lifecycle-circle {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .lifecycle-line {
+            position: absolute;
+            top: 42px;
+            left: 50px;
+            right: 50px;
+            height: 3px;
+            background: rgba(255,255,255,0.1);
+            z-index: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <%- include('../../partials/navbars/organizer-nav') %>
+
+    <div class="container-fluid px-4 py-4">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <a href="/organizer/events/<%= event._id %>" class="btn btn-outline-light btn-sm px-3" style="border-radius: 10px;">
+                    <i class="fi fi-rr-arrow-left me-1"></i> Back to Event
                 </a>
                 <div>
-                    <h2 class="fw-bold m-0" style="letter-spacing:-0.5px;">Edit Event</h2>
-                    <p class="text-dim m-0 small"><%= event.title %></p>
+                    <h3 class="fw-bold m-0">Edit Event: <%= event.title %></h3>
+                    <p class="text-secondary small m-0">Status: <span class="badge bg-secondary"><%= event.status.toUpperCase() %></span> | Make edits across all 9 steps.</p>
                 </div>
             </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary px-4 py-2" onclick="saveAsDraft()" style="border-radius: 12px; font-weight: 600;">
+                    <i class="fi fi-rr-disk me-1"></i> Save Draft
+                </button>
+                <button type="button" class="btn btn-danger px-4 py-2" onclick="submitForReview()" style="border-radius: 12px; font-weight: 600; background: var(--primary); border: none;">
+                    <i class="fi fi-rr-paper-plane me-1"></i> Save & Publish
+                </button>
+            </div>
+        </div>
 
-            <form id="editEventForm" novalidate>
-                <div class="row g-4 animate stagger-2">
+        <div class="wizard-container">
+            <!-- Left Sidebar Navigation (9 Steps) -->
+            <aside class="wizard-sidebar">
+                <div class="wizard-progress-card">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-bold text-uppercase text-secondary">Completion</span>
+                        <span class="small fw-bold text-primary" id="progressText">Step 1 of 9</span>
+                    </div>
+                    <div class="progress" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                        <div class="progress-bar bg-danger" id="progressBar" style="width: 11%; border-radius: 10px; transition: width 0.4s;"></div>
+                    </div>
+                </div>
 
-                    <!-- LEFT: Main Details -->
-                    <div class="col-lg-8">
-                        <div class="glass-premium-panel mb-4">
-                            <p class="section-title"><i class="fi fi-rr-info"></i> Basic Information</p>
+                <div class="step-nav-item active" id="nav-step-1" onclick="goToStep(1)">
+                    <div class="step-nav-icon"><i class="fi fi-rr-document"></i></div>
+                    <div>
+                        <div class="fw-bold small">1. Event Basics</div>
+                        <div class="text-secondary" style="font-size: 0.75rem;">Title, Category, Tags</div>
+                    </div>
+                </div>
 
-                            <div class="form-floating mb-4">
-                                <input type="text" id="title" name="title" class="form-control input" placeholder=" " value="<%= event.title %>" data-rule="required, min5">
-                                <label>Event Title</label>
-                            </div>
+                <div class="step-nav-item" id="nav-step-2" onclick="goToStep(2)">
+                    <div class="step-nav-icon"><i class="fi fi-rr-marker"></i></div>
+                    <div>
+                        <div class="fw-bold small">2. Venue & Location</div>
+                        <div class="text-secondary" style="font-size: 0.75rem;">Offline / Online link</div>
+                    </div>
+                </div>
 
-                            <div class="row g-3 mb-4">
+                <div class="step-nav-item" id="nav-step-3" onclick="goToStep(3)">
+                    <div class="step-nav-icon"><i class="fi fi-rr-calendar-clock"></i></div>
+                    <div>
+                        <div class="fw-bold small">3. Schedule</div>
+                        <div class="text-secondary" style="font-size: 0.75rem;">Dates & Doors open</div>
+                    </div>
+                </div>
+
+                <div class="step-nav-item" id="nav-step-4" onclick="goToStep(4)">
+                    <div class="step-nav-icon"><i class="fi fi-rr-ticket"></i></div>
+                    <div>
+                        <div class="fw-bold small">4. Tickets</div>
+                        <div class="text-secondary" style="font-size: 0.75rem;">Tiers, Benefits, Badges</div>
+                    </div>
+                </div>
+
+                <div class="step-nav-item" id="nav-step-5" onclick="goToStep(5)">
+                    <div class="step-nav-icon"><i class="fi fi-rr-picture"></i></div>
+                    <div>
+                        <div class="fw-bold small">5. Media & Details</div>
+                        <div class="text-secondary" style="font-size: 0.75rem;">Banners, Agenda, FAQs</div>
+                    </div>
+                </div>
+
+                <div class="step-nav-item" id="nav-step-6" onclick="goToStep(6)">
+                    <div class="step-nav-icon"><i class="fi fi-rr-user-tie"></i></div>
+                    <div>
+                        <div class="fw-bold small">6. Organizer Info</div>
+                        <div class="text-secondary" style="font-size: 0.75rem;">Brand, Socials, Support</div>
+                    </div>
+                </div>
+
+                <div class="step-nav-item" id="nav-step-7" onclick="goToStep(7)">
+                    <div class="step-nav-icon"><i class="fi fi-rr-shield-check"></i></div>
+                    <div>
+                        <div class="fw-bold small">7. Policies</div>
+                        <div class="text-secondary" style="font-size: 0.75rem;">Refunds, Terms, COVID</div>
+                    </div>
+                </div>
+
+                <div class="step-nav-item" id="nav-step-8" onclick="goToStep(8)">
+                    <div class="step-nav-icon"><i class="fi fi-rr-eye"></i></div>
+                    <div>
+                        <div class="fw-bold small">8. Live Preview</div>
+                        <div class="text-secondary" style="font-size: 0.75rem;">Desktop, Mobile, Tickets</div>
+                    </div>
+                </div>
+
+                <div class="step-nav-item" id="nav-step-9" onclick="goToStep(9)">
+                    <div class="step-nav-icon"><i class="fi fi-rr-check-circle"></i></div>
+                    <div>
+                        <div class="fw-bold small">9. Review & Submit</div>
+                        <div class="text-secondary" style="font-size: 0.75rem;">Lifecycle & Publish</div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Wizard Content Area -->
+            <main class="wizard-main">
+                <form id="eventWizardForm" enctype="multipart/form-data">
+                    <input type="hidden" name="action" id="formAction" value="publish">
+                    <input type="hidden" name="tickets" id="ticketsJson">
+                    <input type="hidden" name="schedule" id="scheduleJson">
+                    <input type="hidden" name="organizerInfo" id="organizerInfoJson">
+                    <input type="hidden" name="policies" id="policiesJson">
+                    <input type="hidden" name="lat" id="latInput" value="<%= event.location?.lat || '' %>">
+                    <input type="hidden" name="lng" id="lngInput" value="<%= event.location?.lng || '' %>">
+
+                    <!-- ── STEP 1: EVENT BASICS ── -->
+                    <div class="wizard-step-content active" id="step-1">
+                        <div class="glass-card">
+                            <h4 class="fw-bold mb-1">Step 1: Event Basics</h4>
+                            <p class="text-secondary small mb-4">Update the core information that defines your event.</p>
+
+                            <div class="row g-4">
                                 <div class="col-md-12">
-                                    <label class="form-label text-dim mb-3 d-block">Select Category</label>
-                                    <div class="category-selector">
+                                    <label class="form-label">Event Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="title" id="eventTitle" value="<%= event.title %>" required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Category <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="category" id="eventCategory" required>
+                                        <option value="">Select Category</option>
                                         <% categories.forEach(cat => { %>
-                                            <label class="category-option">
-                                                <input type="radio" name="category" value="<%= cat.id %>" required <%= event.category === cat.id ? 'checked' : '' %>>
-                                                <div class="category-card">
-                                                    <i class="fi <%= cat.icon %>"></i>
-                                                    <span><%= cat.name %></span>
-                                                </div>
-                                            </label>
+                                            <option value="<%= cat.id %>" <%= event.category === cat.id ? 'selected' : '' %>><%= cat.name %></option>
                                         <% }) %>
-                                    </div>
+                                    </select>
                                 </div>
-                                <div class="col-md-12 mt-3">
-                                    <div class="d-flex justify-content-between align-items-center px-4 rounded-3"
-                                        style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.08);height:3.6rem;border-radius:12px!important;">
-                                        <span style="font-weight:500;color:white;">Feature Event?</span>
-                                        <label class="modern-switch m-0">
-                                            <input type="checkbox" id="isFeatured" name="isFeatured" value="true" <%= event.isFeatured?'checked':'' %>>
-                                            <span class="slider"></span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <p class="section-title"><i class="fi fi-rr-calendar"></i> Date & Time</p>
-                            <div class="row g-3 mb-3">
                                 <div class="col-md-6">
-                                    <div class="form-floating">
-                                        <input type="date" id="startDate" name="startDate" class="form-control input" placeholder=" " value="<%= event.startDate ? event.startDate.toISOString().split('T')[0] : '' %>" data-rule="required, date">
-                                        <label>Start Date</label>
-                                    </div>
+                                    <label class="form-label">Subcategory</label>
+                                    <input type="text" class="form-control" name="subcategory" id="eventSubcategory" value="<%= event.subcategory || '' %>" placeholder="e.g. Bollywood Pop, Standup Comedy, AI Tech">
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-floating">
-                                        <input type="time" id="startTime" name="startTime" class="form-control input" placeholder=" " value="<%= event.startTime || '' %>" data-rule="required">
-                                        <label>Start Time</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row g-3 mb-4">
-                                <div class="col-md-6">
-                                    <div class="form-floating">
-                                        <input type="date" id="endDate" name="endDate" class="form-control input" placeholder=" " value="<%= event.endDate ? event.endDate.toISOString().split('T')[0] : '' %>" data-rule="required, date">
-                                        <label>End Date</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-floating">
-                                        <input type="time" id="endTime" name="endTime" class="form-control input" placeholder=" " value="<%= event.endTime || '' %>" data-rule="required">
-                                        <label>End Time</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row g-3 mb-4">
-                                <div class="col-12">
-                                    <div class="form-floating">
-                                        <input type="number" id="postStartRegistrationLimit" name="postStartRegistrationLimit" class="form-control input" placeholder=" " min="0" value="<%= event.postStartRegistrationLimit !== null && event.postStartRegistrationLimit !== undefined ? event.postStartRegistrationLimit : '' %>">
-                                        <label>Registration Time Limit (Minutes after event start)</label>
-                                        <div class="form-text text-dim small mt-1">
-                                            <i class="fi fi-rr-info me-1"></i> Enter minutes after start time when registration closes (e.g., <code>30</code> = closes 30 mins after start; <code>0</code> = closes at start). Leave blank for open until event end.
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <div class="form-floating mb-4">
-                                <textarea id="description" name="description" class="form-control input" placeholder=" " style="height:130px;resize:none;padding-top:1.5rem;border-radius:12px;" data-rule="required, min20"><%= event.description %></textarea>
-                                <label>Event Description</label>
-                            </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Language</label>
+                                    <select class="form-select" name="language" id="eventLanguage">
+                                        <option value="English" <%= event.language === 'English' ? 'selected' : '' %>>English</option>
+                                        <option value="Hindi" <%= event.language === 'Hindi' ? 'selected' : '' %>>Hindi</option>
+                                        <option value="Spanish" <%= event.language === 'Spanish' ? 'selected' : '' %>>Spanish</option>
+                                        <option value="French" <%= event.language === 'French' ? 'selected' : '' %>>French</option>
+                                        <option value="Multi-Language" <%= event.language === 'Multi-Language' ? 'selected' : '' %>>Multi-Language</option>
+                                    </select>
+                                </div>
 
-                            <p class="section-title"><i class="fi fi-rr-marker"></i> Venue</p>
-                            <p class="text-dim small mb-2">Click on the map to change the venue location.</p>
-                            <div id="eventMap" style="height:280px;width:100%;border-radius:14px;border:1px solid rgba(255,255,255,0.08);margin-bottom:1rem;"></div>
-                            <div class="form-floating">
-                                <input type="text" id="address" name="address" class="form-control input" placeholder=" " value="<%= event.location.address %>" readonly>
-                                <label>Detected Address</label>
+                                <div class="col-md-6">
+                                    <label class="form-label">Age Restriction</label>
+                                    <select class="form-select" name="ageRestriction" id="eventAge">
+                                        <option value="All Ages" <%= event.ageRestriction === 'All Ages' ? 'selected' : '' %>>All Ages</option>
+                                        <option value="13+" <%= event.ageRestriction === '13+' ? 'selected' : '' %>>13+ Years</option>
+                                        <option value="16+" <%= event.ageRestriction === '16+' ? 'selected' : '' %>>16+ Years</option>
+                                        <option value="18+" <%= event.ageRestriction === '18+' ? 'selected' : '' %>>18+ (Adults Only)</option>
+                                        <option value="21+" <%= event.ageRestriction === '21+' ? 'selected' : '' %>>21+ Years</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-8">
+                                    <label class="form-label">Event Tags <span class="text-secondary small">(Comma separated)</span></label>
+                                    <input type="text" class="form-control" name="tags" id="eventTags" value="<%= Array.isArray(event.tags) ? event.tags.join(', ') : (event.tags || '') %>">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Visibility</label>
+                                    <select class="form-select" name="visibility" id="eventVisibility">
+                                        <option value="public" <%= event.visibility === 'public' ? 'selected' : '' %>>🌐 Public (Listed on home)</option>
+                                        <option value="unlisted" <%= event.visibility === 'unlisted' ? 'selected' : '' %>>🔗 Unlisted (Link access only)</option>
+                                        <option value="private" <%= event.visibility === 'private' ? 'selected' : '' %>>🔒 Private (Invite only)</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label">Short Summary <span class="text-secondary small">(Appears on event cards & banners)</span></label>
+                                    <textarea class="form-control" name="shortSummary" id="eventSummary" rows="2"><%= event.shortSummary || '' %></textarea>
+                                </div>
                             </div>
-                            <input type="hidden" id="lat" name="lat" value="<%= event.location.lat %>">
-                            <input type="hidden" id="lng" name="lng" value="<%= event.location.lng %>">
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="button" class="btn btn-danger px-5 py-3 rounded-3 fw-bold" onclick="nextStep(2)">Next: Venue & Location <i class="fi fi-rr-arrow-right ms-2"></i></button>
                         </div>
                     </div>
 
-                    <!-- RIGHT: Tickets + Banners -->
-                    <div class="col-lg-4 d-flex flex-column gap-4">
+                    <!-- ── STEP 2: VENUE / LOCATION ── -->
+                    <div class="wizard-step-content" id="step-2">
+                        <div class="glass-card">
+                            <h4 class="fw-bold mb-1">Step 2: Venue & Location</h4>
+                            <p class="text-secondary small mb-4">Specify where attendees will experience your event.</p>
 
-                        <!-- Tickets Panel -->
-                        <div class="glass-premium-panel">
+                            <div class="mb-4">
+                                <label class="form-label d-block mb-3">Event Type</label>
+                                <div class="d-flex gap-4">
+                                    <div class="form-check custom-radio">
+                                        <input class="form-check-input" type="radio" name="isOnline" id="typeOffline" value="false" <%= !event.location?.isOnline ? 'checked' : '' %> onchange="toggleVenueType()">
+                                        <label class="form-check-label fw-bold" for="typeOffline">🏢 Offline Venue (Physical Stadium/Hall)</label>
+                                    </div>
+                                    <div class="form-check custom-radio">
+                                        <input class="form-check-input" type="radio" name="isOnline" id="typeOnline" value="true" <%= event.location?.isOnline ? 'checked' : '' %> onchange="toggleVenueType()">
+                                        <label class="form-check-label fw-bold" for="typeOnline">🌐 Online Event (Webinar/Live Stream)</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Offline Venue Fields -->
+                            <div id="offlineVenueFields" style="<%= event.location?.isOnline ? 'display: none;' : '' %>">
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Venue Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="venueName" id="venueName" value="<%= event.location?.venueName || '' %>">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Landmark / Area</label>
+                                        <input type="text" class="form-control" name="landmark" id="venueLandmark" value="<%= event.location?.landmark || '' %>">
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label">Full Street Address <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="address" id="venueAddress" value="<%= event.location?.address || '' %>">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">City <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="city" id="venueCity" value="<%= event.location?.city || '' %>">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">State <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="state" id="venueState" value="<%= event.location?.state || '' %>">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Pincode</label>
+                                        <input type="text" class="form-control" name="pincode" id="venuePincode" value="<%= event.location?.pincode || '' %>">
+                                    </div>
+                                    <div class="col-md-6 d-flex align-items-center gap-3 pt-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" name="parkingAvailable" id="parkingCheck" value="true" <%= event.location?.parkingAvailable ? 'checked' : '' %>>
+                                            <label class="form-check-label fw-semibold" for="parkingCheck">🚗 Parking Available on Premises</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 d-flex align-items-center gap-3 pt-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" name="wheelchairAccessible" id="wheelchairCheck" value="true" <%= event.location?.wheelchairAccessible ? 'checked' : '' %>>
+                                            <label class="form-check-label fw-semibold" for="wheelchairCheck">♿ Wheelchair Accessible</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12 mt-4">
+                                        <label class="form-label d-flex justify-content-between">
+                                            <span>Pin Exact Location on Map <span class="text-danger">*</span></span>
+                                            <small class="text-primary" id="mapStatus"><%= event.location?.lat ? '✓ Location Pinned' : 'Click on map to set pin' %></small>
+                                        </label>
+                                        <div id="venueMap" style="height: 320px; border-radius: 16px; border: 1px solid var(--border-glass);"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Online Venue Fields -->
+                            <div id="onlineVenueFields" style="<%= !event.location?.isOnline ? 'display: none;' : '' %>">
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Streaming Platform <span class="text-danger">*</span></label>
+                                        <select class="form-select" name="onlinePlatform" id="onlinePlatform">
+                                            <option value="Zoom" <%= event.location?.onlinePlatform === 'Zoom' ? 'selected' : '' %>>Zoom Meeting / Webinar</option>
+                                            <option value="Google Meet" <%= event.location?.onlinePlatform === 'Google Meet' ? 'selected' : '' %>>Google Meet</option>
+                                            <option value="YouTube Live" <%= event.location?.onlinePlatform === 'YouTube Live' ? 'selected' : '' %>>YouTube Live Stream</option>
+                                            <option value="Custom Link" <%= event.location?.onlinePlatform === 'Custom Link' ? 'selected' : '' %>>Custom Streaming Link</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Event Stream Link / URL <span class="text-secondary small">(Can be added later)</span></label>
+                                        <input type="url" class="form-control" name="onlineLink" id="onlineLink" value="<%= event.location?.onlineLink || '' %>">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-light px-4 py-3 rounded-3" onclick="prevStep(1)"><i class="fi fi-rr-arrow-left me-2"></i> Back</button>
+                            <button type="button" class="btn btn-danger px-5 py-3 rounded-3 fw-bold" onclick="nextStep(3)">Next: Schedule <i class="fi fi-rr-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- ── STEP 3: SCHEDULE ── -->
+                    <div class="wizard-step-content" id="step-3">
+                        <div class="glass-card">
+                            <h4 class="fw-bold mb-1">Step 3: Schedule & Timings</h4>
+                            <p class="text-secondary small mb-4">Configure dates, start/end times, doors open time, and last entry.</p>
+
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Primary Start Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="startDate" id="startDate" value="<%= event.startDate ? new Date(event.startDate).toISOString().split('T')[0] : '' %>" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Primary End Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="endDate" id="endDate" value="<%= event.endDate ? new Date(event.endDate).toISOString().split('T')[0] : '' %>" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Start Time <span class="text-danger">*</span></label>
+                                    <input type="time" class="form-control" name="startTime" id="startTime" value="<%= event.startTime || '' %>" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">End Time <span class="text-danger">*</span></label>
+                                    <input type="time" class="form-control" name="endTime" id="endTime" value="<%= event.endTime || '' %>" required>
+                                </div>
+                            </div>
+
+                            <hr style="border-color: rgba(255,255,255,0.1); margin: 2rem 0;">
+
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <p class="section-title m-0"><i class="fi fi-rr-ticket"></i> Ticket Tiers</p>
-                                <button type="button" class="btn btn-outline btn-sm" style="border-radius:8px;font-size:0.8rem;" onclick="addTicketVariant()">
-                                    <i class="fi fi-rr-plus me-1"></i> Add
+                                <div>
+                                    <h6 class="fw-bold m-0">Multi-Day / Additional Schedule Slots</h6>
+                                    <small class="text-secondary">Add extra dates or specific doors open/last entry times</small>
+                                </div>
+                                <button type="button" class="btn btn-outline-danger btn-sm px-3 py-2" onclick="addScheduleSlot()" style="border-radius: 10px;">
+                                    <i class="fi fi-rr-plus me-1"></i> Add Another Date
                                 </button>
                             </div>
-                            <div id="ticketsContainer" class="d-flex flex-column gap-3"></div>
-                        </div>
 
-                        <!-- Banners Panel -->
-                        <div class="glass-premium-panel">
-                            <p class="section-title mb-3"><i class="fi fi-rr-picture"></i> Banners</p>
-                            <p class="text-dim mb-4 text-start small">Upload high-quality images. Recommended resolution is 1920×1080px.</p>
-                            
-                            <div class="d-flex flex-column gap-3 mb-3">
-                                <div class="banner-slot w-100" id="banner1Slot" onclick="openCropper(1)" style="min-height: 160px; border-radius: 12px; border: 2px dashed rgba(255,255,255,0.1); position: relative; overflow: hidden; cursor: pointer; background: rgba(0,0,0,0.2);">
-                                    <% if(event.banners && event.banners[0]) { %>
-                                        <img src="<%= event.banners[0] %>" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
-                                    <% } else { %>
-                                        <div class="placeholder-content" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;padding: 2rem;">
-                                            <i class="fi fi-rr-cloud-upload-alt" style="font-size: 2rem; color: rgba(255,255,255,0.5);"></i>
-                                            <span style="font-weight: 600; color: rgba(255,255,255,0.5); font-size:0.9rem;">Primary Banner</span>
+                            <div id="scheduleSlotsContainer">
+                                <!-- Dynamic slots added via js -->
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-light px-4 py-3 rounded-3" onclick="prevStep(2)"><i class="fi fi-rr-arrow-left me-2"></i> Back</button>
+                            <button type="button" class="btn btn-danger px-5 py-3 rounded-3 fw-bold" onclick="nextStep(4)">Next: Tickets <i class="fi fi-rr-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- ── STEP 4: TICKET CONFIGURATION ── -->
+                    <div class="wizard-step-content" id="step-4">
+                        <div class="glass-card">
+                            <h4 class="fw-bold mb-1">Step 4: Ticket Configuration</h4>
+                            <p class="text-secondary small mb-4">BookMyShow encourages detailed ticket descriptions and benefits so attendees understand tier differences.</p>
+
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h6 class="fw-bold m-0 text-primary">Ticket Tiers & Pricing</h6>
+                                <button type="button" class="btn btn-danger btn-sm px-3 py-2" onclick="addTicketTier()" style="border-radius: 10px;">
+                                    <i class="fi fi-rr-plus me-1"></i> Add Ticket Tier
+                                </button>
+                            </div>
+
+                            <div id="ticketTiersContainer">
+                                <!-- Dynamic ticket tiers added via js -->
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-light px-4 py-3 rounded-3" onclick="prevStep(3)"><i class="fi fi-rr-arrow-left me-2"></i> Back</button>
+                            <button type="button" class="btn btn-danger px-5 py-3 rounded-3 fw-bold" onclick="nextStep(5)">Next: Media & Details <i class="fi fi-rr-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- ── STEP 5: MEDIA & DETAILS ── -->
+                    <div class="wizard-step-content" id="step-5">
+                        <div class="glass-card">
+                            <h4 class="fw-bold mb-1">Step 5: Event Details & Media</h4>
+                            <p class="text-secondary small mb-4">Upload new visual assets or keep existing ones, and edit detailed event sections.</p>
+
+                            <div class="row g-4 mb-5">
+                                <div class="col-md-6">
+                                    <label class="form-label">Upload New Cover Banners <span class="text-secondary small">(Max 2 images, leaves existing if blank)</span></label>
+                                    <input type="file" class="form-control" name="banners" id="eventBanners" accept="image/*" multiple>
+                                    <% if (event.banners && event.banners.length > 0) { %>
+                                        <div class="mt-3 d-flex gap-2 flex-wrap">
+                                            <% event.banners.forEach(b => { %>
+                                                <div class="position-relative" style="width: 120px; height: 70px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2);">
+                                                    <img src="<%= b %>" style="width: 100%; height: 100%; object-fit: cover;">
+                                                    <input type="hidden" name="existingBanners[]" value="<%= b %>">
+                                                </div>
+                                            <% }) %>
                                         </div>
                                     <% } %>
-                                    <div class="banner-slot-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;">
-                                        <i class="fi fi-rr-edit" style="font-size: 1.5rem; color: white;"></i>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Promo Video URL <span class="text-secondary small">(YouTube / Vimeo teaser)</span></label>
+                                    <input type="url" class="form-control" name="promoVideo" id="promoVideo" value="<%= event.promoVideo || '' %>" placeholder="https://youtube.com/watch?v=teaser">
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold text-primary mb-3">Detailed Event Description Sections</h6>
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <label class="form-label">About The Event <span class="text-danger">*</span> <span class="text-secondary small">(Min 20 characters)</span></label>
+                                    <textarea class="form-control" name="description" id="eventDescription" rows="4" required><%= event.description || event.aboutEvent || '' %></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Agenda / Schedule Breakdown</label>
+                                    <textarea class="form-control" name="agenda" id="eventAgenda" rows="3"><%= event.agenda || '' %></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Artists / Performers / Speakers</label>
+                                    <textarea class="form-control" name="artists" id="eventArtists" rows="3"><%= event.artists || '' %></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Things To Carry / Recommended</label>
+                                    <textarea class="form-control" name="thingsToCarry" id="eventCarry" rows="3"><%= event.thingsToCarry || '' %></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Not Allowed Items (Prohibited)</label>
+                                    <textarea class="form-control" name="notAllowedItems" id="eventProhibited" rows="3"><%= event.notAllowedItems || '' %></textarea>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label">Frequently Asked Questions (FAQs)</label>
+                                    <textarea class="form-control" name="faqs" id="eventFaqs" rows="3"><%= event.faqs || '' %></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-light px-4 py-3 rounded-3" onclick="prevStep(4)"><i class="fi fi-rr-arrow-left me-2"></i> Back</button>
+                            <button type="button" class="btn btn-danger px-5 py-3 rounded-3 fw-bold" onclick="nextStep(6)">Next: Organizer Info <i class="fi fi-rr-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- ── STEP 6: ORGANIZER INFORMATION ── -->
+                    <div class="wizard-step-content" id="step-6">
+                        <div class="glass-card">
+                            <h4 class="fw-bold mb-1">Step 6: Organizer Information</h4>
+                            <p class="text-secondary small mb-4">Display your brand details and customer support contact on the event page.</p>
+
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Organizer / Production Name</label>
+                                    <input type="text" class="form-control" id="orgName" value="<%= event.organizerInfo?.name || '' %>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Organizer Logo URL</label>
+                                    <input type="url" class="form-control" id="orgLogo" value="<%= event.organizerInfo?.logo || '' %>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Support Email Address <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="orgSupportEmail" value="<%= event.organizerInfo?.supportEmail || '' %>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Support Helpline Phone <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="orgSupportPhone" value="<%= event.organizerInfo?.supportPhone || '' %>">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Official Website</label>
+                                    <input type="url" class="form-control" id="orgWebsite" value="<%= event.organizerInfo?.website || '' %>">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Instagram Handle / URL</label>
+                                    <input type="text" class="form-control" id="orgInsta" value="<%= event.organizerInfo?.instagram || '' %>">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Twitter / X Handle</label>
+                                    <input type="text" class="form-control" id="orgTwitter" value="<%= event.organizerInfo?.twitter || '' %>">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-light px-4 py-3 rounded-3" onclick="prevStep(5)"><i class="fi fi-rr-arrow-left me-2"></i> Back</button>
+                            <button type="button" class="btn btn-danger px-5 py-3 rounded-3 fw-bold" onclick="nextStep(7)">Next: Policies <i class="fi fi-rr-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- ── STEP 7: POLICIES ── -->
+                    <div class="wizard-step-content" id="step-7">
+                        <div class="glass-card">
+                            <h4 class="fw-bold mb-1">Step 7: Event Policies & Terms</h4>
+                            <p class="text-secondary small mb-4">Set clear refund guidelines and entry rules to prevent customer disputes.</p>
+
+                            <div class="row g-4">
+                                <div class="col-md-12 mb-2">
+                                    <label class="form-label d-block mb-3">Cancellation & Refund Policy <span class="text-danger">*</span></label>
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <div class="p-3 border rounded-3" style="background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.1) !important;">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="cancellationPolicy" id="policyNoRefund" value="no_refund" <%= (!event.policies?.cancellation || event.policies?.cancellation === 'no_refund') ? 'checked' : '' %>>
+                                                    <label class="form-check-label fw-bold" for="policyNoRefund">🚫 No Refunds</label>
+                                                </div>
+                                                <small class="text-secondary d-block mt-1">Tickets are non-refundable once purchased.</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="p-3 border rounded-3" style="background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.1) !important;">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="cancellationPolicy" id="policyPartial" value="partial" <%= event.policies?.cancellation === 'partial' ? 'checked' : '' %>>
+                                                    <label class="form-check-label fw-bold" for="policyPartial">⚖️ Partial Refund</label>
+                                                </div>
+                                                <small class="text-secondary d-block mt-1">50% refund available up to 7 days before event.</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="p-3 border rounded-3" style="background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.1) !important;">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="cancellationPolicy" id="policy48hr" value="100_before_48" <%= event.policies?.cancellation === '100_before_48' ? 'checked' : '' %>>
+                                                    <label class="form-check-label fw-bold" for="policy48hr">✅ 100% Refund before 48 hrs</label>
+                                                </div>
+                                                <small class="text-secondary d-block mt-1">Full refund if cancelled 48 hours prior to start.</small>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="banner-slot w-100" id="banner2Slot" onclick="openCropper(2)" style="min-height: 160px; border-radius: 12px; border: 2px dashed rgba(255,255,255,0.1); position: relative; overflow: hidden; cursor: pointer; background: rgba(0,0,0,0.2);">
-                                    <% if(event.banners && event.banners[1]) { %>
-                                        <img src="<%= event.banners[1] %>" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
-                                    <% } else { %>
-                                        <div class="placeholder-content" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;padding: 2rem;">
-                                            <i class="fi fi-rr-cloud-upload-alt" style="font-size: 2rem; color: rgba(255,255,255,0.5);"></i>
-                                            <span style="font-weight: 600; color: rgba(255,255,255,0.5); font-size:0.9rem;">Secondary Banner</span>
+                                <div class="col-md-6">
+                                    <label class="form-label">Terms & Conditions</label>
+                                    <textarea class="form-control" id="policyTerms" rows="3"><%= event.policies?.terms || '' %></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">COVID & Health Guidelines</label>
+                                    <textarea class="form-control" id="policyCovid" rows="3"><%= event.policies?.covidGuidelines || '' %></textarea>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Food & Beverage Policy</label>
+                                    <input type="text" class="form-control" id="policyFood" value="<%= event.policies?.foodPolicy || '' %>">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Parking Policy</label>
+                                    <input type="text" class="form-control" id="policyParking" value="<%= event.policies?.parkingPolicy || '' %>">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Children Policy</label>
+                                    <input type="text" class="form-control" id="policyChildren" value="<%= event.policies?.childrenPolicy || '' %>">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-light px-4 py-3 rounded-3" onclick="prevStep(6)"><i class="fi fi-rr-arrow-left me-2"></i> Back</button>
+                            <button type="button" class="btn btn-danger px-5 py-3 rounded-3 fw-bold" onclick="nextStep(8)">Next: Live Preview <i class="fi fi-rr-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- ── STEP 8: LIVE PREVIEW ── -->
+                    <div class="wizard-step-content" id="step-8">
+                        <div class="glass-card">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div>
+                                    <h4 class="fw-bold mb-1">Step 8: Live Event Preview</h4>
+                                    <p class="text-secondary small m-0">See exactly how your edited event will appear across different devices.</p>
+                                </div>
+                                <ul class="nav nav-pills gap-2" id="previewTabs" role="tablist">
+                                    <li class="nav-item">
+                                        <button class="nav-link active py-2 px-3 small fw-bold" data-bs-toggle="pill" data-bs-target="#previewDesktop" type="button" onclick="renderLivePreview()">🖥️ Desktop View</button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link py-2 px-3 small fw-bold" data-bs-toggle="pill" data-bs-target="#previewMobile" type="button" onclick="renderLivePreview()">📱 Mobile App View</button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link py-2 px-3 small fw-bold" data-bs-toggle="pill" data-bs-target="#previewTicket" type="button" onclick="renderLivePreview()">🎟️ Ticket Checkout Card</button>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="tab-content pt-3">
+                                <!-- Desktop Preview -->
+                                <div class="tab-pane fade show active" id="previewDesktop">
+                                    <div class="p-4 rounded-4 border" style="background: #121216; border-color: rgba(255,255,255,0.1) !important;">
+                                        <div class="row g-4 align-items-center">
+                                            <div class="col-md-8">
+                                                <span class="badge bg-danger mb-2" id="prevCategory">CONCERT</span>
+                                                <span class="badge bg-dark border ms-1" id="prevAge">18+</span>
+                                                <h2 class="fw-bold mb-2" id="prevTitle">Event Title Preview</h2>
+                                                <p class="text-secondary mb-3" id="prevSummary">Event short summary preview will appear here...</p>
+                                                <div class="d-flex flex-wrap gap-3 text-secondary small mb-4">
+                                                    <div><i class="fi fi-rr-calendar me-1 text-danger"></i> <span id="prevDate">Date & Time</span></div>
+                                                    <div><i class="fi fi-rr-marker me-1 text-danger"></i> <span id="prevVenue">Venue Location</span></div>
+                                                </div>
+                                                <div id="prevTags" class="d-flex gap-2 flex-wrap mb-3"></div>
+                                            </div>
+                                            <div class="col-md-4 text-center">
+                                                <div class="p-4 rounded-4" style="background: rgba(230,57,70,0.1); border: 1px solid var(--primary-glow);">
+                                                    <small class="text-secondary d-block mb-1">Starting From</small>
+                                                    <h3 class="fw-bold text-danger mb-3" id="prevPrice">₹1,499</h3>
+                                                    <button type="button" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: 10px;">Book Tickets</button>
+                                                </div>
+                                            </div>
                                         </div>
-                                    <% } %>
-                                    <div class="banner-slot-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;">
-                                        <i class="fi fi-rr-edit" style="font-size: 1.5rem; color: white;"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Mobile Preview -->
+                                <div class="tab-pane fade" id="previewMobile">
+                                    <div class="mobile-preview-frame p-3">
+                                        <div class="text-center py-2 border-bottom mb-3" style="border-color: rgba(255,255,255,0.1) !important;">
+                                            <small class="fw-bold text-secondary">EventHub Mobile</small>
+                                        </div>
+                                        <div id="prevMobileContent">
+                                            <div class="bg-dark rounded-3 mb-3 d-flex align-items-center justify-content-center" style="height: 140px; border: 1px solid rgba(255,255,255,0.1);">
+                                                <i class="fi fi-rr-picture text-secondary fs-1"></i>
+                                            </div>
+                                            <h5 class="fw-bold mb-1" id="prevMobileTitle">Event Title</h5>
+                                            <p class="text-secondary small mb-3" id="prevMobileVenue">Venue Location</p>
+                                            <button type="button" class="btn btn-danger btn-sm w-100 fw-bold py-2 mb-3">Book Now</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Ticket Preview -->
+                                <div class="tab-pane fade" id="previewTicket">
+                                    <div class="row g-3" id="prevTicketsList">
+                                        <!-- Rendered via js -->
                                     </div>
                                 </div>
                             </div>
-                            <input type="file" id="bannerInput1" accept="image/*" style="display:none;" onchange="onFileSelected(1)">
-                            <input type="file" id="bannerInput2" accept="image/*" style="display:none;" onchange="onFileSelected(2)">
-                            
-                            <input type="hidden" id="existingBanner1" name="existingBanners[]" value="<%= event.banners && event.banners[0] ? event.banners[0] : '' %>">
-                            <input type="hidden" id="existingBanner2" name="existingBanners[]" value="<%= event.banners && event.banners[1] ? event.banners[1] : '' %>">
                         </div>
-
-                        <!-- Submit -->
-                        <div class="d-flex flex-column gap-2">
-                            <button type="submit" class="btn btn-primary w-100" style="height:3.2rem;border-radius:14px;font-weight:700;letter-spacing:0.5px;box-shadow:0 8px 25px rgba(230,57,70,0.3);">
-                                <i class="fi fi-rr-check me-2"></i> Save & Publish
-                            </button>
-                            <button type="button" class="btn btn-outline w-100" onclick="submitDraft()" style="height:3.2rem;border-radius:14px;font-weight:600; border-color: rgba(255,255,255,0.2);">
-                                <i class="fi fi-rr-disk me-2"></i> Save as Draft
-                            </button>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-light px-4 py-3 rounded-3" onclick="prevStep(7)"><i class="fi fi-rr-arrow-left me-2"></i> Back</button>
+                            <button type="button" class="btn btn-danger px-5 py-3 rounded-3 fw-bold" onclick="nextStep(9)">Next: Review & Submit <i class="fi fi-rr-arrow-right ms-2"></i></button>
                         </div>
                     </div>
-                </div>
-            </form>
-        </main>
-    </div>
 
-    <div id="cropperModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center;">
-        <div class="cropper-modal-box glass-premium-panel" style="width: 100%; max-width: 800px; padding: 2rem; max-height: 90vh; overflow-y: auto;">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4 class="fw-bold m-0" id="cropperTitle">Crop Banner</h4>
-                <button type="button" onclick="closeCropper()" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius: 50%; width: 36px; height: 36px; color:white; cursor:pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
-                    <i class="fi fi-rr-cross-small"></i>
-                </button>
-            </div>
-            <div class="cropper-img-wrap mb-4" style="border: 2px dashed rgba(255,255,255,0.1); padding: 5px; border-radius: 12px; max-height: 50vh;">
-                <img id="cropperImg" src="" alt="Crop" style="max-width: 100%;">
-            </div>
-            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-end">
-                <button type="button" class="btn btn-outline px-4" style="border-radius: 10px;" onclick="closeCropper()">Cancel</button>
-                <button type="button" class="btn btn-primary px-5" style="border-radius: 10px; font-weight: 600;" onclick="applyCrop()">
-                    Apply Crop <i class="fi fi-rr-check ms-2"></i>
-                </button>
-            </div>
+                    <!-- ── STEP 9: REVIEW & SUBMIT ── -->
+                    <div class="wizard-step-content" id="step-9">
+                        <div class="glass-card text-center py-5">
+                            <div class="mb-4">
+                                <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(46, 204, 113, 0.15); color: #2ecc71; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto;">
+                                    <i class="fi fi-rr-check-circle"></i>
+                                </div>
+                            </div>
+                            <h3 class="fw-bold mb-2">Ready to Save Your Changes!</h3>
+                            <p class="text-secondary max-w-600 mx-auto mb-4">You have reviewed all 9 steps of the BookMyShow event builder. Your event is currently: <strong><%= event.status.toUpperCase() %></strong>.</p>
+
+                            <div class="lifecycle-tracker max-w-700 mx-auto mb-5">
+                                <div class="lifecycle-line"></div>
+                                <div class="lifecycle-step <%= ['draft','pending','under_review','changes_requested','approved','scheduled','published','completed'].includes(event.status) ? 'active' : '' %>">
+                                    <div class="lifecycle-circle">1</div>
+                                    <span class="small fw-bold">Draft</span>
+                                </div>
+                                <div class="lifecycle-step <%= ['pending','under_review','changes_requested','approved','scheduled','published','completed'].includes(event.status) ? 'active' : '' %>">
+                                    <div class="lifecycle-circle">2</div>
+                                    <span class="small fw-bold">Pending Review</span>
+                                </div>
+                                <div class="lifecycle-step <%= ['approved','scheduled','published','completed'].includes(event.status) ? 'active' : '' %>">
+                                    <div class="lifecycle-circle">3</div>
+                                    <span class="small fw-bold">Approved</span>
+                                </div>
+                                <div class="lifecycle-step <%= ['published','completed'].includes(event.status) ? 'active' : '' %>">
+                                    <div class="lifecycle-circle">4</div>
+                                    <span class="small fw-bold">Published</span>
+                                </div>
+                                <div class="lifecycle-step <%= event.status === 'completed' ? 'active' : '' %>">
+                                    <div class="lifecycle-circle">5</div>
+                                    <span class="small fw-bold">Completed</span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-center gap-3">
+                                <button type="button" class="btn btn-outline-light px-5 py-3 rounded-3 fw-bold" onclick="prevStep(8)"><i class="fi fi-rr-arrow-left me-2"></i> Back to Preview</button>
+                                <button type="button" class="btn btn-outline-secondary px-5 py-3 rounded-3 fw-bold" onclick="saveAsDraft()"><i class="fi fi-rr-disk me-2"></i> Save as Draft</button>
+                                <button type="submit" class="btn btn-danger px-5 py-3 rounded-3 fw-bold shadow-lg" style="background: var(--primary);"><i class="fi fi-rr-check me-2"></i> Save & Update Event</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </main>
         </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
-    <style>
-        .banner-slot:hover .banner-slot-overlay { opacity: 1 !important; }
-    </style>
     <script>
-        // ─── MAP ─────────────────────────────────────────────────────────────
-        const initLatLng = [<%= event.location.lat %>, <%= event.location.lng %>];
-        const map = L.map('eventMap').setView(initLatLng, 14);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(map);
-        let marker = L.marker(initLatLng, { draggable: true }).addTo(map);
+        let currentStep = 1;
+        const totalSteps = 9;
+        let map, marker;
+        let ticketTiers = <%- JSON.stringify(event.tickets && event.tickets.length ? event.tickets : []) %>;
+        let scheduleSlots = <%- JSON.stringify(event.schedule && event.schedule.length ? event.schedule : []) %>;
 
-        async function updateAddress(lat, lng) {
-            document.getElementById('lat').value = lat;
-            document.getElementById('lng').value = lng;
-            try {
-                const r = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-                document.getElementById('address').value = r.data.display_name || 'Custom Location';
-            } catch { document.getElementById('address').value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`; }
-        }
-        map.on('click', e => { marker.setLatLng(e.latlng); updateAddress(e.latlng.lat, e.latlng.lng); });
-        marker.on('dragend', () => { const p = marker.getLatLng(); updateAddress(p.lat, p.lng); });
-        setTimeout(() => map.invalidateSize(), 300);
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            if (ticketTiers.length === 0) {
+                addTicketTier('General Admission', 999, 100, 5, '#E63946');
+            } else {
+                renderTicketTiers();
+            }
+            renderScheduleSlots();
+            updateProgress();
+        });
 
-        // ─── FILE UPLOAD & CROPPER ───────────────────────────────────────────
-        let cropperInstance = null;
-        let currentBannerSlot = 1;
-        const croppedBlobs = { 1: null, 2: null };
+        function goToStep(step) {
+            if (step > currentStep && !validateCurrentStep()) return;
+            document.querySelectorAll('.wizard-step-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.step-nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(`step-${step}`).classList.add('active');
+            document.getElementById(`nav-step-${step}`).classList.add('active');
 
-        function openCropper(slot) {
-            currentBannerSlot = slot;
-            document.getElementById('bannerInput' + slot).click();
-        }
+            for (let i = 1; i < step; i++) {
+                document.getElementById(`nav-step-${i}`).classList.add('completed');
+            }
 
-        function onFileSelected(slot) {
-            const input = document.getElementById('bannerInput' + slot);
-            if (!input.files || !input.files[0]) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                document.getElementById('cropperTitle').textContent = `Crop Banner ${slot}`;
-                const img = document.getElementById('cropperImg');
-                img.src = e.target.result;
-                document.getElementById('cropperModal').style.display = 'flex';
+            currentStep = step;
+            updateProgress();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
 
-                if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
-                setTimeout(() => {
-                    cropperInstance = new Cropper(img, {
-                        aspectRatio: 16 / 9,
-                        viewMode: 1,
-                        dragMode: 'move',
-                        autoCropArea: 1,
-                        restore: false,
-                        guides: true,
-                        center: true,
-                        highlight: false,
-                        cropBoxMovable: true,
-                        cropBoxResizable: true,
-                        toggleDragModeOnDblclick: false,
-                    });
-                }, 100);
-            };
-            reader.readAsDataURL(input.files[0]);
-            input.value = ''; 
+            if (step === 2) {
+                setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+            }
+            if (step === 8) {
+                renderLivePreview();
+            }
         }
 
-        function closeCropper() {
-            document.getElementById('cropperModal').style.display = 'none';
-            if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+        function nextStep(step) { goToStep(step); }
+        function prevStep(step) { goToStep(step); }
+
+        function updateProgress() {
+            const percent = Math.round((currentStep / totalSteps) * 100);
+            document.getElementById('progressBar').style.width = `${percent}%`;
+            document.getElementById('progressText').innerText = `Step ${currentStep} of ${totalSteps}`;
         }
 
-        function applyCrop() {
-            if (!cropperInstance) return;
-            cropperInstance.getCroppedCanvas({ width: 1920, height: 1080 }).toBlob(blob => {
-                croppedBlobs[currentBannerSlot] = blob;
+        function validateCurrentStep() {
+            const currentEl = document.getElementById(`step-${currentStep}`);
+            const requiredInputs = currentEl.querySelectorAll('[required]');
+            let valid = true;
+            requiredInputs.forEach(input => {
+                if (!input.value || !input.value.trim()) {
+                    input.classList.add('is-invalid');
+                    valid = false;
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            });
+            if (!valid) {
+                alert('Please fill in all required fields marked with * before advancing.');
+            }
+            return valid;
+        }
 
-                const url = URL.createObjectURL(blob);
-                const slot = document.getElementById('banner' + currentBannerSlot + 'Slot');
+        function toggleVenueType() {
+            const isOnline = document.getElementById('typeOnline').checked;
+            document.getElementById('offlineVenueFields').style.display = isOnline ? 'none' : 'block';
+            document.getElementById('onlineVenueFields').style.display = isOnline ? 'block' : 'none';
+        }
+
+        function initMap() {
+            const initialLat = parseFloat("<%= event.location?.lat || 19.0760 %>");
+            const initialLng = parseFloat("<%= event.location?.lng || 72.8777 %>");
+            
+            map = L.map('venueMap').setView([initialLat, initialLng], <%= event.location?.lat ? 14 : 11 %>);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            if (<%= !!event.location?.lat %>) {
+                marker = L.marker([initialLat, initialLng]).addTo(map)
+                    .bindPopup(`Pinned Location:<br>Lat: ${initialLat.toFixed(4)}, Lng: ${initialLng.toFixed(4)}`).openPopup();
+            }
+
+            map.on('click', function (e) {
+                const { lat, lng } = e.latlng;
+                document.getElementById('latInput').value = lat.toFixed(6);
+                document.getElementById('lngInput').value = lng.toFixed(6);
                 
-                // Clear existing banner logic if replaced
-                document.getElementById('existingBanner' + currentBannerSlot).value = '';
-
-                const oldImg = slot.querySelector('img');
-                const oldPlaceholder = slot.querySelector('.placeholder-content');
-                if (oldImg) oldImg.remove();
-                if (oldPlaceholder) oldPlaceholder.style.display = 'none';
+                if (marker) map.removeLayer(marker);
+                marker = L.marker([lat, lng]).addTo(map)
+                    .bindPopup(`Pinned Location:<br>Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`).openPopup();
                 
-                const img = document.createElement('img');
-                img.src = url;
-                img.style.width = '100%';
-                img.style.height = '100%';
-                img.style.objectFit = 'cover';
-                img.style.position = 'absolute';
-                img.style.inset = '0';
-                slot.appendChild(img);
-                
-                closeCropper();
-            }, 'image/jpeg', 0.92);
+                document.getElementById('mapStatus').innerText = '✓ Location Pinned Successfully!';
+                document.getElementById('mapStatus').className = 'text-success fw-bold';
+            });
         }
 
-        // ─── TICKETS ─────────────────────────────────────────────────────────
-        const existingTickets = <%- JSON.stringify(tickets) %>;
-        let ticketCount = 0;
-        const ticketsContainer = document.getElementById('ticketsContainer');
+        // ── Dynamic Schedule Builder ──
+        function addScheduleSlot() {
+            const id = Date.now();
+            scheduleSlots.push({ id, date: '', startTime: '', endTime: '', doorsOpenTime: '' });
+            renderScheduleSlots();
+        }
 
-        function addTicketVariant(t = { name:'', price:'', capacity:'', maxPerUser: 5 }) {
-            ticketCount++;
-            const div = document.createElement('div');
-            div.className = 'ticket-variant';
-            div.innerHTML = `
-                <div class="ticket-variant-header">
-                    <span class="badge" style="background:rgba(230,57,70,0.15);color:var(--primary);padding:5px 10px;font-weight:700;letter-spacing:1px;font-size:0.7rem;">TIER ${ticketCount}</span>
-                    <button type="button" class="remove-ticket-btn" onclick="this.closest('.ticket-variant').remove()"><i class="fi fi-rr-trash"></i></button>
+        function removeScheduleSlot(id) {
+            scheduleSlots = scheduleSlots.filter(s => (s.id || s._id) !== id);
+            renderScheduleSlots();
+        }
+
+        function renderScheduleSlots() {
+            const container = document.getElementById('scheduleSlotsContainer');
+            container.innerHTML = scheduleSlots.map((slot, idx) => {
+                const slotId = slot.id || slot._id || idx;
+                const slotDate = slot.date ? new Date(slot.date).toISOString().split('T')[0] : '';
+                return `
+                <div class="builder-card">
+                    <button type="button" class="btn-remove" onclick="removeScheduleSlot('${slotId}')"><i class="fi fi-rr-trash"></i></button>
+                    <h6 class="fw-bold mb-3 text-secondary">Additional Date Slot #${idx + 1}</h6>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label small">Date</label>
+                            <input type="date" class="form-control" onchange="updateSchedule('${slotId}', 'date', this.value)" value="${slotDate}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Start Time</label>
+                            <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'startTime', this.value)" value="${slot.startTime || ''}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">End Time</label>
+                            <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'endTime', this.value)" value="${slot.endTime || ''}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Doors Open Time</label>
+                            <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'doorsOpenTime', this.value)" value="${slot.doorsOpenTime || ''}">
+                        </div>
+                    </div>
                 </div>
-                <div class="ticket-variant-body">
-                    <input type="hidden" class="ticket-id" value="${t._id || ''}">
-                    <div class="form-floating mb-3">
-                        <input type="text" class="form-control input ticket-name" placeholder=" " value="${t.name}" data-rule="required">
-                        <label>Ticket Name</label>
-                    </div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-6"><div class="form-floating">
-                            <input type="number" class="form-control input ticket-price" placeholder=" " value="${t.price}" data-rule="required, number" data-min="0">
-                            <label>Price (₹)</label>
-                        </div></div>
-                        <div class="col-6"><div class="form-floating">
-                            <input type="number" class="form-control input ticket-capacity" placeholder=" " value="${t.capacity}" data-rule="required, number" data-min="1">
-                            <label>Capacity</label>
-                        </div></div>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" class="form-control input ticket-max" placeholder=" " value="${t.maxPerUser}" data-rule="required, number" data-min="1">
-                        <label>Max Per User</label>
-                    </div>
-                </div>`;
-            ticketsContainer.appendChild(div);
+            `}).join('');
         }
 
-        existingTickets.length > 0 ? existingTickets.forEach(t => addTicketVariant(t)) : addTicketVariant();
-
-        // ─── DRAFT SUBMIT ────────────────────────────────────────────────────
-        async function submitDraft() {
-            const title = document.getElementById('title').value.trim();
-            if (!title) {
-                return Toast.error('Event title is required to save as draft.');
-            }
-
-            const ticketEls = ticketsContainer.querySelectorAll('.ticket-variant');
-            const tickets = [];
-            for (const el of ticketEls) {
-                const id = el.querySelector('.ticket-id').value;
-                const name = el.querySelector('.ticket-name').value.trim();
-                const price = parseFloat(el.querySelector('.ticket-price').value);
-                const capacity = parseInt(el.querySelector('.ticket-capacity').value);
-                const max = parseInt(el.querySelector('.ticket-max').value);
-                if (name) {
-                    tickets.push({ 
-                        _id: id ? id : undefined,
-                        name: name,  
-                        price: isNaN(price) ? 0 : price, 
-                        capacity: isNaN(capacity) ? 1 : capacity, 
-                        maxPerUser: isNaN(max) ? 1 : max 
-                    });
-                }
-            }
-
-            const formData = new FormData(document.getElementById('editEventForm'));
-            formData.append('tickets', JSON.stringify(tickets));
-            formData.append('action', 'draft');
-            if (croppedBlobs[1]) formData.append('banners', croppedBlobs[1], 'banner1.jpg');
-            if (croppedBlobs[2]) formData.append('banners', croppedBlobs[2], 'banner2.jpg');
-
-            Loader.show('SAVING DRAFT...');
-            try {
-                const res = await axios.post('/organizer/events/<%= event._id %>/update', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-                if (res.data.success) {
-                    Toast.success('Draft saved successfully!');
-                    setTimeout(() => window.location.reload(), 1000);
-                }
-            } catch (err) {
-                Toast.error(err.response?.data?.message || 'Failed to save draft.');
-            } finally { Loader.hide(); }
+        function updateSchedule(id, field, val) {
+            const slot = scheduleSlots.find(s => (s.id || s._id || s) == id);
+            if (slot) slot[field] = val;
         }
 
-        // ─── SUBMIT ──────────────────────────────────────────────────────────
-        document.getElementById('editEventForm').addEventListener('submit', async e => {
+        // ── Dynamic Ticket Builder ──
+        function addTicketTier(name = '', price = '', capacity = '', max = 5, color = '#E63946') {
+            const id = Date.now() + Math.random();
+            ticketTiers.push({ id, name, price, capacity, maxPerUser: max, colourBadge: color, benefits: 'Front Row Access, Entry Pass' });
+            renderTicketTiers();
+        }
+
+        function removeTicketTier(id) {
+            if (ticketTiers.length <= 1) {
+                alert('You must have at least one ticket tier.');
+                return;
+            }
+            ticketTiers = ticketTiers.filter(t => (t.id || t._id) !== id);
+            renderTicketTiers();
+        }
+
+        function renderTicketTiers() {
+            const container = document.getElementById('ticketTiersContainer');
+            container.innerHTML = ticketTiers.map((tier, idx) => {
+                const tierId = tier.id || tier._id || idx;
+                const benefitsStr = Array.isArray(tier.benefits) ? tier.benefits.join(', ') : (tier.benefits || '');
+                return `
+                <div class="builder-card" style="border-left: 6px solid ${tier.colourBadge || '#E63946'};">
+                    <button type="button" class="btn-remove" onclick="removeTicketTier('${tierId}')"><i class="fi fi-rr-trash"></i></button>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label small">Ticket Tier Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" placeholder="VIP / Early Bird / General" value="${tier.name || ''}" onchange="updateTicket('${tierId}', 'name', this.value)" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Price (₹) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" placeholder="999" value="${tier.price || 0}" min="0" onchange="updateTicket('${tierId}', 'price', parseFloat(this.value))" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Total Tickets <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" placeholder="100" value="${tier.capacity || 10}" min="1" onchange="updateTicket('${tierId}', 'capacity', parseInt(this.value))" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Max/User</label>
+                            <input type="number" class="form-control" placeholder="5" value="${tier.maxPerUser || 5}" min="1" onchange="updateTicket('${tierId}', 'maxPerUser', parseInt(this.value))">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Badge Color</label>
+                            <input type="color" class="form-control p-1" style="height: 42px;" value="${tier.colourBadge || '#E63946'}" onchange="updateTicket('${tierId}', 'colourBadge', this.value)">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label small">Included Benefits <span class="text-secondary">(Comma separated list: Front Row, Free T-shirt, Meet Artist)</span></label>
+                            <input type="text" class="form-control" placeholder="Front Row Access, Complimentary Drink, VIP Lounge" value="${benefitsStr}" onchange="updateTicket('${tierId}', 'benefits', this.value)">
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function updateTicket(id, field, val) {
+            const tier = ticketTiers.find(t => (t.id || t._id || t) == id);
+            if (tier) {
+                tier[field] = val;
+                if (field === 'colourBadge') renderTicketTiers();
+            }
+        }
+
+        // ── Live Preview Renderer ──
+        function renderLivePreview() {
+            const title = document.getElementById('eventTitle').value || 'Untitled Live Event';
+            const summary = document.getElementById('eventSummary').value || 'No summary provided yet.';
+            const date = document.getElementById('startDate').value || 'Date Not Set';
+            const time = document.getElementById('startTime').value || 'Time Not Set';
+            const isOnline = document.getElementById('typeOnline').checked;
+            const venue = isOnline ? `Online (${document.getElementById('onlinePlatform').value})` : (document.getElementById('venueName').value || 'Venue Not Set');
+
+            document.getElementById('prevTitle').innerText = title;
+            document.getElementById('prevSummary').innerText = summary;
+            document.getElementById('prevDate').innerText = `${date} at ${time}`;
+            document.getElementById('prevVenue').innerText = venue;
+
+            const minPrice = ticketTiers.length > 0 ? Math.min(...ticketTiers.map(t => t.price || 0)) : 0;
+            document.getElementById('prevPrice').innerText = `₹${minPrice}`;
+
+            const prevTickets = document.getElementById('prevTicketsList');
+            prevTickets.innerHTML = ticketTiers.map(t => {
+                const bStr = Array.isArray(t.benefits) ? t.benefits.join(', ') : (t.benefits || 'Standard Access');
+                return `
+                <div class="col-md-6">
+                    <div class="p-3 rounded-4 border" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.1) !important; border-top: 4px solid ${t.colourBadge || '#E63946'} !important;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="fw-bold m-0">${t.name}</h5>
+                            <span class="badge" style="background: ${t.colourBadge || '#E63946'};">₹${t.price}</span>
+                        </div>
+                        <p class="text-secondary small mb-2"><i class="fi fi-rr-check me-1 text-success"></i> ${bStr}</p>
+                        <small class="text-secondary">Capacity: ${t.capacity} Tickets</small>
+                    </div>
+                </div>
+            `}).join('');
+
+            document.getElementById('prevMobileTitle').innerText = title;
+            document.getElementById('prevMobileVenue').innerText = venue;
+        }
+
+        // ── Form Submission & Draft Saving ──
+        function saveAsDraft() {
+            document.getElementById('formAction').value = 'draft';
+            submitWizardForm();
+        }
+
+        function submitForReview() {
+            if (!validateCurrentStep()) return;
+            document.getElementById('formAction').value = 'publish';
+            submitWizardForm();
+        }
+
+        function submitWizardForm() {
+            document.getElementById('ticketsJson').value = JSON.stringify(ticketTiers.map(({ id, ...t }) => ({
+                ...t,
+                benefits: typeof t.benefits === 'string' ? t.benefits.split(',').map(b => b.trim()).filter(Boolean) : t.benefits
+            })));
+            document.getElementById('scheduleJson').value = JSON.stringify(scheduleSlots.map(({ id, ...s }) => s));
+            
+            const orgInfo = {
+                name: document.getElementById('orgName').value,
+                logo: document.getElementById('orgLogo').value,
+                supportEmail: document.getElementById('orgSupportEmail').value,
+                supportPhone: document.getElementById('orgSupportPhone').value,
+                website: document.getElementById('orgWebsite').value,
+                instagram: document.getElementById('orgInsta').value,
+                twitter: document.getElementById('orgTwitter').value
+            };
+            document.getElementById('organizerInfoJson').value = JSON.stringify(orgInfo);
+
+            const policies = {
+                cancellation: document.querySelector('input[name="cancellationPolicy"]:checked')?.value || 'no_refund',
+                terms: document.getElementById('policyTerms').value,
+                covidGuidelines: document.getElementById('policyCovid').value,
+                foodPolicy: document.getElementById('policyFood').value,
+                parkingPolicy: document.getElementById('policyParking').value,
+                childrenPolicy: document.getElementById('policyChildren').value
+            };
+            document.getElementById('policiesJson').value = JSON.stringify(policies);
+
+            const form = document.getElementById('eventWizardForm');
+            const formData = new FormData(form);
+
+            fetch('/organizer/events/<%= event._id %>/update', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    window.location.href = '/organizer/events/<%= event._id %>';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Something went wrong while updating the event.');
+            });
+        }
+
+        document.getElementById('eventWizardForm').addEventListener('submit', (e) => {
             e.preventDefault();
-
-            // ── Date & Time Validation ──────────────────────────────────────────
-            const startDate = document.getElementById('startDate').value;
-            const startTime = document.getElementById('startTime').value;
-            const endDate   = document.getElementById('endDate').value;
-            const endTime   = document.getElementById('endTime').value;
-
-            if (!startDate) return Toast.error('Start date is required.');
-            if (!startTime) return Toast.error('Start time is required.');
-            if (!endDate)   return Toast.error('End date is required.');
-            if (!endTime)   return Toast.error('End time is required.');
-
-            if (endDate < startDate) {
-                return Toast.error('End date must be the same or after the start date.');
-            }
-
-            if (startDate === endDate && endTime <= startTime) {
-                return Toast.error('End time must be after start time when the event starts and ends on the same day.');
-            }
-
-            // ── Ticket Validation ───────────────────────────────────────────────
-            const ticketEls = ticketsContainer.querySelectorAll('.ticket-variant');
-            if (!ticketEls.length) return Toast.error('Add at least one ticket tier.');
-
-            const tickets = [];
-            for (const el of ticketEls) {
-                const id         = el.querySelector('.ticket-id').value;
-                const name       = el.querySelector('.ticket-name').value.trim();
-                const price      = parseFloat(el.querySelector('.ticket-price').value);
-                const capacity   = parseInt(el.querySelector('.ticket-capacity').value);
-                const maxPerUser = parseInt(el.querySelector('.ticket-max').value);
-                if (!name || isNaN(price) || price < 0 || !capacity || capacity < 1)
-                    return Toast.error('Please fill all ticket fields correctly.');
-                tickets.push({ _id: id ? id : undefined, name, price, capacity, maxPerUser });
-            }
-
-            const formData = new FormData(document.getElementById('editEventForm'));
-            formData.append('tickets', JSON.stringify(tickets));
-            formData.append('action', 'publish');
-            if (croppedBlobs[1]) formData.append('banners', croppedBlobs[1], 'banner1.jpg');
-            if (croppedBlobs[2]) formData.append('banners', croppedBlobs[2], 'banner2.jpg');
-
-            Loader.show('SAVING CHANGES...');
-            try {
-                const res = await axios.post('/organizer/events/<%= event._id %>/update', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-                if (res.data.success) {
-                    Toast.success('Event published successfully!');
-                    setTimeout(() => window.location.href = '/organizer/events/<%= event._id %>', 1500);
-                }
-            } catch (err) {
-                Toast.error(err.response?.data?.message || 'Failed to update event.');
-            } finally { Loader.hide(); }
+            submitForReview();
         });
     </script>
 </body>
