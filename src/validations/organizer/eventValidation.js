@@ -91,6 +91,7 @@ export const eventValidationSchema = Joi.object({
         }),
 
     doorsOpenTime: Joi.string().allow('', null).optional(),
+    bookingOpenTime: Joi.string().allow('', null).optional(),
     bookingCloseTime: Joi.string().allow('', null).optional(),
 
     schedule: Joi.alternatives().try(Joi.array(), Joi.string(), Joi.object()).allow('', null).optional(),
@@ -166,6 +167,15 @@ export const eventValidationSchema = Joi.object({
         }
     }
 
+    const { bookingOpenTime, bookingCloseTime } = value;
+    if (bookingOpenTime && bookingCloseTime) {
+        if (bookingCloseTime <= bookingOpenTime) {
+            return helpers.error('any.invalid', {
+                message: 'Close booking time must be after open booking time'
+            });
+        }
+    }
+
     if (schedule && Array.isArray(schedule)) {
         for (let i = 0; i < schedule.length; i++) {
             const slot = schedule[i];
@@ -173,6 +183,13 @@ export const eventValidationSchema = Joi.object({
                 if (slot.doorsOpenTime < slot.startTime || slot.doorsOpenTime > slot.endTime) {
                     return helpers.error('any.invalid', {
                         message: `For Additional Day #${i + 1}, doors open time must be between start time and end time`
+                    });
+                }
+            }
+            if (slot && slot.bookingOpenTime && slot.bookingCloseTime) {
+                if (slot.bookingCloseTime <= slot.bookingOpenTime) {
+                    return helpers.error('any.invalid', {
+                        message: `For Additional Day #${i + 1}, close booking time must be after open booking time`
                     });
                 }
             }
@@ -227,6 +244,7 @@ export const draftEventValidationSchema = Joi.object({
     endDate: Joi.alternatives().try(Joi.date().iso(), Joi.string().valid('', null)).optional(),
     endTime: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).allow('', null).optional(),
     doorsOpenTime: Joi.string().allow('', null).optional(),
+    bookingOpenTime: Joi.string().allow('', null).optional(),
     bookingCloseTime: Joi.string().allow('', null).optional(),
     schedule: Joi.alternatives().try(Joi.array(), Joi.string(), Joi.object()).allow('', null).optional(),
 

@@ -581,12 +581,16 @@
                                 </div>
                             </div>
                             <div class="row g-4 mb-4">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <label class="form-label">Doors Open Time <span class="text-secondary small">(Optional)</span></label>
                                     <input type="time" class="form-control" name="doorsOpenTime" id="doorsOpenTime">
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Close Booking Time <span class="text-secondary small">(Time on Event Date to close sales)</span></label>
+                                <div class="col-md-4">
+                                    <label class="form-label">Open Booking Time <span class="text-secondary small">(Time to open sales)</span></label>
+                                    <input type="time" class="form-control" name="bookingOpenTime" id="bookingOpenTime">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Close Booking Time <span class="text-secondary small">(Time to close sales)</span></label>
                                     <input type="time" class="form-control" name="bookingCloseTime" id="bookingCloseTime">
                                 </div>
                             </div>
@@ -1098,6 +1102,16 @@
                     }
                 }
 
+                const ot = document.getElementById('bookingOpenTime')?.value;
+                const ct = document.getElementById('bookingCloseTime')?.value;
+                if (ot && ct && ct <= ot) {
+                    Toast.error('Close Booking Time must be greater than Open Booking Time.');
+                    document.getElementById('bookingCloseTime')?.classList.add('is-invalid');
+                    return false;
+                } else {
+                    document.getElementById('bookingCloseTime')?.classList.remove('is-invalid');
+                }
+
                 for (let i = 0; i < scheduleSlots.length; i++) {
                     const slot = scheduleSlots[i];
                     if (!slot.date || !slot.date.trim()) {
@@ -1117,6 +1131,12 @@
                     if (slot.doorsOpenTime && slot.startTime && slot.endTime) {
                         if (slot.doorsOpenTime < slot.startTime || slot.doorsOpenTime > slot.endTime) {
                             Toast.error(`Additional Day #${i + 1}: Doors Open Time must be between Start Time and End Time.`);
+                            return false;
+                        }
+                    }
+                    if (slot.bookingOpenTime && slot.bookingCloseTime) {
+                        if (slot.bookingCloseTime <= slot.bookingOpenTime) {
+                            Toast.error(`Additional Day #${i + 1}: Close Booking Time must be greater than Open Booking Time.`);
                             return false;
                         }
                     }
@@ -1175,7 +1195,7 @@
 
         function addScheduleSlot() {
             const id = Date.now();
-            scheduleSlots.push({ id, date: '', startTime: '', endTime: '', doorsOpenTime: '', bookingCloseTime: '' });
+            scheduleSlots.push({ id, date: '', startTime: '', endTime: '', doorsOpenTime: '', bookingOpenTime: '', bookingCloseTime: '' });
             renderScheduleSlots();
             syncEndDate();
         }
@@ -1208,12 +1228,16 @@
                         </div>
                     </div>
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label small">Doors Open Time <span class="text-secondary">(Optional)</span></label>
                             <input type="time" class="form-control" onchange="updateSchedule(${slot.id}, 'doorsOpenTime', this.value)" value="${slot.doorsOpenTime || ''}">
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label small">Close Booking Time <span class="text-secondary">(Time on Date to close sales)</span></label>
+                        <div class="col-md-4">
+                            <label class="form-label small">Open Booking Time <span class="text-secondary">(Time to open sales)</span></label>
+                            <input type="time" class="form-control" onchange="updateSchedule(${slot.id}, 'bookingOpenTime', this.value)" value="${slot.bookingOpenTime || ''}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Close Booking Time <span class="text-secondary">(Time to close sales)</span></label>
                             <input type="time" class="form-control" onchange="updateSchedule(${slot.id}, 'bookingCloseTime', this.value)" value="${slot.bookingCloseTime || ''}">
                         </div>
                     </div>
