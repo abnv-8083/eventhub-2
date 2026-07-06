@@ -8,7 +8,7 @@ import HTTP_STATUS from '../../constant/statusCode.js';
 
 // ─── Get Featured Events for Homepage ─────────────────────────────────────────
 export const getFeaturedEvents = async (userId) => {
-    const events = await Event.find({ status: 'approved', isBlocked: false, deleted: { $ne: true } })
+    const events = await Event.find({ status: { $in: ['approved', 'published'] }, isBlocked: false, deleted: { $ne: true } })
         .populate('organizer', 'fullName')
         .sort({ isFeatured: -1, createdAt: -1 })
         .limit(4);
@@ -36,7 +36,7 @@ export const getFeaturedEvents = async (userId) => {
 export const browseEvents = async (userId, { search = '', category = 'all', sort = 'newest', page = 1, limit = 12, priceRange = 'all', dateRange = 'all' }) => {
     const skip = (parseInt(page) - 1) * limit;
 
-    const query = { status: 'approved', isBlocked: false, deleted: { $ne: true } };
+    const query = { status: { $in: ['approved', 'published'] }, isBlocked: false, deleted: { $ne: true } };
     if (search) query.title = { $regex: search, $options: 'i' };
     if (category !== 'all') query.category = category;
 
@@ -126,8 +126,8 @@ export const browseEvents = async (userId, { search = '', category = 'all', sort
 
 
 // ─── Get Event Detail ─────────────────────────────────────────────────────────
-export const getEventDetail = async (eventId, userId) => {
-    const event = await Event.findOne({ _id: eventId, status: 'approved', isBlocked: false, deleted: { $ne: true } })
+export const getEventById = async (eventId, userId) => {
+    const event = await Event.findOne({ _id: eventId, status: { $in: ['approved', 'published'] }, isBlocked: false, deleted: { $ne: true } })
         .populate('organizer', 'fullName organizationName')
         .lean();
 
@@ -152,7 +152,7 @@ export const getEventDetail = async (eventId, userId) => {
 
 // ─── Get Buy Tickets Page Data ────────────────────────────────────────────────
 export const getBuyTicketsData = async (eventId) => {
-    const event = await Event.findOne({ _id: eventId, status: 'approved', isBlocked: false, deleted: { $ne: true } })
+    const event = await Event.findOne({ _id: eventId, status: { $in: ['approved', 'published'] }, isBlocked: false, deleted: { $ne: true } })
         .populate('organizer', 'fullName organizationName')
         .lean();
 
@@ -195,7 +195,7 @@ export const toggleWishlist = async (userId, eventId) => {
 export const getWishlist = async (userId) => {
     const user = await User.findById(userId).populate({
         path: 'wishlist',
-        match: { status: 'approved', isBlocked: false },
+        match: { status: { $in: ['approved', 'published'] }, isBlocked: false },
         populate: [
             { path: 'organizer', select: 'fullName' }
         ]

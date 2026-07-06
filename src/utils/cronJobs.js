@@ -9,12 +9,12 @@ const initCronJobs = () => {
             const now = new Date();
             
             const result = await Event.updateMany(
-                { status: 'approved', endDate: { $lt: now } },
-                { $set: { status: 'inactive' } }
+                { status: { $in: ['approved', 'published'] }, endDate: { $lt: now } },
+                { $set: { status: 'completed' } }
             );
 
             if (result.modifiedCount > 0) {
-                console.log(`✅ Cron Job: Marked ${result.modifiedCount} events as inactive.`);
+                console.log(`✅ Cron Job: Marked ${result.modifiedCount} events as completed.`);
             } else {
                 console.log('✅ Cron Job: No expired events found.');
             }
