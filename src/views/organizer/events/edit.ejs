@@ -568,7 +568,7 @@
                             <div class="row g-4 mb-4">
                                 <div class="col-md-4">
                                     <label class="form-label">Event Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="startDate" id="startDate" value="<%= event.startDate ? new Date(event.startDate).toISOString().split('T')[0] : '' %>" onchange="syncEndDate(); renderScheduleSlots();" required>
+                                    <input type="date" class="form-control" name="startDate" id="startDate" value="<%= event.startDate ? new Date(event.startDate).toISOString().split('T')[0] : '' %>" min="<%= event.startDate && new Date(event.startDate) < new Date() ? new Date(event.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0] %>" onchange="syncEndDate(); renderScheduleSlots();" required>
                                     <input type="hidden" name="endDate" id="endDate" value="<%= event.endDate ? new Date(event.endDate).toISOString().split('T')[0] : (event.startDate ? new Date(event.startDate).toISOString().split('T')[0] : '') %>">
                                 </div>
                                 <div class="col-md-4">
@@ -1181,7 +1181,7 @@
 
         function getMinAdditionalDate() {
             const sd = document.getElementById('startDate')?.value;
-            if (!sd) return '';
+            if (!sd) return new Date().toISOString().split('T')[0];
             const d = new Date(sd);
             d.setDate(d.getDate() + 1);
             return d.toISOString().split('T')[0];

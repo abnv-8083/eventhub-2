@@ -568,7 +568,7 @@
                             <div class="row g-4 mb-4">
                                 <div class="col-md-4">
                                     <label class="form-label">Event Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="startDate" id="startDate" onchange="syncEndDate(); renderScheduleSlots();" required>
+                                    <input type="date" class="form-control" name="startDate" id="startDate" min="<%= new Date().toISOString().split('T')[0] %>" onchange="syncEndDate(); renderScheduleSlots();" required>
                                     <input type="hidden" name="endDate" id="endDate">
                                 </div>
                                 <div class="col-md-4">
@@ -1167,7 +1167,7 @@
 
         function getMinAdditionalDate() {
             const sd = document.getElementById('startDate')?.value;
-            if (!sd) return '';
+            if (!sd) return new Date().toISOString().split('T')[0];
             const d = new Date(sd);
             d.setDate(d.getDate() + 1);
             return d.toISOString().split('T')[0];
