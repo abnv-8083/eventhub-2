@@ -91,31 +91,94 @@ export const getActiveCategories = async () => {
 // ─── Create Event ─────────────────────────────────────────────────────────────
 // Tickets are embedded directly — no separate insertMany needed.
 export const createEvent = async (organizerId, eventData, bannerUrls, ticketData, status = 'pending') => {
+    let parseJSON = (val) => {
+        if (typeof val === 'string') {
+            try { return JSON.parse(val); } catch { return {}; }
+        }
+        return val || {};
+    };
+
+    let parseArray = (val) => {
+        if (Array.isArray(val)) return val;
+        if (typeof val === 'string') {
+            try {
+                const parsed = JSON.parse(val);
+                if (Array.isArray(parsed)) return parsed;
+            } catch {}
+            return val.split(',').map(t => t.trim()).filter(Boolean);
+        }
+        return [];
+    };
+
     const newEvent = new Event({
-        title:       eventData.title,
-        description: eventData.description,
-        category:    eventData.category,
+        title:          eventData.title,
+        description:    eventData.description,
+        category:       eventData.category,
+        subcategory:    eventData.subcategory,
+        language:       eventData.language || 'English',
+        ageRestriction: eventData.ageRestriction || 'All Ages',
+        tags:           parseArray(eventData.tags),
+        shortSummary:   eventData.shortSummary,
+        visibility:     eventData.visibility || 'public',
+
         location: {
-            address: eventData.address,
-            lat:     eventData.lat,
-            lng:     eventData.lng
+            isOnline:             eventData.isOnline === true || eventData.isOnline === 'true',
+            onlinePlatform:       eventData.onlinePlatform || null,
+            onlineLink:           eventData.onlineLink,
+            venueName:            eventData.venueName,
+            address:              eventData.address,
+            landmark:             eventData.landmark,
+            city:                 eventData.city,
+            state:                eventData.state,
+            pincode:              eventData.pincode,
+            lat:                  eventData.lat ? parseFloat(eventData.lat) : null,
+            lng:                  eventData.lng ? parseFloat(eventData.lng) : null,
+            parkingAvailable:     eventData.parkingAvailable === true || eventData.parkingAvailable === 'true',
+            wheelchairAccessible: eventData.wheelchairAccessible === true || eventData.wheelchairAccessible === 'true'
         },
+
         startDate:  eventData.startDate,
         startTime:  eventData.startTime,
         endDate:    eventData.endDate,
         endTime:    eventData.endTime,
-        isFeatured: eventData.isFeatured,
-        postStartRegistrationLimit: eventData.postStartRegistrationLimit !== undefined ? eventData.postStartRegistrationLimit : null,
+        schedule:   parseArray(eventData.schedule),
+
+        isFeatured: eventData.isFeatured === true || eventData.isFeatured === 'true',
+        postStartRegistrationLimit: eventData.postStartRegistrationLimit !== undefined && eventData.postStartRegistrationLimit !== '' ? parseInt(eventData.postStartRegistrationLimit, 10) : null,
         banners:    bannerUrls,
+        thumbnail:     eventData.thumbnail,
+        galleryImages: parseArray(eventData.galleryImages),
+        promoVideo:    eventData.promoVideo,
+
+        aboutEvent:      eventData.aboutEvent,
+        agenda:          eventData.agenda,
+        artists:         eventData.artists,
+        guests:          eventData.guests,
+        faqs:            eventData.faqs,
+        thingsToCarry:   eventData.thingsToCarry,
+        notAllowedItems: eventData.notAllowedItems,
+
+        organizerInfo: parseJSON(eventData.organizerInfo),
+        policies:      parseJSON(eventData.policies),
+
         organizer:  organizerId,
         status:     status,
         // Embed tickets; `sold` defaults to 0 per sub-schema
         tickets:    ticketData.map(t => ({
-            name:       t.name,
-            price:      t.price,
-            capacity:   t.capacity,
-            maxPerUser: t.maxPerUser,
-            sold:       0
+            name:        t.name,
+            price:       t.price,
+            capacity:    t.capacity,
+            maxPerUser:  t.maxPerUser,
+            minPerUser:  t.minPerUser || 1,
+            sold:        0,
+            saleStart:   t.saleStart || null,
+            saleEnd:     t.saleEnd || null,
+            description: t.description,
+            refundable:  t.refundable === true || t.refundable === 'true',
+            seatType:    t.seatType || 'general',
+            colourBadge: t.colourBadge || '#E63946',
+            benefits:    parseArray(t.benefits),
+            stadiumSide: t.stadiumSide || 'general'
         }))
     });
 
@@ -134,32 +197,116 @@ export const getEventForEdit = async (eventId, organizerId) => {
 };
 
 
+// ─── Duplicate Event ──────────────────────────────────────────────────────────
+export const duplicateEvent = async (eventId, organizerId) => {
+    const originalEvent = await Event.findOne({ _id: eventId, organizer: organizerId }).lean();
+    if (!originalEvent) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
+
+    const { _id, createdAt, updatedAt, __v, ...eventCopy } = originalEvent;
+    
+    eventCopy.title = `${originalEvent.title} (Copy)`;
+    eventCopy.status = 'draft';
+    eventCopy.isBlocked = false;
+
+    if (eventCopy.tickets && Array.isArray(eventCopy.tickets)) {
+        eventCopy.tickets = eventCopy.tickets.map(t => {
+            const { _id: ticketId, ...tCopy } = t;
+            return { ...tCopy, sold: 0 };
+        });
+    }
+
+    if (eventCopy.schedule && Array.isArray(eventCopy.schedule)) {
+        eventCopy.schedule = eventCopy.schedule.map(s => {
+            const { _id: schedId, ...sCopy } = s;
+            return sCopy;
+        });
+    }
+
+    const newEvent = new Event(eventCopy);
+    return await newEvent.save();
+};
+
+
 // ─── Update Event ─────────────────────────────────────────────────────────────
-// Strategy for tickets on edit:
-//   • Keep existing tiers that already have sold > 0 (protect sold-out data).
-//   • Remove tiers with sold == 0 that are not in the new list.
-//   • Add any brand-new tiers that don't exist yet (matched by name).
 export const updateEvent = async (eventId, organizerId, eventData, newBannerFiles, ticketData, status = 'pending') => {
     const event = await Event.findOne({ _id: eventId, organizer: organizerId });
     if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
 
-    event.title       = eventData.title;
-    event.description = eventData.description;
-    event.category    = eventData.category;
-    event.location    = { address: eventData.address, lat: eventData.lat, lng: eventData.lng };
-    event.startDate   = eventData.startDate;
-    event.startTime   = eventData.startTime;
-    event.endDate     = eventData.endDate;
-    event.endTime     = eventData.endTime;
-    event.isFeatured  = eventData.isFeatured;
-    event.postStartRegistrationLimit = eventData.postStartRegistrationLimit !== undefined ? eventData.postStartRegistrationLimit : null;
+    let parseJSON = (val) => {
+        if (typeof val === 'string') {
+            try { return JSON.parse(val); } catch { return {}; }
+        }
+        return val || {};
+    };
+
+    let parseArray = (val) => {
+        if (Array.isArray(val)) return val;
+        if (typeof val === 'string') {
+            try {
+                const parsed = JSON.parse(val);
+                if (Array.isArray(parsed)) return parsed;
+            } catch {}
+            return val.split(',').map(t => t.trim()).filter(Boolean);
+        }
+        return [];
+    };
+
+    event.title          = eventData.title;
+    event.description    = eventData.description;
+    event.category       = eventData.category;
+    event.subcategory    = eventData.subcategory;
+    event.language       = eventData.language || 'English';
+    event.ageRestriction = eventData.ageRestriction || 'All Ages';
+    event.tags           = parseArray(eventData.tags);
+    event.shortSummary   = eventData.shortSummary;
+    event.visibility     = eventData.visibility || 'public';
+
+    event.location = {
+        isOnline:             eventData.isOnline === true || eventData.isOnline === 'true',
+        onlinePlatform:       eventData.onlinePlatform || null,
+        onlineLink:           eventData.onlineLink,
+        venueName:            eventData.venueName,
+        address:              eventData.address,
+        landmark:             eventData.landmark,
+        city:                 eventData.city,
+        state:                eventData.state,
+        pincode:              eventData.pincode,
+        lat:                  eventData.lat ? parseFloat(eventData.lat) : null,
+        lng:                  eventData.lng ? parseFloat(eventData.lng) : null,
+        parkingAvailable:     eventData.parkingAvailable === true || eventData.parkingAvailable === 'true',
+        wheelchairAccessible: eventData.wheelchairAccessible === true || eventData.wheelchairAccessible === 'true'
+    };
+
+    event.startDate = eventData.startDate;
+    event.startTime = eventData.startTime;
+    event.endDate   = eventData.endDate;
+    event.endTime   = eventData.endTime;
+    event.schedule  = parseArray(eventData.schedule);
+
+    event.isFeatured = eventData.isFeatured === true || eventData.isFeatured === 'true';
+    event.postStartRegistrationLimit = eventData.postStartRegistrationLimit !== undefined && eventData.postStartRegistrationLimit !== '' ? parseInt(eventData.postStartRegistrationLimit, 10) : null;
     
+    if (eventData.thumbnail) event.thumbnail = eventData.thumbnail;
+    if (eventData.galleryImages) event.galleryImages = parseArray(eventData.galleryImages);
+    if (eventData.promoVideo !== undefined) event.promoVideo = eventData.promoVideo;
+
+    if (eventData.aboutEvent !== undefined) event.aboutEvent = eventData.aboutEvent;
+    if (eventData.agenda !== undefined) event.agenda = eventData.agenda;
+    if (eventData.artists !== undefined) event.artists = eventData.artists;
+    if (eventData.guests !== undefined) event.guests = eventData.guests;
+    if (eventData.faqs !== undefined) event.faqs = eventData.faqs;
+    if (eventData.thingsToCarry !== undefined) event.thingsToCarry = eventData.thingsToCarry;
+    if (eventData.notAllowedItems !== undefined) event.notAllowedItems = eventData.notAllowedItems;
+
+    if (eventData.organizerInfo) event.organizerInfo = parseJSON(eventData.organizerInfo);
+    if (eventData.policies) event.policies = parseJSON(eventData.policies);
+
     // Only update status if it's currently draft, or if we explicitly publish it
     if (event.status === 'draft' || status !== 'pending') {
         event.status = status;
     }
 
-    let finalBanners = (eventData.existingBanners || []).filter(b => b); // Remove empty strings
+    let finalBanners = (eventData.existingBanners || []).filter(b => b);
     
     if (newBannerFiles && newBannerFiles.length > 0) {
         const newBanners = newBannerFiles.map(file => file.path);
@@ -167,28 +314,45 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
     }
     event.banners = finalBanners.slice(0, 2);
 
-    // Determine which existing tiers are "protected" (have been sold)
     const soldTiers     = event.tickets.filter(t => t.sold > 0);
     const soldTierNames = new Set(soldTiers.map(t => t.name));
 
-    // Build new tier list:
-    // 1. All incoming tiers that are NOT already sold (fresh / unsold tiers)
-    // 2. Plus all sold tiers that were NOT supplied in new data (keep them intact)
     const incomingNames = new Set(ticketData.map(t => t.name));
-
     const preservedSoldTiers = soldTiers.filter(t => !incomingNames.has(t.name));
 
     const freshTiers = ticketData.map(t => {
-        // If this name matches a sold tier, update capacity/maxPerUser but keep sold count
         const existingSold = soldTiers.find(s => s.name === t.name);
         if (existingSold) {
-            existingSold.price      = t.price;
-            existingSold.capacity   = t.capacity;
-            existingSold.maxPerUser = t.maxPerUser;
+            existingSold.price       = t.price;
+            existingSold.capacity    = t.capacity;
+            existingSold.maxPerUser  = t.maxPerUser;
+            existingSold.minPerUser  = t.minPerUser || 1;
+            existingSold.saleStart   = t.saleStart || null;
+            existingSold.saleEnd     = t.saleEnd || null;
+            existingSold.description = t.description;
+            existingSold.refundable  = t.refundable === true || t.refundable === 'true';
+            existingSold.seatType    = t.seatType || 'general';
+            existingSold.colourBadge = t.colourBadge || '#E63946';
+            existingSold.benefits    = parseArray(t.benefits);
+            existingSold.stadiumSide = t.stadiumSide || 'general';
             return existingSold;
         }
-        // Brand-new tier
-        return { name: t.name, price: t.price, capacity: t.capacity, maxPerUser: t.maxPerUser, sold: 0 };
+        return {
+            name:        t.name,
+            price:       t.price,
+            capacity:    t.capacity,
+            maxPerUser:  t.maxPerUser,
+            minPerUser:  t.minPerUser || 1,
+            sold:        0,
+            saleStart:   t.saleStart || null,
+            saleEnd:     t.saleEnd || null,
+            description: t.description,
+            refundable:  t.refundable === true || t.refundable === 'true',
+            seatType:    t.seatType || 'general',
+            colourBadge: t.colourBadge || '#E63946',
+            benefits:    parseArray(t.benefits),
+            stadiumSide: t.stadiumSide || 'general'
+        };
     });
 
     event.tickets = [...freshTiers, ...preservedSoldTiers];
