@@ -229,19 +229,29 @@
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <div style="width:10px;height:10px;border-radius:50%;background:#2ecc71;"></div>
-                                <span class="text-dim" style="font-size:0.8rem;">Wallet &#8377;<%= (paymentMethodMap.wallet||0).toLocaleString('en-IN') %></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <%# ── Recent Transactions Table ───────────────── %>
-            <div class="glass-premium animate stagger-5" style="border-radius:18px;overflow:hidden;">
-                <div class="d-flex justify-content-between align-items-center p-4" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                                <span class="text-dim" style            <%# ── Transactions Table with Pagination & Filters ── %>
+            <div class="glass-premium animate stagger-5" style="border-radius:18px;overflow:hidden;margin-bottom:2rem;">
+                <div class="d-flex justify-content-between align-items-center p-4 flex-wrap gap-3" style="border-bottom:1px solid rgba(255,255,255,0.06);">
                     <div>
                         <p class="page-label">Transactions</p>
-                        <h5 class="fw-bold m-0">Recent Global Bookings</h5>
+                        <h5 class="fw-bold m-0">Global Bookings</h5>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <div class="position-relative">
+                            <i class="fi fi-rr-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.4);font-size:0.9rem;"></i>
+                            <input type="text" id="txnSearch" class="form-control" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);color:white;padding:6px 12px 6px 36px;border-radius:100px;font-size:0.85rem;min-width:220px;" placeholder="Search attendee, email..." oninput="onTxnFilterChange()">
+                        </div>
+                        <select id="txnStatusFilter" class="form-select" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);color:white;padding:6px 30px 6px 12px;border-radius:100px;font-size:0.85rem;width:auto;" onchange="onTxnFilterChange()">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="on_hold">On Hold</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <select id="txnLimit" class="form-select" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);color:white;padding:6px 30px 6px 12px;border-radius:100px;font-size:0.85rem;width:auto;" onchange="onTxnFilterChange()">
+                            <option value="10">10 / page</option>
+                            <option value="25">25 / page</option>
+                            <option value="50">50 / page</option>
+                        </select>
                     </div>
                 </div>
                 <div style="overflow-x:auto;">
@@ -257,50 +267,14 @@
                             </tr>
                         </thead>
                         <tbody id="globalTxnBody">
-                            <% if(recentTransactions && recentTransactions.length > 0) { %>
-                                <% recentTransactions.forEach(txn => { %>
-                                <tr>
-                                    <td>
-                                        <strong style="color:white;font-size:0.875rem;"><%= txn.eventName %></strong>
-                                    </td>
-                                    <td>
-                                        <div>
-                                            <strong style="color:white;font-size:0.875rem;"><%= txn.userName %></strong>
-                                            <p class="text-dim m-0" style="font-size:0.75rem;"><%= txn.userEmail %></p>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.75);padding:3px 10px;border-radius:100px;font-size:0.78rem;font-weight:600;">
-                                            <%= txn.ticketCount %> ticket<%= txn.ticketCount !== 1 ? 's' : '' %>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <strong style="color:#2ecc71;font-size:0.9rem;">&#8377;<%= txn.amount.toLocaleString('en-IN') %></strong>
-                                    </td>
-                                    <td class="text-dim" style="font-size:0.82rem;">
-                                        <%= new Date(txn.bookingDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %>
-                                    </td>
-                                    <td>
-                                        <% if(txn.status === 'active') { %>
-                                            <span class="status-badge status-approved">Active</span>
-                                        <% } else if(txn.status === 'on_hold') { %>
-                                            <span class="status-badge status-pending">On Hold</span>
-                                        <% } else { %>
-                                            <span class="status-badge status-rejected">Cancelled</span>
-                                        <% } %>
-                                    </td>
-                                </tr>
-                                <% }) %>
-                            <% } else { %>
-                            <tr>
-                                <td colspan="6" class="text-center py-5 text-dim">
-                                    <i class="fi fi-rr-receipt" style="font-size:2rem;opacity:0.3;display:block;margin-bottom:1rem;"></i>
-                                    No transactions yet.
-                                </td>
-                            </tr>
-                            <% } %>
+                            <!-- Injected via JS -->
                         </tbody>
                     </table>
+                </div>
+                <!-- Pagination Footer -->
+                <div id="globalTxnPagination" class="d-flex justify-content-between align-items-center px-4 py-3" style="border-top:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;gap:12px;">
+                </div>
+            </div>le>
                 </div>
                 <!-- Pagination -->
                 <div id="globalTxnPagination" class="d-flex justify-content-between align-items-center px-4 py-3" style="border-top:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;gap:12px;"></div>
@@ -310,46 +284,102 @@
     </div>
 
     <script>
-    // ── Client-Side Table Pagination ─────────────────────────────────────────────
-    function initTablePagination(tbodyId, paginationId, rowsPerPage) {
-        const tbody = document.getElementById(tbodyId);
-        const container = document.getElementById(paginationId);
-        if (!tbody || !container) return;
-        const allRows = Array.from(tbody.querySelectorAll('tr'));
-        if (allRows.length <= rowsPerPage) return;
-        let currentPage = 1;
-        const totalPages = () => Math.ceil(allRows.length / rowsPerPage);
-        function renderPage(page) {
-            currentPage = page;
-            const start = (page - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-            allRows.forEach((row, i) => { row.style.display = (i >= start && i < end) ? '' : 'none'; });
-            renderControls();
-        }
-        function renderControls() {
-            const total = totalPages();
-            const startRow = (currentPage - 1) * rowsPerPage + 1;
-            const endRow = Math.min(currentPage * rowsPerPage, allRows.length);
-            container.innerHTML = `
-                <span style="color:rgba(255,255,255,0.45);font-size:0.83rem;">Showing ${startRow}–${endRow} of ${allRows.length} entries</span>
-                <div class="d-flex align-items-center gap-2">
-                    <button onclick="paginateTo_${tbodyId}(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}
-                        style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:${currentPage===1?'rgba(255,255,255,0.2)':'rgba(255,255,255,0.7)'};border-radius:8px;padding:5px 12px;cursor:${currentPage===1?'default':'pointer'};font-size:0.82rem;">← Prev</button>
-                    ${Array.from({length: total}, (_, i) => i + 1).map(p => `<button onclick="paginateTo_${tbodyId}(${p})" style="background:${p===currentPage?'rgba(99,102,241,0.25)':'rgba(255,255,255,0.05)'};border:1px solid ${p===currentPage?'rgba(99,102,241,0.5)':'rgba(255,255,255,0.1)'};color:${p===currentPage?'#818CF8':'rgba(255,255,255,0.6)'};border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.82rem;min-width:32px;">${p}</button>`).join('')}
-                    <button onclick="paginateTo_${tbodyId}(${currentPage + 1})" ${currentPage === total ? 'disabled' : ''}
-                        style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:${currentPage===total?'rgba(255,255,255,0.2)':'rgba(255,255,255,0.7)'};border-radius:8px;padding:5px 12px;cursor:${currentPage===total?'default':'pointer'};font-size:0.82rem;">Next →</button>
-                </div>
-            `;
-        }
-        window[`paginateTo_${tbodyId}`] = function(page) {
-            const total = totalPages();
-            if (page < 1 || page > total) return;
-            renderPage(page);
-        };
-        renderPage(1);
+    // ── Client-Side Transactions Pagination & Filtering ─────────────────────────
+    const allTransactions = JSON.parse('<%- JSON.stringify(allTransactions || []).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '\\"') %>');
+    let txnCurrentPage = 1;
+    let filteredTxns = [...allTransactions];
+
+    function onTxnFilterChange() {
+        const search = document.getElementById('txnSearch').value.toLowerCase();
+        const status = document.getElementById('txnStatusFilter').value;
+        
+        filteredTxns = allTransactions.filter(txn => {
+            const matchesSearch = !search || 
+                (txn.userName && txn.userName.toLowerCase().includes(search)) || 
+                (txn.userEmail && txn.userEmail.toLowerCase().includes(search)) ||
+                (txn.eventName && txn.eventName.toLowerCase().includes(search));
+            const matchesStatus = status === 'all' || txn.status === status;
+            return matchesSearch && matchesStatus;
+        });
+        
+        txnCurrentPage = 1;
+        renderTxnPage();
     }
 
-    initTablePagination('globalTxnBody', 'globalTxnPagination', 10);
+    function renderTxnPage() {
+        const tbody = document.getElementById('globalTxnBody');
+        const pagination = document.getElementById('globalTxnPagination');
+        const limit = parseInt(document.getElementById('txnLimit').value);
+        
+        if (filteredTxns.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-dim">
+                        <i class="fi fi-rr-receipt" style="font-size:2rem;opacity:0.3;display:block;margin-bottom:1rem;"></i>
+                        No transactions found.
+                    </td>
+                </tr>
+            `;
+            pagination.innerHTML = '';
+            return;
+        }
+
+        const totalPages = Math.ceil(filteredTxns.length / limit);
+        if (txnCurrentPage > totalPages) txnCurrentPage = totalPages;
+        
+        const start = (txnCurrentPage - 1) * limit;
+        const pageData = filteredTxns.slice(start, start + limit);
+        
+        tbody.innerHTML = pageData.map(txn => {
+            let statusHtml = '';
+            if(txn.status === 'active') statusHtml = `<span class="status-badge status-approved">Active</span>`;
+            else if(txn.status === 'on_hold') statusHtml = `<span class="status-badge status-pending">On Hold</span>`;
+            else statusHtml = `<span class="status-badge status-rejected">Cancelled</span>`;
+            
+            return `
+                <tr>
+                    <td><strong style="color:white;font-size:0.875rem;">${txn.eventName}</strong></td>
+                    <td>
+                        <div>
+                            <strong style="color:white;font-size:0.875rem;">${txn.userName}</strong>
+                            <p class="text-dim m-0" style="font-size:0.75rem;">${txn.userEmail}</p>
+                        </div>
+                    </td>
+                    <td>
+                        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.75);padding:3px 10px;border-radius:100px;font-size:0.78rem;font-weight:600;">
+                            ${txn.ticketCount} ticket${txn.ticketCount !== 1 ? 's' : ''}
+                        </span>
+                    </td>
+                    <td><strong style="color:#2ecc71;font-size:0.9rem;">₹${Number(txn.amount).toLocaleString('en-IN')}</strong></td>
+                    <td class="text-dim" style="font-size:0.82rem;">${new Date(txn.bookingDate).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'})}</td>
+                    <td>${statusHtml}</td>
+                </tr>
+            `;
+        }).join('');
+
+        // Pagination controls
+        const startRow = start + 1;
+        const endRow = Math.min(start + limit, filteredTxns.length);
+        
+        pagination.innerHTML = `
+            <span style="color:rgba(255,255,255,0.45);font-size:0.83rem;">Showing ${startRow}–${endRow} of ${filteredTxns.length} entries</span>
+            <div class="d-flex align-items-center gap-2">
+                <button onclick="changeTxnPage(${txnCurrentPage - 1})" ${txnCurrentPage === 1 ? 'disabled' : ''}
+                    style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:${txnCurrentPage===1?'rgba(255,255,255,0.2)':'rgba(255,255,255,0.7)'};border-radius:8px;padding:5px 12px;cursor:${txnCurrentPage===1?'default':'pointer'};font-size:0.82rem;">← Prev</button>
+                <span class="text-dim mx-1" style="font-size:0.85rem;">Page ${txnCurrentPage} of ${totalPages}</span>
+                <button onclick="changeTxnPage(${txnCurrentPage + 1})" ${txnCurrentPage === totalPages ? 'disabled' : ''}
+                    style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:${txnCurrentPage===totalPages?'rgba(255,255,255,0.2)':'rgba(255,255,255,0.7)'};border-radius:8px;padding:5px 12px;cursor:${txnCurrentPage===totalPages?'default':'pointer'};font-size:0.82rem;">Next →</button>
+            </div>
+        `;
+    }
+
+    function changeTxnPage(page) {
+        txnCurrentPage = page;
+        renderTxnPage();
+    }
+
+    // Init table
+    renderTxnPage();
 
     // ── Export Dropdown ──────────────────────────────────────────────────────────
     function toggleExportMenu() {
