@@ -296,7 +296,7 @@
                                 <div class="d-flex flex-column gap-2">
                                 <% event.schedule.forEach(item => { %>
                                     <div class="p-2 rounded" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);font-size:0.85rem;">
-                                        <strong style="color:var(--primary);"><%= item.startTime || '' %> <%= item.endTime ? '- ' + item.endTime : '' %></strong>: <span class="text-white"><%= item.title %></span>
+                                        <strong style="color:var(--primary);"><%= item.startTime ? formatTime12(item.startTime) : '' %> <%= item.endTime ? '- ' + formatTime12(item.endTime) : '' %></strong>: <span class="text-white"><%= item.title %></span>
                                     </div>
                                 <% }) %>
                                 </div>

@@ -126,7 +126,7 @@
                             <% } %>
                             <div class="event-snippet-info">
                                 <h3><%= event.title %></h3>
-                                <p><i class="fi fi-rr-calendar"></i> <%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'}) %> · <%= event.startTime %></p>
+                                <p><i class="fi fi-rr-calendar"></i> <%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'}) %> &middot; <%= formatTime12(event.startTime) %></p>
                                 <p><i class="fi fi-rr-marker"></i> <%= event.location.address %></p>
                             </div>
                         </div>

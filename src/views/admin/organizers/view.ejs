@@ -109,7 +109,7 @@
                                         </td>
                                         <td class="text-dim">
                                             <%= new Date(event.startDate).toLocaleDateString() %><br>
-                                            <small><%= event.startTime %></small>
+                                            <small><%= formatTime12(event.startTime) %></small>
                                         </td>
                                         <td class="text-dim"><%= event.location.address %></td>
                                         <td>

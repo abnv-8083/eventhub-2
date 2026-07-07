@@ -58,14 +58,14 @@
                 <div class="stat-icon"><i class="fi fi-rr-calendar-clock"></i></div>
                 <div>
                     <p class="stat-label mb-0">Start</p>
-                    <p class="stat-value mb-0"><%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %> Â&middot; <%= event.startTime %></p>
+                    <p class="stat-value mb-0"><%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %> &middot; <%= formatTime12(event.startTime) %></p>
                 </div>
             </div>
             <div class="stat-item">
                 <div class="stat-icon"><i class="fi fi-rr-calendar-check"></i></div>
                 <div>
                     <p class="stat-label mb-0">End</p>
-                    <p class="stat-value mb-0"><%= new Date(event.endDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %> Â&middot; <%= event.endTime %></p>
+                    <p class="stat-value mb-0"><%= new Date(event.endDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %> &middot; <%= formatTime12(event.endTime) %></p>
                 </div>
             </div>
             <div class="stat-item" style="flex:2;">
@@ -98,7 +98,7 @@
                                 <% if(item.date) { %>
                                 <div style="font-size: 0.75rem; color: var(--primary); font-weight: 700; text-transform: uppercase;"><%= new Date(item.date).toLocaleDateString(undefined, {month:'short', day:'numeric'}) %></div>
                                 <% } %>
-                                <div style="font-size: 0.9rem; color: white; font-weight: 600;"><%= item.startTime || '' %> <%= item.endTime ? '- ' + item.endTime : '' %></div>
+                                <div style="font-size: 0.9rem; color: white; font-weight: 600;"><%= item.startTime ? formatTime12(item.startTime) : '' %> <%= item.endTime ? '- ' + formatTime12(item.endTime) : '' %></div>
                             </div>
                             <div class="schedule-info">
                                 <h6 class="text-white fw-bold mb-1" style="font-size: 0.95rem;"><%= item.title || 'Event Session' %></h6>
@@ -355,7 +355,7 @@
                                     <span style="font-size: 0.65rem; letter-spacing: 1px;" class="text-dim fw-semibold">SECS</span>
                                 </div>
                             </div>
-                            <p class="text-dim mb-0" style="font-size: 0.85rem;">Sales open on <strong class="text-white"><%= bookingOpenDateObj.toLocaleDateString(undefined, {month:'short', day:'numeric'}) %></strong> at <strong class="text-white"><%= event.bookingOpenTime %></strong></p>
+                            <p class="text-dim mb-0" style="font-size: 0.85rem;">Sales open on <strong class="text-white"><%= bookingOpenDateObj.toLocaleDateString(undefined, {month:'short', day:'numeric'}) %></strong> at <strong class="text-white"><%= formatTime12(event.bookingOpenTime) %></strong></p>
                         </div>
                         <button disabled class="btn btn-secondary w-100 shadow-sm" style="height: 3.2rem; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 1.05rem; font-weight: 600; opacity: 0.6; cursor: not-allowed; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);">
                             <i class="fi fi-rr-lock me-2"></i> Booking Not Open Yet

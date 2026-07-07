@@ -120,7 +120,7 @@
                                     </td>
                                     <td>
                                         <div style="min-width: 150px;">
-                                            <span style="color: white; font-size: 0.9rem;"><%= new Date(event.startDate).toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric'}) %> &bull; <%= event.startTime %></span>
+                                            <span style="color: white; font-size: 0.9rem;"><%= new Date(event.startDate).toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric'}) %> &bull; <%= formatTime12(event.startTime) %></span>
                                             <p class="text-dim m-0 text-truncate" style="font-size: 0.8rem; max-width: 200px;" title="<%= event.location.address %>"><%= event.location.address %></p>
                                         </div>
                                     </td>

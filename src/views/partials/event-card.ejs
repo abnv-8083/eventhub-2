@@ -29,7 +29,7 @@
             <i class="fi fi-rr-calendar"></i>
             <span><%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %></span>
             <span style="opacity:0.4;">&middot;</span>
-            <span><%= event.startTime %></span>
+            <span><%= formatTime12(event.startTime) %></span>
         </div>
         <div class="event-meta-row mb-3" style="overflow:hidden;">
             <i class="fi fi-rr-marker" style="flex-shrink:0;"></i>
