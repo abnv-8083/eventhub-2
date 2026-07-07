@@ -179,18 +179,18 @@
                                 <button onclick="toggleBlockEvent('<%= event._id %>', <%= event.isBlocked %>)" class="action-icon-btn" title="<%= event.isBlocked ? 'Unblock' : 'Block' %>">
                                     <i class="fi <%= event.isBlocked ? 'fi-rr-check' : 'fi-rr-ban' %>"></i>
                                 </button>
-                                <button onclick="cancelEvent('<%= event._id %>')" class="action-icon-btn danger" title="Cancel Event" style="color:#ff9f43;border-color:rgba(255,159,67,0.2);">
-                                    <i class="fi fi-rr-cross-circle"></i>
-                                </button>
                                 <% } %>
-                                <% if(event.status==='completed' || event.status==='sales_closed' || event.status==='cancelled') { %>
+                                <% const totalSold = (event.tickets || []).reduce((acc, t) => acc + (t.sold || 0), 0); %>
+                                <% if(totalSold === 0 || event.status==='cancelled' || event.status==='completed' || event.status==='sales_closed' || event.status==='draft') { %>
+                                <button onclick="deleteEvent('<%= event._id %>')" class="action-icon-btn danger" title="Delete Event">
+                                    <i class="fi fi-rr-trash"></i>
+                                </button>
                                 <button onclick="archiveEvent('<%= event._id %>')" class="action-icon-btn" title="Archive Event" style="color:#9b59b6;border-color:rgba(155,89,182,0.2);">
                                     <i class="fi fi-rr-archive"></i>
                                 </button>
-                                <% } %>
-                                <% if(event.status==='draft') { %>
-                                <button onclick="deleteEvent('<%= event._id %>')" class="action-icon-btn danger" title="Delete Draft">
-                                    <i class="fi fi-rr-trash"></i>
+                                <% } else { %>
+                                <button onclick="cancelEvent('<%= event._id %>')" class="action-icon-btn danger" title="Cancel Bookings & Event (100% Refund)" style="color:#ff9f43;border-color:rgba(255,159,67,0.2);">
+                                    <i class="fi fi-rr-cross-circle"></i>
                                 </button>
                                 <% } %>
                             </div>
@@ -253,8 +253,8 @@
             catch(e){Toast.error(e.response?.data?.message||'Failed');} finally{Loader.hide();}
         }
         async function cancelEvent(id) {
-            const c=await CustomConfirm.show({title:'Cancel Event?',message:'Are you sure you want to cancel this event? All registered attendees will be automatically refunded to their wallet.',confirmText:'Yes, Cancel Event',actionType:'danger',icon:'fi-rr-cross-circle'});
-            if(!c) return; Loader.show('CANCELLING EVENT & REFUNDING...');
+            const c=await CustomConfirm.show({title:'Cancel Event?',message:'Are you sure you want to cancel this event? All registered attendees will automatically receive a 100% refund to their wallet.',confirmText:'Yes, Cancel & 100% Refund',actionType:'danger',icon:'fi-rr-cross-circle'});
+            if(!c) return; Loader.show('CANCELLING EVENT & REFUNDING 100%...');
             try { const r=await axios.post(`/organizer/events/${id}/cancel`); if(r.data.success){Toast.success(r.data.message);setTimeout(()=>location.reload(),1200);} }
             catch(e){Toast.error(e.response?.data?.message||'Failed');} finally{Loader.hide();}
         }

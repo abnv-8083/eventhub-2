@@ -394,10 +394,6 @@
                             <a href="/organizer/events/<%= event._id %>/manage-coupons" class="btn btn-outline-primary">
                                 <i class="fi fi-rr-ticket-alt me-2"></i> Manage Offers
                             </a>
-
-                            <button onclick="cancelEvent('<%= event._id %>')" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;color:#e67e22;border-color:rgba(230,126,34,0.4);">
-                                <i class="fi fi-rr-ban me-2"></i> Cancel Event
-                            </button>
                             <% } %>
 
                             <% if(event.status === 'rejected' || event.status === 'inactive') { %>
@@ -406,15 +402,16 @@
                             </button>
                             <% } %>
 
-                            <% if(event.status === 'completed' || event.status === 'sales_closed' || event.status === 'cancelled') { %>
+                            <% if(totalTicketsSold === 0 || event.status === 'cancelled' || event.status === 'completed' || event.status === 'sales_closed' || event.status === 'draft') { %>
+                            <button onclick="deleteEvent('<%= event._id %>')" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;color:#E63946;border-color:rgba(230,57,70,0.4);">
+                                <i class="fi fi-rr-trash me-2"></i> Delete Event
+                            </button>
                             <button onclick="archiveEvent('<%= event._id %>')" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;color:#9b59b6;border-color:rgba(155,89,182,0.4);">
                                 <i class="fi fi-rr-archive me-2"></i> Archive Event
                             </button>
-                            <% } %>
-
-                            <% if(event.status === 'draft') { %>
-                            <button onclick="deleteEvent('<%= event._id %>')" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;color:#E63946;border-color:rgba(230,57,70,0.4);">
-                                <i class="fi fi-rr-trash me-2"></i> Delete Draft
+                            <% } else { %>
+                            <button onclick="cancelEvent('<%= event._id %>')" class="btn btn-outline w-100" style="border-radius:10px;text-align:left;justify-content:flex-start;color:#e67e22;border-color:rgba(230,126,34,0.4);">
+                                <i class="fi fi-rr-cross-circle me-2"></i> Cancel Bookings & Event (100% Refund)
                             </button>
                             <% } %>
                         </div>
@@ -564,11 +561,11 @@
         async function cancelEvent(id) {
             const confirmed = await CustomConfirm.show({
                 title: 'Cancel Event?',
-                message: 'Are you sure you want to cancel this event? Active attendees will be automatically refunded and notified.',
-                confirmText: 'Yes, Cancel Event', actionType: 'danger', icon: 'fi-rr-ban'
+                message: 'Are you sure you want to cancel this event? All registered attendees will automatically receive a 100% refund directly to their wallet and be notified.',
+                confirmText: 'Yes, Cancel & 100% Refund', actionType: 'danger', icon: 'fi-rr-cross-circle'
             });
             if (!confirmed) return;
-            Loader.show('CANCELLING EVENT...');
+            Loader.show('CANCELLING EVENT & REFUNDING 100%...');
             try {
                 const res = await axios.post(`/organizer/events/${id}/cancel`);
                 if (res.data.success) { Toast.success(res.data.message); setTimeout(() => location.reload(), 1200); }
