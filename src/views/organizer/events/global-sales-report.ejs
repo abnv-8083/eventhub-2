@@ -229,7 +229,14 @@
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <div style="width:10px;height:10px;border-radius:50%;background:#2ecc71;"></div>
-                                <span class="text-dim" style            <%# ── Transactions Table with Pagination & Filters ── %>
+                                <span class="text-dim" style="font-size:0.8rem;">Wallet &#8377;<%= (paymentMethodMap.wallet||0).toLocaleString('en-IN') %></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <%# ── Transactions Table with Pagination & Filters ── %>
             <div class="glass-premium animate stagger-5" style="border-radius:18px;overflow:hidden;margin-bottom:2rem;">
                 <div class="d-flex justify-content-between align-items-center p-4 flex-wrap gap-3" style="border-bottom:1px solid rgba(255,255,255,0.06);">
                     <div>
