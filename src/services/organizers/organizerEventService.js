@@ -259,7 +259,7 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
 
     const totalSold = (event.tickets || []).reduce((acc, t) => acc + t.sold, 0);
     const activeBookingsCount = await Booking.countDocuments({ event: eventId, status: { $ne: 'cancelled' } });
-    const hasRegistrations = totalSold > 0 || activeBookingsCount > 0;
+    const hasRegistrations = totalSold > 0 || activeBookingsCount > 0 || event.status !== 'draft';
 
     event.title          = eventData.title;
     event.description    = eventData.description;
