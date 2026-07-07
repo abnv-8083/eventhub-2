@@ -173,6 +173,8 @@ export const verifyAndBook = async (eventId, userId, { razorpay_order_id, razorp
     }));
     const updatedTickets = await incrementTicketsOrRollback(eventId, validatedItems);
 
+    
+
     // 4. Create Booking
     const newBooking = await Booking.create({
         event:         eventId,
@@ -184,6 +186,8 @@ export const verifyAndBook = async (eventId, userId, { razorpay_order_id, razorp
         paymentId:     razorpay_payment_id,
         coupon:        appliedCoupon ? appliedCoupon._id : undefined
     });
+
+    const totalBooking = newBooking.user
 
     // ✨ INCREMENT THE COUPON USAGE COUNT ✨
     if (appliedCoupon) {
