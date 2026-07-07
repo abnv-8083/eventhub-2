@@ -114,7 +114,17 @@ export const verifyTicket = async (req, res) => {
         }
 
         let query = {};
-        const cleanRef = bookingRef.trim().replace(/^#/, '');
+        let cleanRef = bookingRef.trim().replace(/^#/, '');
+
+        // ─── Handle full QR URL (e.g. https://host/organizer/verify-ticket/<bookingId>) ───
+        try {
+            const parsed = new URL(cleanRef);
+            // Extract last path segment as the booking ID
+            const segments = parsed.pathname.split('/').filter(Boolean);
+            cleanRef = segments[segments.length - 1];
+        } catch (_) {
+            // Not a URL — use cleanRef as-is
+        }
 
         if (mongoose.Types.ObjectId.isValid(cleanRef) && cleanRef.length === 24) {
             query = { _id: cleanRef };

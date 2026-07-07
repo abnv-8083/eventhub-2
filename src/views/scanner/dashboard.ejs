@@ -251,6 +251,83 @@
             cursor: not-allowed;
             transform: none;
         }
+
+        /* ─── Custom Toast Notification ─── */
+        #scannerToast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            z-index: 9999;
+            background: #1F2937;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 18px;
+            padding: 16px 24px 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            max-width: 90vw;
+            min-width: 300px;
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.6);
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #scannerToast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        #scannerToast.toast-error {
+            border-color: rgba(239, 68, 68, 0.4);
+            background: #1c1118;
+        }
+
+        #scannerToast.toast-success {
+            border-color: rgba(16, 185, 129, 0.4);
+            background: #0f1f1a;
+        }
+
+        #scannerToast.toast-info {
+            border-color: rgba(99, 102, 241, 0.4);
+            background: #111827;
+        }
+
+        .toast-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1.2rem;
+        }
+
+        .toast-icon.err { background: rgba(239,68,68,0.2); color: #FCA5A5; }
+        .toast-icon.ok  { background: rgba(16,185,129,0.2); color: #34D399; }
+        .toast-icon.inf { background: rgba(99,102,241,0.2); color: #818CF8; }
+
+        .toast-msg {
+            flex: 1;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #F3F4F6;
+            line-height: 1.4;
+        }
+
+        #toastDismiss {
+            background: none;
+            border: none;
+            color: #6B7280;
+            padding: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: color 0.2s;
+        }
+        #toastDismiss:hover { color: #fff; }
     </style>
 </head>
 <body>
@@ -411,6 +488,15 @@
         </div>
     </div>
 
+    <!-- Custom Toast Notification -->
+    <div id="scannerToast" class="toast-info" role="alert">
+        <div class="toast-icon inf" id="toastIcon"><i class="fi fi-rr-info" id="toastIconEl"></i></div>
+        <div class="toast-msg" id="toastMsg">Message here</div>
+        <button id="toastDismiss" onclick="hideToast()" aria-label="Close">
+            <i class="fi fi-rr-cross"></i>
+        </button>
+    </div>
+
     <!-- Audio Beeps for Scanner Feedback -->
     <audio id="beepSuccess" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
     <audio id="beepError" src="https://assets.mixkit.co/active_storage/sfx/2870/2870-preview.mp3" preload="auto"></audio>
@@ -424,7 +510,47 @@
         let html5QrCode = null;
         let isScanning = false;
         let currentBookingId = null;
+        let toastTimer = null;
         const verificationModal = new bootstrap.Modal(document.getElementById('verificationModal'));
+
+        // ─── Custom Toast System ───────────────────────────────────────────
+        function showToast(message, type = 'error') {
+            const toast = document.getElementById('scannerToast');
+            const msg = document.getElementById('toastMsg');
+            const icon = document.getElementById('toastIcon');
+            const iconEl = document.getElementById('toastIconEl');
+
+            msg.innerText = message;
+
+            // Reset classes
+            toast.className = '';
+            icon.className = 'toast-icon';
+
+            if (type === 'error') {
+                toast.classList.add('toast-error');
+                icon.classList.add('err');
+                iconEl.className = 'fi fi-rr-triangle-warning';
+            } else if (type === 'success') {
+                toast.classList.add('toast-success');
+                icon.classList.add('ok');
+                iconEl.className = 'fi fi-rr-check-circle';
+            } else {
+                toast.classList.add('toast-info');
+                icon.classList.add('inf');
+                iconEl.className = 'fi fi-rr-info';
+            }
+
+            toast.classList.add('show');
+
+            // Auto-hide after 4s
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(hideToast, 4000);
+        }
+
+        function hideToast() {
+            const toast = document.getElementById('scannerToast');
+            toast.classList.remove('show');
+        }
 
         // Sound Beeps
         const playBeep = (type) => {
@@ -493,7 +619,7 @@
                 btnStartCamera.classList.add('d-none');
                 btnStopCamera.classList.remove('d-none');
             }).catch(err => {
-                alert("Could not start camera: " + err);
+                showToast('Could not start camera. Please allow camera access and try again.', 'error');
             });
         });
 
@@ -544,7 +670,7 @@
 
                 if (!data.success) {
                     playBeep('error');
-                    alert(data.message || "Ticket verification failed.");
+                    showToast(data.message || 'Ticket verification failed.', 'error');
                     resumeCamera();
                     return;
                 }
@@ -554,7 +680,7 @@
                 verificationModal.show();
             } catch (err) {
                 playBeep('error');
-                alert("Network error while verifying ticket.");
+                showToast('Network error while verifying ticket. Please try again.', 'error');
                 resumeCamera();
             }
         }
@@ -653,7 +779,7 @@
             });
 
             if (checkInItems.length === 0) {
-                alert("Please select at least 1 ticket quantity to check in.");
+                showToast('Please select at least 1 ticket quantity to check in.', 'info');
                 return;
             }
 
@@ -675,16 +801,17 @@
                 if (data.success) {
                     playBeep('success');
                     verificationModal.hide();
+                    showToast(`✅ Successfully checked in ${data.booking.totalCheckedInThisScan} ticket(s)!`, 'success');
                     // Live stats are updated via Socket.io automatically!
                 } else {
                     playBeep('error');
-                    alert(data.message || "Failed to process check-in.");
+                    showToast(data.message || 'Failed to process check-in.', 'error');
                     btn.disabled = false;
                     btn.innerHTML = `<i class="fi fi-rr-check me-2"></i> Approve Entry & Check In`;
                 }
             } catch (err) {
                 playBeep('error');
-                alert("Network error while executing check-in.");
+                showToast('Network error while executing check-in. Please try again.', 'error');
                 btn.disabled = false;
                 btn.innerHTML = `<i class="fi fi-rr-check me-2"></i> Approve Entry & Check In`;
             }
