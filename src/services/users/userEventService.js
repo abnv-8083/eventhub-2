@@ -32,6 +32,32 @@ export const getFeaturedEvents = async (userId) => {
     }));
 };
 
+// ─── Get Latest Events for Homepage ─────────────────────────────────────────
+export const getLatestEvents = async (userId) => {
+    const events = await Event.find({ status: { $in: ['approved', 'published'] }, isBlocked: false, deleted: { $ne: true } })
+        .populate('organizer', 'fullName')
+        .sort({ createdAt: -1 }) // strictly by newest
+        .limit(5);
+
+    const eventsWithMeta = events.map(ev => {
+        const tickets = ev.tickets || [];
+        const minPrice = tickets.length ? Math.min(...tickets.map(t => t.price)) : 0;
+        const hasAvailability = tickets.some(t => t.sold < t.capacity);
+        return { ...ev.toObject(), category: { name: getCategoryName(ev.category) }, minPrice, hasAvailability };
+    });
+
+    let wishlistIds = new Set();
+    if (userId) {
+        const u = await User.findById(userId).select('wishlist');
+        wishlistIds = new Set((u?.wishlist || []).map(id => id.toString()));
+    }
+
+    return eventsWithMeta.map(ev => ({
+        ...ev,
+        isWishlisted: wishlistIds.has(ev._id.toString())
+    }));
+};
+
 // ─── Browse Events ────────────────────────────────────────────────────────────
 export const browseEvents = async (userId, { search = '', category = 'all', sort = 'newest', page = 1, limit = 12, priceRange = 'all', dateRange = 'all' }) => {
     const skip = (parseInt(page) - 1) * limit;
