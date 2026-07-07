@@ -195,8 +195,10 @@ export const getEventForEdit = async (eventId, organizerId) => {
     const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } });
     if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
 
+    const activeBookingsCount = await Booking.countDocuments({ event: eventId, status: { $ne: 'cancelled' } });
+
     // Return event.tickets directly as the "tickets" variable for the edit form
-    return { event, tickets: event.tickets };
+    return { event, tickets: event.tickets, activeBookingsCount };
 };
 
 
@@ -259,7 +261,7 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
 
     const totalSold = (event.tickets || []).reduce((acc, t) => acc + t.sold, 0);
     const activeBookingsCount = await Booking.countDocuments({ event: eventId, status: { $ne: 'cancelled' } });
-    const hasRegistrations = totalSold > 0 || activeBookingsCount > 0 || event.status !== 'draft';
+    const hasRegistrations = totalSold > 0 || activeBookingsCount > 0;
 
     event.title          = eventData.title;
     event.description    = eventData.description;

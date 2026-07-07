@@ -281,7 +281,7 @@
                     <i class="fi fi-rr-arrow-left me-1"></i> Back to Event
                 </a>
                 <div>
-                    <% const hasSoldTickets = (tickets || []).some(t => (t.sold || 0) > 0) || event.status !== 'draft'; %>
+                    <% const hasSoldTickets = (tickets || []).some(t => (t.sold || 0) > 0) || (typeof activeBookingsCount !== 'undefined' && activeBookingsCount > 0); %>
                     <h3 class="fw-bold m-0" style="font-size: 1.6rem;">Edit Event: <%= event.title %></h3>
                     <p class="text-secondary small m-0 mt-1">Status: <span class="badge bg-secondary"><%= event.status.toUpperCase() %></span> &bull; Make edits across all 9 steps.<%= hasSoldTickets ? ' (🔒 Some fields disabled)' : '' %></p>
                 </div>

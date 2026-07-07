@@ -246,9 +246,9 @@ export const getEventViewPage = async (req, res, next) => {
 // ─── Edit Event Page ──────────────────────────────────────────────────────────
 export const getEditEventPage = async (req, res, next) => {
     try {
-        const { event, tickets } = await organizerEventService.getEventForEdit(req.params.id, req.session.organizer._id);
+        const { event, tickets, activeBookingsCount } = await organizerEventService.getEventForEdit(req.params.id, req.session.organizer._id);
         const categories = await organizerEventService.getActiveCategories();
-        res.render('organizer/events/edit', { title: 'Edit Event', event, categories, tickets });
+        res.render('organizer/events/edit', { title: 'Edit Event', event, categories, tickets, activeBookingsCount });
     } catch (error) {
         next(error);
     }
