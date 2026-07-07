@@ -99,9 +99,8 @@ export const generatePoster = async (req, res) => {
 export const getHomepage = async (req, res, next) => {
     try {
         const userId = req.session?.user?._id;
-        const events = await userEventService.getFeaturedEvents(userId);
         const latestEvents = await userEventService.getLatestEvents(userId);
-        res.render('index', { events, latestEvents });
+        res.render('index', { latestEvents });
     } catch (error) {
         next(error);
     }
