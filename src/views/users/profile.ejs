@@ -195,14 +195,14 @@
                         <div class="d-flex justify-between align-center p-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border);">
                             <div>
                                 <h6 class="fw-bold mb-1" style="font-size: 0.95rem;">Password</h6>
-                                <% if(user.password) { %>
+                                <% if(locals.hasPassword) { %>
                                     <p class="text-dim m-0" style="font-size: 0.85rem;">••••••••••••</p>
                                 <% } else { %>
                                     <p class="text-warning m-0" style="font-size: 0.85rem; color: #f1c40f;">Not set</p>
                                 <% } %>
                             </div>
                             <button type="button" class="btn btn-outline btn-sm px-3" onclick="openModal('passwordModal')">
-                                <%= user.password ? 'Edit' : 'Add' %>
+                                <%= locals.hasPassword ? 'Edit' : 'Add' %>
                             </button>
                         </div>
                         <% } %>
@@ -270,17 +270,17 @@
     <div class="modal-overlay" id="passwordModal">
         <div class="modal-container">
             <div class="modal-header">
-                <h5 class="fw-bold m-0 text-white"><%= user.password ? 'Update Password' : 'Add Password' %></h5>
+                <h5 class="fw-bold m-0 text-white"><%= locals.hasPassword ? 'Update Password' : 'Add Password' %></h5>
                 <i class="fi fi-rr-cross modal-close" onclick="closeModal('passwordModal')"></i>
             </div>
             <form id="passwordUpdateForm" novalidate>
                 <div class="modal-body">
                     
                     <!-- Send the action to the backend -->
-                    <input type="hidden" name="action" value="<%= user.password ? 'update' : 'add' %>">
+                    <input type="hidden" name="action" value="<%= locals.hasPassword ? 'update' : 'add' %>">
                     
                     <!-- Only render Current Password if they have a password to verify -->
-                    <% if(user.password) { %>
+                    <% if(locals.hasPassword) { %>
                     <div class="form-floating password-group mb-4">
                         <input type="password" name="currentPassword" class="form-control input" id="currentPassword" placeholder=" " data-rule="required">
                         <label for="currentPassword">Current Password</label>
@@ -308,7 +308,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn text-dim" style="background: transparent;" onclick="closeModal('passwordModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><%= user.password ? 'Save Password' : 'Create Password' %></button>
+                    <button type="submit" class="btn btn-primary"><%= locals.hasPassword ? 'Save Password' : 'Create Password' %></button>
                 </div>
             </form>
         </div>

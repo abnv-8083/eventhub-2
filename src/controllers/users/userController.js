@@ -132,7 +132,9 @@ export const getCalendar = async (req, res, next) => {
 export const getUserProfile = async (req, res, next) => {
     try {
         const data = await userDashboardService.getDashboardData(req.session.user._id);
-        res.render('users/profile', { title: 'My Profile', calendarEvents: data.calendarEvents });
+        const userWithPassword = await import('../../models/users/user.js').then(m => m.default.findById(req.session.user._id).select('+password'));
+        const hasPassword = !!(userWithPassword && userWithPassword.password);
+        res.render('users/profile', { title: 'My Profile', calendarEvents: data.calendarEvents, hasPassword });
     } catch (error) {
         next(error);
     }

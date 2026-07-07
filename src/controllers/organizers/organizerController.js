@@ -65,9 +65,12 @@ export const deleteNotification = async (req, res, next) => {
 // ─── Profile Management ───────────────────────────────────────────────────────
 export const getProfile = async (req, res, next) => {
     try {
+        const userWithPassword = await import('../../models/users/user.js').then(m => m.default.findById(req.session.organizer._id).select('+password'));
+        const hasPassword = !!(userWithPassword && userWithPassword.password);
         res.render('organizer/profile', {
             title: 'Organizer Profile',
-            organizer: req.session.organizer
+            organizer: req.session.organizer,
+            hasPassword
         });
     } catch (error) {
         next(error);
