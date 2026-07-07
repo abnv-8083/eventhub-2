@@ -514,7 +514,7 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Pincode</label>
-                                        <input type="text" class="form-control" name="pincode" id="venuePincode" value="<%= event.location?.pincode || '' %>">
+                                        <input type="text" class="form-control" name="pincode" id="venuePincode" value="<%= event.location?.pincode || '' %>" pattern="^[1-9][0-9]{5}$" title="Please enter a valid 6-digit Indian pincode (e.g. 400051, cannot start with 0)" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6)">
                                     </div>
                                     <div class="col-md-6 d-flex align-items-center gap-3 pt-3">
                                         <div class="form-check form-switch">
@@ -1120,6 +1120,21 @@
             if (!valid) {
                 Toast.error('Please fill in all required fields marked with * before advancing.');
                 return false;
+            }
+
+            if (currentStep === 2) {
+                const isOnline = document.getElementById('typeOnline')?.checked;
+                if (!isOnline) {
+                    const pincodeEl = document.getElementById('venuePincode');
+                    const pinVal = pincodeEl?.value?.trim();
+                    if (pinVal && !/^[1-9][0-9]{5}$/.test(pinVal)) {
+                        Toast.error('Please enter a valid 6-digit Indian Pincode (e.g. 400051, cannot start with 0).');
+                        pincodeEl?.classList.add('is-invalid');
+                        return false;
+                    } else if (pincodeEl) {
+                        pincodeEl.classList.remove('is-invalid');
+                    }
+                }
             }
 
             if (currentStep === 3) {

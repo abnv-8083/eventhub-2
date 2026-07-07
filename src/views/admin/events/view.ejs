@@ -118,54 +118,86 @@
                 </div>
             </div>
 
-            <!-- ── Schedule & Venue + Organizer ────────────────────────── -->
+            <!-- ── Row 1: Event Basics & Organizer ───────────────────────── -->
             <div class="row g-4 mb-4 animate stagger-3">
-
-                <!-- Schedule & Venue -->
+                <!-- Event Basics & Meta -->
                 <div class="col-lg-6 d-flex flex-column">
                     <div class="ev-detail-card flex-grow-1">
                         <div class="ev-detail-card-title">
-                            <i class="fi fi-rr-calendar"></i> Schedule &amp; Venue
+                            <i class="fi fi-rr-info"></i> Event Overview &amp; Meta
                         </div>
                         <div class="ev-detail-row">
                             <div class="ev-detail-item">
-                                <div class="ev-detail-item-icon"><i class="fi fi-rr-play"></i></div>
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-category"></i></div>
                                 <div>
-                                    <div class="ev-detail-label">Starts</div>
+                                    <div class="ev-detail-label">Category &amp; Subcategory</div>
                                     <div class="ev-detail-value">
-                                        <%= new Date(event.startDate).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'long', year:'numeric' }) %>
-                                        &nbsp;·&nbsp;<strong><%= formatTime12(event.startTime) %></strong>
+                                        <strong><%= typeof event.category === 'object' && event.category ? event.category.name : (event.category || 'Uncategorised') %></strong>
+                                        <%= event.subcategory ? ' · ' + event.subcategory : '' %>
                                     </div>
                                 </div>
                             </div>
                             <div class="ev-detail-item">
-                                <div class="ev-detail-item-icon"><i class="fi fi-rr-flag-checkered"></i></div>
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-language"></i></div>
                                 <div>
-                                    <div class="ev-detail-label">Ends</div>
+                                    <div class="ev-detail-label">Language &amp; Age Restriction</div>
                                     <div class="ev-detail-value">
-                                        <%= new Date(event.endDate).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'long', year:'numeric' }) %>
-                                        &nbsp;·&nbsp;<strong><%= formatTime12(event.endTime) %></strong>
+                                        <%= event.language || 'English' %> &nbsp;·&nbsp;
+                                        <span class="badge bg-secondary"><%= event.ageRestriction || 'All Ages' %></span>
                                     </div>
                                 </div>
                             </div>
                             <div class="ev-detail-item">
-                                <div class="ev-detail-item-icon"><i class="fi fi-rr-marker"></i></div>
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-eye"></i></div>
                                 <div>
-                                    <div class="ev-detail-label">Venue</div>
-                                    <div class="ev-detail-value"><%= event.location.address %></div>
+                                    <div class="ev-detail-label">Visibility</div>
+                                    <div class="ev-detail-value">
+                                        <span class="badge <%= event.visibility === 'public' ? 'bg-success' : 'bg-warning text-dark' %>">
+                                            <%= event.visibility ? event.visibility.toUpperCase() : 'PUBLIC' %>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-tags"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Tags</div>
+                                    <div class="ev-detail-value">
+                                        <% if (event.tags && event.tags.length > 0) { %>
+                                            <% event.tags.forEach(tag => { %>
+                                                <span class="badge bg-dark border border-secondary me-1 mb-1"><%= tag %></span>
+                                            <% }) %>
+                                        <% } else { %>
+                                            <span class="text-dim small">No tags defined</span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-document-signed"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Short Summary</div>
+                                    <div class="ev-detail-value small text-light"><%= event.shortSummary || 'No short summary provided.' %></div>
+                                </div>
+                            </div>
+                            <% if (event.postStartRegistrationLimit !== null && event.postStartRegistrationLimit !== undefined) { %>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-alarm-clock"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Late Registration Limit</div>
+                                    <div class="ev-detail-value"><%= event.postStartRegistrationLimit %> minutes after start</div>
+                                </div>
+                            </div>
+                            <% } %>
                         </div>
-                        <!-- Mini Map -->
-                        <div class="ev-map-preview" id="adminEventMap"></div>
                     </div>
                 </div>
 
-                <!-- Organizer -->
+                <!-- Organizer & Brand Info -->
                 <div class="col-lg-6 d-flex flex-column">
                     <div class="ev-detail-card flex-grow-1">
                         <div class="ev-detail-card-title">
-                            <i class="fi fi-rr-building"></i> Organizer
+                            <i class="fi fi-rr-building"></i> Organizer &amp; Brand
                         </div>
                         <!-- Organizer identity -->
                         <div class="d-flex align-items-center gap-3 mb-4 pb-4" style="border-bottom: 1px solid rgba(255,255,255,0.06);">
@@ -216,43 +248,205 @@
                                     </div>
                                 </div>
                             </div>
+                            <% if (event.organizerInfo && (event.organizerInfo.name || event.organizerInfo.supportEmail || event.organizerInfo.website || event.organizerInfo.supportPhone)) { %>
+                            <div class="mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
+                                <div class="ev-detail-label mb-2" style="color: var(--primary);">Brand Override / Support Contact</div>
+                                <div class="small text-light">
+                                    <% if (event.organizerInfo.name) { %><div><strong>Brand:</strong> <%= event.organizerInfo.name %></div><% } %>
+                                    <% if (event.organizerInfo.supportEmail) { %><div><strong>Support Email:</strong> <%= event.organizerInfo.supportEmail %></div><% } %>
+                                    <% if (event.organizerInfo.supportPhone) { %><div><strong>Support Phone:</strong> <%= event.organizerInfo.supportPhone %></div><% } %>
+                                    <% if (event.organizerInfo.website) { %><div><strong>Website:</strong> <a href="<%= event.organizerInfo.website %>" target="_blank" class="text-primary"><%= event.organizerInfo.website %></a></div><% } %>
+                                    <% if (event.organizerInfo.instagram || event.organizerInfo.facebook || event.organizerInfo.twitter) { %>
+                                    <div class="mt-1 d-flex gap-2">
+                                        <% if (event.organizerInfo.instagram) { %><a href="<%= event.organizerInfo.instagram %>" target="_blank" class="text-secondary"><i class="fi fi-brands-instagram"></i></a><% } %>
+                                        <% if (event.organizerInfo.facebook) { %><a href="<%= event.organizerInfo.facebook %>" target="_blank" class="text-secondary"><i class="fi fi-brands-facebook"></i></a><% } %>
+                                        <% if (event.organizerInfo.twitter) { %><a href="<%= event.organizerInfo.twitter %>" target="_blank" class="text-secondary"><i class="fi fi-brands-twitter"></i></a><% } %>
+                                    </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <% } %>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ── Description ─────────────────────────────────────────── -->
-            <div class="ev-detail-card mb-4 animate stagger-3">
-                <div class="ev-detail-card-title"><i class="fi fi-rr-document"></i> Event Description</div>
-                <p class="ev-description-text m-0"><%= event.description %></p>
+            <!-- ── Row 2: Schedule & Timings + Venue & Location ─────────── -->
+            <div class="row g-4 mb-4 animate stagger-3">
+                <!-- Schedule & Timings -->
+                <div class="col-lg-6 d-flex flex-column">
+                    <div class="ev-detail-card flex-grow-1">
+                        <div class="ev-detail-card-title">
+                            <i class="fi fi-rr-calendar-clock"></i> Schedule &amp; Timings
+                        </div>
+                        <div class="ev-detail-row">
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-play"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Starts</div>
+                                    <div class="ev-detail-value">
+                                        <%= event.startDate ? new Date(event.startDate).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'long', year:'numeric' }) : 'N/A' %>
+                                        &nbsp;·&nbsp;<strong><%= formatTime12(event.startTime) %></strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-flag-checkered"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Ends</div>
+                                    <div class="ev-detail-value">
+                                        <%= event.endDate ? new Date(event.endDate).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'long', year:'numeric' }) : 'N/A' %>
+                                        &nbsp;·&nbsp;<strong><%= formatTime12(event.endTime) %></strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-door-open"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Doors Open &amp; Booking Windows</div>
+                                    <div class="ev-detail-value small">
+                                        <div><strong>Doors Open:</strong> <%= event.doorsOpenTime ? formatTime12(event.doorsOpenTime) : 'Not specified' %></div>
+                                        <div><strong>Booking Opens:</strong> <%= event.bookingOpenTime ? formatTime12(event.bookingOpenTime) : 'Immediate' %></div>
+                                        <div><strong>Booking Closes:</strong> <%= event.bookingCloseTime ? formatTime12(event.bookingCloseTime) : 'At Event End' %></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <% if (event.schedule && event.schedule.length > 0) { %>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-list-check"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Additional Day Schedules (<%= event.schedule.length %>)</div>
+                                    <div class="ev-detail-value small">
+                                        <% event.schedule.forEach((slot, idx) => { %>
+                                            <div class="mb-1 pb-1" style="border-bottom: 1px dashed rgba(255,255,255,0.05);">
+                                                <strong>Day <%= idx + 2 %>:</strong> <%= slot.date ? new Date(slot.date).toLocaleDateString() : 'N/A' %>
+                                                (<%= formatTime12(slot.startTime) %> - <%= formatTime12(slot.endTime) %>)
+                                            </div>
+                                        <% }) %>
+                                    </div>
+                                </div>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Venue & Location -->
+                <div class="col-lg-6 d-flex flex-column">
+                    <div class="ev-detail-card flex-grow-1">
+                        <div class="ev-detail-card-title">
+                            <i class="fi fi-rr-marker"></i> Venue &amp; Location
+                        </div>
+                        <div class="ev-detail-row">
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-globe"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Event Type</div>
+                                    <div class="ev-detail-value">
+                                        <% if (event.location?.isOnline) { %>
+                                            <span class="badge bg-info text-dark">🌐 Online Event (<%= event.location.onlinePlatform || 'Custom Link' %>)</span>
+                                        <% } else { %>
+                                            <span class="badge bg-primary">🏢 Offline Physical Venue</span>
+                                            <% if (event.venueLayout) { %>
+                                                <span class="badge bg-dark border border-secondary ms-1">Layout: <%= event.venueLayout.toUpperCase() %></span>
+                                            <% } %>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                            <% if (event.location?.isOnline) { %>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-link"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Stream URL</div>
+                                    <div class="ev-detail-value">
+                                        <% if (event.location.onlineLink) { %>
+                                            <a href="<%= event.location.onlineLink %>" target="_blank" class="text-primary"><%= event.location.onlineLink %></a>
+                                        <% } else { %>
+                                            <span class="text-dim small">Link will be provided by organizer</span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                            <% } else { %>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-map-marker-home"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Venue Address</div>
+                                    <div class="ev-detail-value">
+                                        <strong><%= event.location?.venueName || '' %></strong><br>
+                                        <%= event.location?.address || '' %><br>
+                                        <% if (event.location?.landmark) { %><span class="text-dim small">Landmark: <%= event.location.landmark %></span><br><% } %>
+                                        <%= event.location?.city || '' %>, <%= event.location?.state || '' %> - <strong><%= event.location?.pincode || '' %></strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-sparkles"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Amenities</div>
+                                    <div class="ev-detail-value d-flex gap-2">
+                                        <span class="badge <%= event.location?.parkingAvailable ? 'bg-success' : 'bg-dark text-secondary border' %>">🚗 Parking: <%= event.location?.parkingAvailable ? 'Yes' : 'No' %></span>
+                                        <span class="badge <%= event.location?.wheelchairAccessible ? 'bg-success' : 'bg-dark text-secondary border' %>">♿ Wheelchair: <%= event.location?.wheelchairAccessible ? 'Yes' : 'No' %></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Mini Map -->
+                            <div class="ev-map-preview" id="adminEventMap"></div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- ── Ticket Tiers ─────────────────────────────────────────── -->
+            <!-- ── Row 3: Ticket Tiers ───────────────────────────────────── -->
             <div class="ev-detail-card mb-4 animate stagger-4">
                 <div class="d-flex align-items-center justify-content-between mb-4" style="flex-wrap: wrap; gap: 0.5rem;">
                     <div class="ev-detail-card-title m-0">
-                        <i class="fi fi-rr-ticket"></i> Ticket Tiers (<%= event.tickets.length %>)
+                        <i class="fi fi-rr-ticket"></i> Ticket Tiers Configuration (<%= (event.tickets || []).length %>)
                     </div>
                     <span class="text-dim" style="font-size: 0.78rem;">
-                        Total capacity: <strong style="color: rgba(255,255,255,0.6);"><%= event.tickets.reduce((s, t) => s + t.capacity, 0).toLocaleString('en-IN') %></strong> seats
+                        Total capacity: <strong style="color: rgba(255,255,255,0.6);"><%= (event.tickets || []).reduce((s, t) => s + t.capacity, 0).toLocaleString('en-IN') %></strong> seats
                     </span>
                 </div>
                 <% if(event.tickets && event.tickets.length > 0) { %>
                 <div class="d-flex flex-column gap-3">
                     <% event.tickets.forEach((ticket, i) => { %>
-                    <div class="ev-ticket-card">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="ev-ticket-badge">T<%= i + 1 %></div>
+                    <div class="ev-ticket-card d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 p-3">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="ev-ticket-badge" style="background: <%= ticket.colourBadge || '#E63946' %>33; color: <%= ticket.colourBadge || '#E63946' %>;">T<%= i + 1 %></div>
                             <div>
-                                <div class="ev-ticket-name"><%= ticket.name %></div>
-                                <div class="ev-ticket-meta">
-                                    <i class="fi fi-rr-users me-1"></i>Capacity: <%= ticket.capacity.toLocaleString('en-IN') %>
-                                    &nbsp;&bull;&nbsp;
-                                    <i class="fi fi-rr-user me-1"></i>Max/user: <%= ticket.maxPerUser %>
+                                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                    <span class="ev-ticket-name"><%= ticket.name %></span>
+                                    <span class="badge bg-dark border border-secondary small"><%= ticket.seatType ? ticket.seatType.toUpperCase() : 'GENERAL' %></span>
+                                    <% if (ticket.stadiumSide && ticket.stadiumSide !== 'general') { %>
+                                        <span class="badge bg-info text-dark small">Side: <%= ticket.stadiumSide.toUpperCase() %></span>
+                                    <% } %>
+                                    <% if (ticket.refundable) { %>
+                                        <span class="badge bg-success small">✅ Refundable</span>
+                                    <% } %>
                                 </div>
+                                <div class="ev-ticket-meta mb-2">
+                                    <i class="fi fi-rr-users me-1"></i>Capacity: <strong><%= ticket.capacity.toLocaleString('en-IN') %></strong> (Sold: <%= ticket.sold || 0 %>)
+                                    &nbsp;&bull;&nbsp;
+                                    <i class="fi fi-rr-user me-1"></i>Min/Max per user: <strong><%= ticket.minPerUser || 1 %> - <%= ticket.maxPerUser %></strong>
+                                    <% if (ticket.saleStart || ticket.saleEnd) { %>
+                                        &nbsp;&bull;&nbsp; <i class="fi fi-rr-calendar me-1"></i>Sale: <%= ticket.saleStart ? new Date(ticket.saleStart).toLocaleDateString() : 'Now' %> - <%= ticket.saleEnd ? new Date(ticket.saleEnd).toLocaleDateString() : 'Event End' %>
+                                    <% } %>
+                                </div>
+                                <% if (ticket.description) { %>
+                                    <div class="small text-light mb-2"><%= ticket.description %></div>
+                                <% } %>
+                                <% if (ticket.benefits && ticket.benefits.length > 0) { %>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <% ticket.benefits.forEach(b => { %>
+                                            <span class="badge" style="background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); font-size: 0.72rem;">✨ <%= b %></span>
+                                        <% }) %>
+                                    </div>
+                                <% } %>
                             </div>
                         </div>
-                        <div class="ev-ticket-price <%= ticket.price === 0 ? 'free' : '' %>">
+                        <div class="ev-ticket-price ms-md-auto <%= ticket.price === 0 ? 'free' : '' %>">
                             <%= ticket.price === 0 ? 'FREE' : '₹' + ticket.price.toLocaleString('en-IN') %>
                         </div>
                     </div>
@@ -263,20 +457,179 @@
                 <% } %>
             </div>
 
-            <!-- ── Banner Gallery ───────────────────────────────────────── -->
-            <% if(event.banners && event.banners.length > 0) { %>
-            <div class="ev-detail-card mb-4 animate stagger-4">
-                <div class="ev-detail-card-title"><i class="fi fi-rr-picture"></i> Event Banners</div>
-                <div class="ev-banner-grid">
-                    <% event.banners.forEach((banner, i) => { %>
-                    <div class="ev-banner-thumb" onclick="openLightbox('<%= banner %>')" title="Click to enlarge">
-                        <img src="<%= banner %>" alt="Banner <%= i + 1 %>">
+            <!-- ── Row 4: Description & Rich Sections + Policies ─────────── -->
+            <div class="row g-4 mb-4 animate stagger-4">
+                <!-- Description & Rich Sections -->
+                <div class="col-lg-6 d-flex flex-column">
+                    <div class="ev-detail-card flex-grow-1">
+                        <div class="ev-detail-card-title"><i class="fi fi-rr-document"></i> Description &amp; Event Details</div>
+                        <div class="mb-4">
+                            <div class="ev-detail-label mb-2">Main Description</div>
+                            <p class="ev-description-text m-0"><%= event.description || 'No description provided.' %></p>
+                        </div>
+                        <% if (event.aboutEvent) { %>
+                        <div class="mb-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
+                            <div class="ev-detail-label mb-1">About Event</div>
+                            <div class="small text-light" style="white-space: pre-wrap;"><%= event.aboutEvent %></div>
+                        </div>
+                        <% } %>
+                        <% if (event.agenda) { %>
+                        <div class="mb-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
+                            <div class="ev-detail-label mb-1">Agenda / Schedule Breakdown</div>
+                            <div class="small text-light" style="white-space: pre-wrap;"><%= event.agenda %></div>
+                        </div>
+                        <% } %>
+                        <% if (event.artists) { %>
+                        <div class="mb-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
+                            <div class="ev-detail-label mb-1">Artists / Performers</div>
+                            <div class="small text-light" style="white-space: pre-wrap;"><%= event.artists %></div>
+                        </div>
+                        <% } %>
+                        <% if (event.guests) { %>
+                        <div class="mb-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
+                            <div class="ev-detail-label mb-1">Special Guests / Speakers</div>
+                            <div class="small text-light" style="white-space: pre-wrap;"><%= event.guests %></div>
+                        </div>
+                        <% } %>
+                        <% if (event.faqs) { %>
+                        <div class="mb-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
+                            <div class="ev-detail-label mb-1">FAQs</div>
+                            <div class="small text-light" style="white-space: pre-wrap;"><%= event.faqs %></div>
+                        </div>
+                        <% } %>
+                        <% if (event.thingsToCarry || event.notAllowedItems) { %>
+                        <div class="row g-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
+                            <% if (event.thingsToCarry) { %>
+                            <div class="col-md-6">
+                                <div class="ev-detail-label mb-1 text-success">✅ Things to Carry</div>
+                                <div class="small text-light" style="white-space: pre-wrap;"><%= event.thingsToCarry %></div>
+                            </div>
+                            <% } %>
+                            <% if (event.notAllowedItems) { %>
+                            <div class="col-md-6">
+                                <div class="ev-detail-label mb-1 text-danger">🚫 Prohibited Items</div>
+                                <div class="small text-light" style="white-space: pre-wrap;"><%= event.notAllowedItems %></div>
+                            </div>
+                            <% } %>
+                        </div>
+                        <% } %>
                     </div>
-                    <% }) %>
                 </div>
-                <p class="text-dim small mt-3 mb-0"><i class="fi fi-rr-zoom-in me-1"></i>Click a banner to view full size.</p>
+
+                <!-- Policies & Guidelines -->
+                <div class="col-lg-6 d-flex flex-column">
+                    <div class="ev-detail-card flex-grow-1">
+                        <div class="ev-detail-card-title"><i class="fi fi-rr-shield-check"></i> Policies &amp; Guidelines</div>
+                        <div class="ev-detail-row">
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-refresh"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Cancellation &amp; Refund Policy</div>
+                                    <div class="ev-detail-value">
+                                        <% if (event.policies?.cancellation === '100_before_48') { %>
+                                            <span class="badge bg-success">✅ 100% Refund (Before 48h)</span>
+                                        <% } else if (event.policies?.cancellation === 'partial') { %>
+                                            <span class="badge bg-warning text-dark">⚠️ Partial Refund</span>
+                                        <% } else { %>
+                                            <span class="badge bg-danger">🚫 Non-Refundable</span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-camera"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Photography Consent</div>
+                                    <div class="ev-detail-value">
+                                        <%= event.policies?.photographyConsent !== false ? '✅ Consent Granted / Permitted' : '❌ No Photography Permitted' %>
+                                    </div>
+                                </div>
+                            </div>
+                            <% if (event.policies?.terms) { %>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-file-check"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Terms &amp; Conditions</div>
+                                    <div class="ev-detail-value small text-light" style="max-height: 100px; overflow-y: auto; white-space: pre-wrap;"><%= event.policies.terms %></div>
+                                </div>
+                            </div>
+                            <% } %>
+                            <% if (event.policies?.privacyPolicy) { %>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-lock"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Privacy Policy</div>
+                                    <div class="ev-detail-value small text-light" style="max-height: 100px; overflow-y: auto; white-space: pre-wrap;"><%= event.policies.privacyPolicy %></div>
+                                </div>
+                            </div>
+                            <% } %>
+                            <% if (event.policies?.covidGuidelines) { %>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-shield-plus"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">COVID / Health Guidelines</div>
+                                    <div class="ev-detail-value small text-light"><%= event.policies.covidGuidelines %></div>
+                                </div>
+                            </div>
+                            <% } %>
+                            <% if (event.policies?.foodPolicy || event.policies?.parkingPolicy || event.policies?.childrenPolicy) { %>
+                            <div class="ev-detail-item">
+                                <div class="ev-detail-item-icon"><i class="fi fi-rr-info"></i></div>
+                                <div>
+                                    <div class="ev-detail-label">Other Facility Policies</div>
+                                    <div class="ev-detail-value small text-light">
+                                        <% if (event.policies.foodPolicy) { %><div><strong>Food:</strong> <%= event.policies.foodPolicy %></div><% } %>
+                                        <% if (event.policies.parkingPolicy) { %><div><strong>Parking:</strong> <%= event.policies.parkingPolicy %></div><% } %>
+                                        <% if (event.policies.childrenPolicy) { %><div><strong>Children:</strong> <%= event.policies.childrenPolicy %></div><% } %>
+                                    </div>
+                                </div>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <% } %>
+
+            <!-- ── Row 5: Media, Banners & Gallery ───────────────────────── -->
+            <div class="ev-detail-card mb-4 animate stagger-4">
+                <div class="ev-detail-card-title"><i class="fi fi-rr-picture"></i> Media, Banners &amp; Gallery</div>
+                <div class="row g-4">
+                    <% if(event.banners && event.banners.length > 0) { %>
+                    <div class="col-md-6">
+                        <div class="ev-detail-label mb-2">Main Banners (<%= event.banners.length %>)</div>
+                        <div class="ev-banner-grid">
+                            <% event.banners.forEach((banner, i) => { %>
+                            <div class="ev-banner-thumb" onclick="openLightbox('<%= banner %>')" title="Click to enlarge">
+                                <img src="<%= banner %>" alt="Banner <%= i + 1 %>">
+                            </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                    <% } %>
+                    <% if(event.galleryImages && event.galleryImages.length > 0) { %>
+                    <div class="col-md-6">
+                        <div class="ev-detail-label mb-2">Gallery Images (<%= event.galleryImages.length %>)</div>
+                        <div class="ev-banner-grid">
+                            <% event.galleryImages.forEach((img, i) => { %>
+                            <div class="ev-banner-thumb" onclick="openLightbox('<%= img %>')" title="Click to enlarge">
+                                <img src="<%= img %>" alt="Gallery <%= i + 1 %>">
+                            </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                    <% } %>
+                    <% if(event.promoVideo) { %>
+                    <div class="col-12 pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
+                        <div class="ev-detail-label mb-2">Promo Video</div>
+                        <a href="<%= event.promoVideo %>" target="_blank" class="btn btn-outline-light btn-sm"><i class="fi fi-rr-play-alt me-2"></i>Watch Promo Video</a>
+                    </div>
+                    <% } %>
+                    <% if ((!event.banners || event.banners.length === 0) && (!event.galleryImages || event.galleryImages.length === 0) && !event.promoVideo) { %>
+                    <div class="col-12"><p class="text-dim m-0 small">No media files or banners uploaded.</p></div>
+                    <% } %>
+                </div>
+                <p class="text-dim small mt-3 mb-0"><i class="fi fi-rr-zoom-in me-1"></i>Click any image to view full size.</p>
+            </div>
 
             <!-- ── Sticky Action Bar ────────────────────────────────────── -->
             <div class="ev-action-bar animate stagger-4">
@@ -331,42 +684,44 @@
 
     <script>
         // ── Mini Map (read-only) ────────────────────────────────────────────────
-        const eventLat = <%= event.location.lat %>;
-        const eventLng = <%= event.location.lng %>;
+        const isOnlineEvent = <%= event.location?.isOnline ? 'true' : 'false' %>;
+        const eventLat = <%= event.location?.lat || 0 %>;
+        const eventLng = <%= event.location?.lng || 0 %>;
 
-        const map = L.map('adminEventMap', {
-            zoomControl: false,
-            scrollWheelZoom: false,
-            dragging: false,
-            doubleClickZoom: false,
-            boxZoom: false,
-            keyboard: false,
-            touchZoom: false
-        }).setView([eventLat, eventLng], 15);
+        if (!isOnlineEvent && eventLat && eventLng && document.getElementById('adminEventMap')) {
+            const map = L.map('adminEventMap', {
+                zoomControl: false,
+                scrollWheelZoom: false,
+                dragging: false,
+                doubleClickZoom: false,
+                boxZoom: false,
+                keyboard: false,
+                touchZoom: false
+            }).setView([eventLat, eventLng], 15);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 20
-        }).addTo(map);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(map);
 
-        const pinIcon = L.divIcon({
-            className: '',
-            html: `<div style="
-                width: 28px; height: 28px;
-                border-radius: 50% 50% 50% 0;
-                background: var(--primary);
-                transform: rotate(-45deg);
-                border: 2px solid rgba(255,255,255,0.9);
-                box-shadow: 0 4px 14px rgba(230,57,70,0.55);
-            "></div>`,
-            iconSize: [28, 28],
-            iconAnchor: [14, 28]
-        });
-        L.marker([eventLat, eventLng], { icon: pinIcon }).addTo(map);
+            const pinIcon = L.divIcon({
+                className: '',
+                html: `<div style="
+                    width: 28px; height: 28px;
+                    border-radius: 50% 50% 50% 0;
+                    background: var(--primary);
+                    transform: rotate(-45deg);
+                    border: 2px solid rgba(255,255,255,0.9);
+                    box-shadow: 0 4px 14px rgba(230,57,70,0.55);
+                "></div>`,
+                iconSize: [28, 28],
+                iconAnchor: [14, 28]
+            });
+            L.marker([eventLat, eventLng], { icon: pinIcon }).addTo(map);
 
-        // Fix Leaflet sizing after layout render
-        setTimeout(() => map.invalidateSize(), 250);
+            setTimeout(() => map.invalidateSize(), 250);
+        }
 
         // ── Lightbox ───────────────────────────────────────────────────────────
         function openLightbox(src) {
