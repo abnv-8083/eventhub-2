@@ -299,40 +299,43 @@ export const cancelBookingByOrganizer = async (bookingId, organizerId) => {
         );
     }
 
-    if (booking.paymentMethod === 'wallet') {
-        const userId = String(booking.user).trim();
-        const description = `Organizer refund: ${booking.event?.title || 'Event'}`;
-        
-        await User.findByIdAndUpdate(userId, {
-            $inc: { 'wallet.balance': booking.totalAmount },
-            $push: {
-                'wallet.transactions': {
+    const userId = String(booking.user).trim();
+    const description = `Organizer refund (100%): ${booking.event?.title || 'Event'}`;
+    
+    const updatedUser = await User.findByIdAndUpdate(userId, {
+        $inc: { 'wallet.balance': booking.totalAmount },
+        $push: {
+            'wallet.transactions': {
+                type: 'credit',
+                amount: booking.totalAmount,
+                description
+            }
+        }
+    }, { new: true });
+
+    if (updatedUser) {
+        try {
+            const io = socketUtil.getIO();
+            io.to(userId).emit('walletUpdate', {
+                newBalance: updatedUser.wallet.balance,
+                transaction: {
                     type: 'credit',
                     amount: booking.totalAmount,
                     description
                 }
-            }
-        });
-
-        await sendNotification(
-            userId,
-            `Your ${booking.event?.title || 'Event'} booking has been cancelled. ₹${booking.totalAmount.toLocaleString('en-IN')} refunded to your wallet.`,
-            'info'
-        );
-
-        return { message: `Booking cancelled. ₹${booking.totalAmount.toLocaleString('en-IN')} refunded to user's wallet.` };
+            });
+        } catch (err) {
+            console.error('Socket emit error:', err);
+        }
     }
 
-    // Razorpay — notify user about manual refund process
-    const organizer = await User.findById(organizerId);
-    const userId = String(booking.user).trim();
     await sendNotification(
         userId,
-        `Your booking for "${booking.event?.title || 'Event'}" has been cancelled by ${organizer?.organizationName || 'the organizer'}. Razorpay refund will be processed within 5–7 business days.`,
-        'warning'
+        `Your ${booking.event?.title || 'Event'} booking has been cancelled by the organizer. ₹${booking.totalAmount.toLocaleString('en-IN')} (100% refund) credited to your wallet.`,
+        'info'
     );
 
-    return { message: 'Booking cancelled. Razorpay refund will be processed within 5–7 business days.' };
+    return { message: `Booking cancelled. ₹${booking.totalAmount.toLocaleString('en-IN')} (100% refund) credited to user's wallet.` };
 };
 
 
@@ -530,28 +533,41 @@ export const cancelSingleTicketByOrganizer = async (eventId, bookingId, ticketIt
         });
     }
 
-    // 5. Process Wallet Refund — ONLY for wallet payments (NOT Razorpay)
-    if (booking.paymentMethod === 'wallet') {
-        const userId = String(booking.user._id || booking.user).trim();
-        await User.findByIdAndUpdate(userId, {
-            $inc: { 'wallet.balance': refundAmount },
-            $push: {
-                'wallet.transactions': {
+    // 5. Process 100% Wallet Refund unconditionally
+    const userId = String(booking.user._id || booking.user).trim();
+    const description = `Partial Refund (100%): ${cancelQty}x ${ticketItem.ticketName} cancelled for ${booking.event.title}`;
+    const updatedUser = await User.findByIdAndUpdate(userId, {
+        $inc: { 'wallet.balance': refundAmount },
+        $push: {
+            'wallet.transactions': {
+                type: 'credit',
+                amount: refundAmount,
+                description
+            }
+        }
+    }, { new: true });
+
+    if (updatedUser) {
+        try {
+            const io = socketUtil.getIO();
+            io.to(userId).emit('walletUpdate', {
+                newBalance: updatedUser.wallet.balance,
+                transaction: {
                     type: 'credit',
                     amount: refundAmount,
-                    description: `Partial Refund: ${cancelQty}x ${ticketItem.ticketName} cancelled for ${booking.event.title}`
+                    description
                 }
-            }
-        });
+            });
+        } catch (err) {
+            console.error('Socket emit error:', err);
+        }
     }
-    // Note: Razorpay partial refunds require manual processing — do NOT credit wallet
 
-    // 6. Notify the User (Using your notify.js utility!)
-    const userId = String(booking.user._id || booking.user).trim();
-    const notifMessage = `organizer has cancelled ${cancelQty}x "${ticketItem.ticketName}" tickets for ${booking.event.title}. ₹${refundAmount.toLocaleString('en-IN')} will be refunded.`;
+    // 6. Notify the User
+    const notifMessage = `Organizer has cancelled ${cancelQty}x "${ticketItem.ticketName}" tickets for ${booking.event.title}. ₹${refundAmount.toLocaleString('en-IN')} (100% refund) credited to your wallet.`;
     await sendNotification(userId, notifMessage, 'danger');
 
-    return { message: `Successfully cancelled ${cancelQty}x ${ticketItem.ticketName} and refunded ₹${refundAmount.toLocaleString('en-IN')}.` };
+    return { message: `Successfully cancelled ${cancelQty}x ${ticketItem.ticketName} and credited ₹${refundAmount.toLocaleString('en-IN')} (100% refund) to wallet.` };
 };
 
 export const verifyTicketScan = async (bookingId, organizerId) => {

@@ -414,40 +414,38 @@ export const cancelBooking = async (bookingId, userId) => {
         io.to(booking.event._id.toString()).emit('ticketStockUpdate', { tickets: updatedTicketsPayload });
     }
 
-    // Refund to wallet ONLY if payment was via wallet
-    if (booking.paymentMethod === 'wallet') {
-        const description = `Refund: Cancelled booking for "${booking.event?.title || 'Event'}"`;
-        const updatedUser = await User.findByIdAndUpdate(userId, {
-            $inc: { 'wallet.balance': booking.totalAmount },
-            $push: {
-                'wallet.transactions': {
-                    type: 'credit',
-                    amount: booking.totalAmount,
-                    description
-                }
-            }
-        }, { new: true });
-
-        // Emit live wallet balance update
-        const io = socketUtil.getIO();
-        io.to(String(userId).trim()).emit('walletUpdate', {
-            newBalance: updatedUser.wallet.balance,
-            transaction: {
+    // 100% Refund credited to wallet unconditionally
+    const description = `Refund (100%): Cancelled booking for "${booking.event?.title || 'Event'}"`;
+    const updatedUser = await User.findByIdAndUpdate(userId, {
+        $inc: { 'wallet.balance': booking.totalAmount },
+        $push: {
+            'wallet.transactions': {
                 type: 'credit',
                 amount: booking.totalAmount,
                 description
             }
-        });
+        }
+    }, { new: true });
 
-        return {
-            message:  `Booking cancelled. \u20b9${booking.totalAmount.toLocaleString('en-IN')} refunded to your wallet.`,
-            refunded: true
-        };
+    if (updatedUser) {
+        try {
+            const io = socketUtil.getIO();
+            io.to(String(userId).trim()).emit('walletUpdate', {
+                newBalance: updatedUser.wallet.balance,
+                transaction: {
+                    type: 'credit',
+                    amount: booking.totalAmount,
+                    description
+                }
+            });
+        } catch (err) {
+            console.error('Socket emit error:', err);
+        }
     }
 
     return {
-        message:  'Booking cancelled successfully. For Razorpay payments, refunds are processed within 5\u20137 business days.',
-        refunded: false
+        message:  `Booking cancelled. \u20b9${booking.totalAmount.toLocaleString('en-IN')} (100% refund) credited to your wallet.`,
+        refunded: true
     };
 };
 

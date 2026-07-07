@@ -431,20 +431,37 @@ export const cancelEvent = async (eventId, organizerId) => {
         const refundAmount = booking.finalAmount || booking.totalAmount || 0;
         const userId = String(booking.user._id || booking.user).trim();
 
-        if (booking.paymentMethod === 'wallet' && refundAmount > 0) {
-            await User.findByIdAndUpdate(userId, {
+        if (refundAmount > 0) {
+            const updatedUser = await User.findByIdAndUpdate(userId, {
                 $inc: { 'wallet.balance': refundAmount },
                 $push: {
                     'wallet.transactions': {
                         type: 'credit',
                         amount: refundAmount,
-                        description: `Full Refund: Event "${event.title}" cancelled by organizer`
+                        description: `Full Refund (100%): Event "${event.title}" cancelled by organizer`
                     }
                 }
-            });
+            }, { new: true });
+
+            if (updatedUser) {
+                try {
+                    const socketUtil = await import('../../utils/socket.js');
+                    const io = socketUtil.getIO();
+                    io.to(userId).emit('walletUpdate', {
+                        newBalance: updatedUser.wallet.balance,
+                        transaction: {
+                            type: 'credit',
+                            amount: refundAmount,
+                            description: `Full Refund (100%): Event "${event.title}" cancelled by organizer`
+                        }
+                    });
+                } catch (err) {
+                    console.error('Socket emit error during refund:', err);
+                }
+            }
         }
 
-        const notifMessage = `Event "${event.title}" has been cancelled by the organizer. ${refundAmount > 0 ? `₹${refundAmount.toLocaleString('en-IN')} will be refunded.` : ''}`;
+        const notifMessage = `Event "${event.title}" has been cancelled by the organizer. ₹${refundAmount.toLocaleString('en-IN')} (100% refund) credited to your wallet.`;
         await sendNotification(userId, notifMessage.trim(), 'danger');
     }
 
