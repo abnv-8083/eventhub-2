@@ -32,7 +32,7 @@ export const getBrowseEvents = async (req, res, next) => {
 export const getEventDetail = async (req, res, next) => {
     try {
         const userId = req.session.user?._id || null;
-        const { event, tickets, isWishlisted } = await userEventService.getEventDetail(req.params.id, userId);
+        const { event, tickets, isWishlisted } = await userEventService.getEventById(req.params.id, userId);
         res.render('users/events/detail', { title: event.title, event, tickets, isWishlisted });
     } catch (error) {
         next(error);

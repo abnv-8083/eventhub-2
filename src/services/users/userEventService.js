@@ -148,6 +148,7 @@ export const getEventById = async (eventId, userId) => {
 
     return { event, tickets, isWishlisted };
 };
+export const getEventDetail = getEventById;
 
 
 // ─── Get Buy Tickets Page Data ────────────────────────────────────────────────
