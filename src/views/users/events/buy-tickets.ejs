@@ -56,6 +56,26 @@
                         : `Ticket sales closed ${event.postStartRegistrationLimit} minutes after the event started.`;
                 }
             }
+            if (!isClosed && event.bookingCloseTime) {
+                const closeDateObj = new Date(event.endDate || event.startDate);
+                const [closeHours, closeMinutes] = event.bookingCloseTime.split(':');
+                closeDateObj.setHours(parseInt(closeHours, 10), parseInt(closeMinutes, 10), 0, 0);
+                if (new Date() > closeDateObj) {
+                    isClosed = true;
+                    closedTitle = 'Booking Closed';
+                    closedMessage = `Ticket sales for this event closed at ${event.bookingCloseTime}.`;
+                }
+            }
+            let isBookingNotOpen = false;
+            let bookingOpenDateObj = null;
+            if (!isClosed && event.bookingOpenTime) {
+                bookingOpenDateObj = new Date(event.startDate);
+                const [openHours, openMinutes] = event.bookingOpenTime.split(':');
+                bookingOpenDateObj.setHours(parseInt(openHours, 10), parseInt(openMinutes, 10), 0, 0);
+                if (new Date() < bookingOpenDateObj) {
+                    isBookingNotOpen = true;
+                }
+            }
         %>
 
         <div class="animate stagger-2">
@@ -64,6 +84,33 @@
                     <i class="fi fi-rr-time-past mb-3" style="font-size: 3rem; color: #e63946; display: block;"></i>
                     <h4 class="fw-bold text-white mb-2"><%= closedTitle %></h4>
                     <p class="text-dim mb-0"><%= closedMessage %></p>
+                </div>
+            <% } else if (isBookingNotOpen) { %>
+                <div class="text-center p-5 mt-4 glass-premium" style="background: rgba(255, 193, 7, 0.05); border: 1px dashed rgba(255, 193, 7, 0.4); border-radius: 20px;">
+                    <i class="fi fi-rr-clock mb-3" style="font-size: 3.5rem; color: #ffc107; display: block;"></i>
+                    <h4 class="fw-bold text-white mb-2">Booking Not Open Yet</h4>
+                    <p class="text-dim mb-4">Ticket sales for this event will open on <strong class="text-white"><%= bookingOpenDateObj.toLocaleDateString(undefined, {month:'long', day:'numeric', year:'numeric'}) %></strong> at <strong class="text-white"><%= event.bookingOpenTime %></strong>.</p>
+                    <div id="bookingCountdown" class="d-flex justify-content-center gap-3 mb-4" data-target="<%= bookingOpenDateObj.toISOString() %>">
+                        <div class="p-3 rounded-4 text-white shadow" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); min-width: 75px;">
+                            <span class="fs-2 fw-bold d-block lh-1 mb-1" id="cd-days" style="color: #ffc107;">00</span>
+                            <span style="font-size: 0.75rem; letter-spacing: 1px;" class="text-dim fw-semibold">DAYS</span>
+                        </div>
+                        <div class="p-3 rounded-4 text-white shadow" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); min-width: 75px;">
+                            <span class="fs-2 fw-bold d-block lh-1 mb-1" id="cd-hours" style="color: #ffc107;">00</span>
+                            <span style="font-size: 0.75rem; letter-spacing: 1px;" class="text-dim fw-semibold">HOURS</span>
+                        </div>
+                        <div class="p-3 rounded-4 text-white shadow" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); min-width: 75px;">
+                            <span class="fs-2 fw-bold d-block lh-1 mb-1" id="cd-mins" style="color: #ffc107;">00</span>
+                            <span style="font-size: 0.75rem; letter-spacing: 1px;" class="text-dim fw-semibold">MINS</span>
+                        </div>
+                        <div class="p-3 rounded-4 text-white shadow" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); min-width: 75px;">
+                            <span class="fs-2 fw-bold d-block lh-1 mb-1" id="cd-secs" style="color: #ffc107;">00</span>
+                            <span style="font-size: 0.75rem; letter-spacing: 1px;" class="text-dim fw-semibold">SECS</span>
+                        </div>
+                    </div>
+                    <a href="/user/events/<%= event._id %>" class="btn btn-outline-light px-4 py-2" style="border-radius: 12px; font-weight: 600;">
+                        <i class="fi fi-rr-arrow-left me-2"></i> Back to Event Details
+                    </a>
                 </div>
             <% } else { %>
                 <h5 class="fw-bold text-white mb-4">Select Tickets</h5>
@@ -308,6 +355,36 @@
 
         window.socket.off('ticketStockUpdate', handleStockUpdate); // remove stale listener if any
         window.socket.on('ticketStockUpdate', handleStockUpdate);
+
+        // Booking Open Countdown Timer
+        document.addEventListener('DOMContentLoaded', function() {
+            const cdEl = document.getElementById('bookingCountdown');
+            if (cdEl) {
+                const target = new Date(cdEl.getAttribute('data-target')).getTime();
+                const timer = setInterval(function() {
+                    const now = new Date().getTime();
+                    const distance = target - now;
+                    if (distance <= 0) {
+                        clearInterval(timer);
+                        window.location.reload();
+                        return;
+                    }
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    
+                    const daysEl = document.getElementById('cd-days');
+                    const hoursEl = document.getElementById('cd-hours');
+                    const minsEl = document.getElementById('cd-mins');
+                    const secsEl = document.getElementById('cd-secs');
+                    if (daysEl) daysEl.innerText = String(days).padStart(2, '0');
+                    if (hoursEl) hoursEl.innerText = String(hours).padStart(2, '0');
+                    if (minsEl) minsEl.innerText = String(minutes).padStart(2, '0');
+                    if (secsEl) secsEl.innerText = String(seconds).padStart(2, '0');
+                }, 1000);
+            }
+        });
     </script>
 </body>
 </html>

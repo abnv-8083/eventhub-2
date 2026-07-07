@@ -307,6 +307,26 @@
                                     : `Ticket sales ended ${event.postStartRegistrationLimit} minutes after event start.`;
                             }
                         }
+                        if (!isClosed && event.bookingCloseTime) {
+                            const closeDateObj = new Date(event.endDate || event.startDate);
+                            const [closeHours, closeMinutes] = event.bookingCloseTime.split(':');
+                            closeDateObj.setHours(parseInt(closeHours, 10), parseInt(closeMinutes, 10), 0, 0);
+                            if (new Date() > closeDateObj) {
+                                isClosed = true;
+                                closedTitle = 'Booking Closed';
+                                closedMessage = `Ticket sales for this event closed at ${event.bookingCloseTime}.`;
+                            }
+                        }
+                        let isBookingNotOpen = false;
+                        let bookingOpenDateObj = null;
+                        if (!isClosed && event.bookingOpenTime) {
+                            bookingOpenDateObj = new Date(event.startDate);
+                            const [openHours, openMinutes] = event.bookingOpenTime.split(':');
+                            bookingOpenDateObj.setHours(parseInt(openHours, 10), parseInt(openMinutes, 10), 0, 0);
+                            if (new Date() < bookingOpenDateObj) {
+                                isBookingNotOpen = true;
+                            }
+                        }
                     %>
                     
                     <% if (isClosed) { %>
@@ -314,6 +334,34 @@
                             <h5 class="fw-bold mb-1" style="color: #e63946;"><%= closedTitle %></h5>
                             <p class="text-dim mb-0" style="font-size: 0.85rem;"><%= closedMessage %></p>
                         </div>
+                    <% } else if (isBookingNotOpen) { %>
+                        <div class="p-3 mb-3 text-center" style="background: rgba(255, 193, 7, 0.08); border: 1px dashed rgba(255, 193, 7, 0.4); border-radius: 16px; backdrop-filter: blur(10px);">
+                            <h6 class="fw-bold mb-3 d-flex align-items-center justify-content-center gap-2" style="color: #ffc107; font-size: 0.9rem; letter-spacing: 0.5px; text-transform: uppercase;">
+                                <i class="fi fi-rr-clock"></i> Booking Opens In
+                            </h6>
+                            <div id="bookingCountdown" class="d-flex justify-content-center gap-2 mb-3" data-target="<%= bookingOpenDateObj.toISOString() %>">
+                                <div class="p-2 rounded-3 text-white shadow-sm" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); min-width: 55px;">
+                                    <span class="fs-4 fw-bold d-block lh-1 mb-1" id="cd-days" style="color: #ffc107;">00</span>
+                                    <span style="font-size: 0.65rem; letter-spacing: 1px;" class="text-dim fw-semibold">DAYS</span>
+                                </div>
+                                <div class="p-2 rounded-3 text-white shadow-sm" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); min-width: 55px;">
+                                    <span class="fs-4 fw-bold d-block lh-1 mb-1" id="cd-hours" style="color: #ffc107;">00</span>
+                                    <span style="font-size: 0.65rem; letter-spacing: 1px;" class="text-dim fw-semibold">HOURS</span>
+                                </div>
+                                <div class="p-2 rounded-3 text-white shadow-sm" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); min-width: 55px;">
+                                    <span class="fs-4 fw-bold d-block lh-1 mb-1" id="cd-mins" style="color: #ffc107;">00</span>
+                                    <span style="font-size: 0.65rem; letter-spacing: 1px;" class="text-dim fw-semibold">MINS</span>
+                                </div>
+                                <div class="p-2 rounded-3 text-white shadow-sm" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); min-width: 55px;">
+                                    <span class="fs-4 fw-bold d-block lh-1 mb-1" id="cd-secs" style="color: #ffc107;">00</span>
+                                    <span style="font-size: 0.65rem; letter-spacing: 1px;" class="text-dim fw-semibold">SECS</span>
+                                </div>
+                            </div>
+                            <p class="text-dim mb-0" style="font-size: 0.85rem;">Sales open on <strong class="text-white"><%= bookingOpenDateObj.toLocaleDateString(undefined, {month:'short', day:'numeric'}) %></strong> at <strong class="text-white"><%= event.bookingOpenTime %></strong></p>
+                        </div>
+                        <button disabled class="btn btn-secondary w-100 shadow-sm" style="height: 3.2rem; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 1.05rem; font-weight: 600; opacity: 0.6; cursor: not-allowed; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);">
+                            <i class="fi fi-rr-lock me-2"></i> Booking Not Open Yet
+                        </button>
                     <% } else { %>
                         <a href="/user/events/<%= event._id %>/buy-tickets" class="btn btn-primary w-100 shadow-sm" style="height: 3.2rem; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 1.05rem; font-weight: 600;">
                             Get Tickets
@@ -432,6 +480,36 @@
                 } else Toast.error('Failed to update wishlist');
             }
         }
+
+        // Booking Open Countdown Timer
+        document.addEventListener('DOMContentLoaded', function() {
+            const cdEl = document.getElementById('bookingCountdown');
+            if (cdEl) {
+                const target = new Date(cdEl.getAttribute('data-target')).getTime();
+                const timer = setInterval(function() {
+                    const now = new Date().getTime();
+                    const distance = target - now;
+                    if (distance <= 0) {
+                        clearInterval(timer);
+                        window.location.reload(); // Reload page when countdown reaches zero so user can buy instantly!
+                        return;
+                    }
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    
+                    const daysEl = document.getElementById('cd-days');
+                    const hoursEl = document.getElementById('cd-hours');
+                    const minsEl = document.getElementById('cd-mins');
+                    const secsEl = document.getElementById('cd-secs');
+                    if (daysEl) daysEl.innerText = String(days).padStart(2, '0');
+                    if (hoursEl) hoursEl.innerText = String(hours).padStart(2, '0');
+                    if (minsEl) minsEl.innerText = String(minutes).padStart(2, '0');
+                    if (secsEl) secsEl.innerText = String(seconds).padStart(2, '0');
+                }, 1000);
+            }
+        });
     </script>
 </body>
 </html>
