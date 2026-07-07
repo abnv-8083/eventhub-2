@@ -128,6 +128,59 @@
             70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
+
+        /* ─── Grouped Booking Card Feed ─── */
+        .booking-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 18px;
+            margin-bottom: 14px;
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+
+        .booking-card.new-booking-animation {
+            animation: cardHighlight 3s ease-out forwards;
+        }
+
+        @keyframes cardHighlight {
+            0%   { border-color: rgba(16, 185, 129, 0.7); background: rgba(16, 185, 129, 0.08); }
+            100% { border-color: rgba(255, 255, 255, 0.07); background: rgba(255,255,255,0.03); }
+        }
+
+        .booking-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .booking-card-tiers {
+            padding: 8px 20px 12px;
+        }
+
+        .tier-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            gap: 10px;
+        }
+
+        .tier-row:last-child { border-bottom: none; }
+
+        .tier-row.new-tier-animation {
+            animation: tierFlash 2.5s ease-out forwards;
+        }
+
+        @keyframes tierFlash {
+            0%   { background: rgba(16, 185, 129, 0.15); border-radius: 8px; padding-left: 8px; padding-right: 8px; }
+            100% { background: transparent; padding-left: 0; padding-right: 0; }
+        }
     </style>
 </head>
 <body class="bg-mesh">
@@ -246,50 +299,81 @@
                 <div class="d-flex align-items-center justify-content-between mb-4">
                     <div>
                         <h4 class="text-white fw-bold mb-1">Live Check-in Feed</h4>
-                        <p class="text-secondary small mb-0">Updates instantly as gate staff scan tickets</p>
+                        <p class="text-secondary small mb-0">Grouped by booking · Updates instantly as gate staff scan tickets</p>
                     </div>
                     <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 px-3 py-2 rounded-pill">
                         <span class="live-pulse"></span> Listening for Scans
                     </span>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="feed-table">
-                        <thead>
-                            <tr>
-                                <th>Attendee</th>
-                                <th>Booking Ref</th>
-                                <th>Ticket Tier</th>
-                                <th>Qty Scanned</th>
-                                <th>Scanned At</th>
-                                <th>Gate / PIN</th>
-                            </tr>
-                        </thead>
-                        <tbody id="liveCheckInTableBody">
-                            <% if (checkInFeed && checkInFeed.length > 0) { %>
-                                <% checkInFeed.forEach(item => { %>
-                                    <tr>
-                                        <td>
-                                            <div class="fw-bold text-white"><%= item.attendeeName %></div>
-                                            <small class="text-secondary"><%= item.attendeeEmail %></small>
-                                        </td>
-                                        <td><span class="badge bg-dark border border-secondary border-opacity-25 text-white font-outfit">#<%= item.bookingRef %></span></td>
-                                        <td><span class="text-white fw-semibold"><%= item.ticketName %></span></td>
-                                        <td><span class="badge bg-success font-outfit fs-6">+<%= item.quantity %></span></td>
-                                        <td><span class="text-secondary small"><%= new Date(item.checkedInAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) %></span></td>
-                                        <td><span class="text-secondary small font-outfit">#<%= item.scannedByCode %></span></td>
-                                    </tr>
+                <div id="checkInFeedContainer">
+                    <%
+                        // Group checkInFeed by bookingRef server-side
+                        const grouped = {};
+                        if (checkInFeed && checkInFeed.length > 0) {
+                            checkInFeed.forEach(item => {
+                                if (!grouped[item.bookingRef]) {
+                                    grouped[item.bookingRef] = {
+                                        bookingRef: item.bookingRef,
+                                        attendeeName: item.attendeeName,
+                                        attendeeEmail: item.attendeeEmail,
+                                        scannedByCode: item.scannedByCode,
+                                        checkedInAt: item.checkedInAt,
+                                        tiers: []
+                                    };
+                                }
+                                grouped[item.bookingRef].tiers.push({
+                                    ticketName: item.ticketName,
+                                    quantity: item.quantity,
+                                    checkedInAt: item.checkedInAt
+                                });
+                                // Keep latest scan time for the card header
+                                if (new Date(item.checkedInAt) > new Date(grouped[item.bookingRef].checkedInAt)) {
+                                    grouped[item.bookingRef].checkedInAt = item.checkedInAt;
+                                }
+                            });
+                        }
+                        const groupedList = Object.values(grouped);
+                    %>
+
+                    <% if (groupedList.length > 0) { %>
+                        <% groupedList.forEach(group => { %>
+                        <div class="booking-card" data-booking-ref="<%= group.bookingRef %>">
+                            <div class="booking-card-header">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="d-flex align-items-center justify-content-center rounded-3" style="width:42px;height:42px;background:rgba(16,185,129,0.15);color:#34D399;font-size:1.2rem;flex-shrink:0;">
+                                        <i class="fi fi-rr-user"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-white"><%= group.attendeeName %></div>
+                                        <small class="text-secondary"><%= group.attendeeEmail %></small>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-3 flex-wrap">
+                                    <span class="badge bg-dark border border-secondary border-opacity-25 text-white" style="font-family:Outfit,monospace;font-size:0.9rem;padding:6px 12px;">#<%= group.bookingRef %></span>
+                                    <span class="text-secondary small"><i class="fi fi-rr-clock me-1"></i><%= new Date(group.checkedInAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) %></span>
+                                    <span class="text-secondary small"><i class="fi fi-rr-key me-1"></i>#<%= group.scannedByCode %></span>
+                                </div>
+                            </div>
+                            <div class="booking-card-tiers">
+                                <% group.tiers.forEach(tier => { %>
+                                <div class="tier-row">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fi fi-rr-ticket text-secondary"></i>
+                                        <span class="text-white fw-semibold"><%= tier.ticketName %></span>
+                                    </div>
+                                    <span class="badge bg-success" style="font-family:Outfit,monospace;font-size:0.9rem;min-width:36px;">+<%= tier.quantity %></span>
+                                </div>
                                 <% }) %>
-                            <% } else { %>
-                                <tr id="noScansRow">
-                                    <td colspan="6" class="text-center py-5 text-secondary">
-                                        <i class="fi fi-rr-camera d-block fs-2 mb-2 opacity-50"></i>
-                                        No tickets checked in yet. When gate staff scan tickets, they will appear here live!
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
+                            </div>
+                        </div>
+                        <% }) %>
+                    <% } else { %>
+                        <div id="noScansPlaceholder" class="text-center py-5 text-secondary stat-box">
+                            <i class="fi fi-rr-camera d-block fs-1 mb-3 opacity-30"></i>
+                            <p class="mb-0">No tickets checked in yet.<br><small>When gate staff scan tickets, they will appear here live!</small></p>
+                        </div>
+                    <% } %>
                 </div>
             </div>
 
@@ -353,41 +437,83 @@
             if (elCheckedIn && elSold) {
                 let currentChecked = parseInt(elCheckedIn.innerText, 10) || 0;
                 let totalSold = parseInt(elSold.innerText, 10) || 0;
-                
                 currentChecked += (data.totalCheckedInThisScan || 0);
                 elCheckedIn.innerText = currentChecked;
                 elRemaining.innerText = Math.max(0, totalSold - currentChecked);
-
                 const pct = totalSold > 0 ? Math.round((currentChecked / totalSold) * 100) : 0;
                 elProgressBar.style.width = `${pct}%`;
                 elPctText.innerText = `${pct}%`;
             }
 
-            // 2. Remove "No scans yet" row if present
-            const noScansRow = document.getElementById('noScansRow');
-            if (noScansRow) {
-                noScansRow.remove();
-            }
+            // 2. Remove placeholder if present
+            const placeholder = document.getElementById('noScansPlaceholder');
+            if (placeholder) placeholder.remove();
 
-            // 3. Prepend new rows to table
-            const tbody = document.getElementById('liveCheckInTableBody');
-            if (tbody && data.newLogs && data.newLogs.length > 0) {
+            // 3. Insert or update grouped booking card
+            const container = document.getElementById('checkInFeedContainer');
+            if (!container || !data.newLogs || data.newLogs.length === 0) return;
+
+            const bookingRef = data.bookingRef;
+            let existingCard = container.querySelector(`[data-booking-ref="${bookingRef}"]`);
+
+            if (existingCard) {
+                // Booking already has a card — append new tier rows to it
+                const tiersContainer = existingCard.querySelector('.booking-card-tiers');
                 data.newLogs.forEach(log => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'new-row-animation';
-                    tr.innerHTML = `
-                        <td>
-                            <div class="fw-bold text-white">${data.attendeeName}</div>
-                            <small class="text-secondary">${data.attendeeEmail}</small>
-                        </td>
-                        <td><span class="badge bg-dark border border-secondary border-opacity-25 text-white font-outfit">#${data.bookingRef}</span></td>
-                        <td><span class="text-white fw-semibold">${log.ticketName || 'General Ticket'}</span></td>
-                        <td><span class="badge bg-success font-outfit fs-6">+${log.quantity}</span></td>
-                        <td><span class="text-secondary small">${new Date(log.checkedInAt || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span></td>
-                        <td><span class="text-secondary small font-outfit">#${log.scannedByCode || data.scannedByCode || 'GATE'}</span></td>
+                    const tierRow = document.createElement('div');
+                    tierRow.className = 'tier-row new-tier-animation';
+                    tierRow.innerHTML = `
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fi fi-rr-ticket text-secondary"></i>
+                            <span class="text-white fw-semibold">${log.ticketName || 'General Ticket'}</span>
+                        </div>
+                        <span class="badge bg-success" style="font-family:Outfit,monospace;font-size:0.9rem;min-width:36px;">+${log.quantity}</span>
                     `;
-                    tbody.insertBefore(tr, tbody.firstChild);
+                    tiersContainer.appendChild(tierRow);
                 });
+                // Highlight the existing card briefly
+                existingCard.classList.remove('new-booking-animation');
+                void existingCard.offsetWidth; // force reflow
+                existingCard.classList.add('new-booking-animation');
+                // Move to top
+                container.insertBefore(existingCard, container.firstChild);
+            } else {
+                // New booking — create full card and prepend
+                const scannedTime = new Date(data.checkedInAt || Date.now()).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+                const card = document.createElement('div');
+                card.className = 'booking-card new-booking-animation';
+                card.setAttribute('data-booking-ref', bookingRef);
+
+                const tiersHtml = data.newLogs.map(log => `
+                    <div class="tier-row">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fi fi-rr-ticket text-secondary"></i>
+                            <span class="text-white fw-semibold">${log.ticketName || 'General Ticket'}</span>
+                        </div>
+                        <span class="badge bg-success" style="font-family:Outfit,monospace;font-size:0.9rem;min-width:36px;">+${log.quantity}</span>
+                    </div>
+                `).join('');
+
+                card.innerHTML = `
+                    <div class="booking-card-header">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center justify-content-center rounded-3" style="width:42px;height:42px;background:rgba(16,185,129,0.15);color:#34D399;font-size:1.2rem;flex-shrink:0;">
+                                <i class="fi fi-rr-user"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-white">${data.attendeeName}</div>
+                                <small class="text-secondary">${data.attendeeEmail}</small>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                            <span class="badge bg-dark border border-secondary border-opacity-25 text-white" style="font-family:Outfit,monospace;font-size:0.9rem;padding:6px 12px;">#${bookingRef}</span>
+                            <span class="text-secondary small"><i class="fi fi-rr-clock me-1"></i>${scannedTime}</span>
+                            <span class="text-secondary small"><i class="fi fi-rr-key me-1"></i>#${data.scannedByCode || 'GATE'}</span>
+                        </div>
+                    </div>
+                    <div class="booking-card-tiers">${tiersHtml}</div>
+                `;
+                container.insertBefore(card, container.firstChild);
             }
         });
     </script>
