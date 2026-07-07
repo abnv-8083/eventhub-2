@@ -57,9 +57,8 @@
                 }
             }
             if (!isClosed && event.bookingCloseTime) {
-                const closeDateObj = new Date(event.endDate || event.startDate);
-                const [closeHours, closeMinutes] = event.bookingCloseTime.split(':');
-                closeDateObj.setHours(parseInt(closeHours, 10), parseInt(closeMinutes, 10), 0, 0);
+                const closeDateStr = new Date(event.endDate || event.startDate).toISOString().split('T')[0];
+                const closeDateObj = new Date(`${closeDateStr}T${event.bookingCloseTime}:00+05:30`);
                 if (new Date() > closeDateObj) {
                     isClosed = true;
                     closedTitle = 'Booking Closed';
@@ -69,9 +68,8 @@
             let isBookingNotOpen = false;
             let bookingOpenDateObj = null;
             if (!isClosed && event.bookingOpenTime) {
-                bookingOpenDateObj = new Date(event.startDate);
-                const [openHours, openMinutes] = event.bookingOpenTime.split(':');
-                bookingOpenDateObj.setHours(parseInt(openHours, 10), parseInt(openMinutes, 10), 0, 0);
+                const startDateStr = new Date(event.startDate).toISOString().split('T')[0];
+                bookingOpenDateObj = new Date(`${startDateStr}T${event.bookingOpenTime}:00+05:30`);
                 if (new Date() < bookingOpenDateObj) {
                     isBookingNotOpen = true;
                 }

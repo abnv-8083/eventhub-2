@@ -637,21 +637,17 @@ export const validateCartRequest = async (eventId, cart, userId, couponId = null
 
     // Check bookingOpenTime and bookingCloseTime
     if (event.bookingOpenTime) {
-        const openDateObj = new Date(event.startDate);
-        const [openHours, openMinutes] = event.bookingOpenTime.split(':');
-        openDateObj.setHours(parseInt(openHours, 10), parseInt(openMinutes, 10), 0, 0);
+        const startDateStr = new Date(event.startDate).toISOString().split('T')[0];
+        const openDateObj = new Date(`${startDateStr}T${event.bookingOpenTime}:00+05:30`);
         if (new Date() < openDateObj) {
-            const timeStr = openDateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            throw new AppError(`Ticket sales for this event have not opened yet. Booking opens at ${timeStr}.`, HTTP_STATUS.BAD_REQUEST);
+            throw new AppError(`Ticket sales for this event have not opened yet. Booking opens at ${event.bookingOpenTime}.`, HTTP_STATUS.BAD_REQUEST);
         }
     }
     if (event.bookingCloseTime) {
-        const closeDateObj = new Date(event.endDate || event.startDate);
-        const [closeHours, closeMinutes] = event.bookingCloseTime.split(':');
-        closeDateObj.setHours(parseInt(closeHours, 10), parseInt(closeMinutes, 10), 0, 0);
+        const closeDateStr = new Date(event.endDate || event.startDate).toISOString().split('T')[0];
+        const closeDateObj = new Date(`${closeDateStr}T${event.bookingCloseTime}:00+05:30`);
         if (new Date() > closeDateObj) {
-            const timeStr = closeDateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            throw new AppError(`Ticket sales for this event closed at ${timeStr}.`, HTTP_STATUS.BAD_REQUEST);
+            throw new AppError(`Ticket sales for this event closed at ${event.bookingCloseTime}.`, HTTP_STATUS.BAD_REQUEST);
         }
     }
 

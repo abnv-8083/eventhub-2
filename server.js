@@ -1,6 +1,7 @@
 console.log("🚀 ===========================");
 console.log("🚀 SERVER IS BOOTING UP!");
 console.log("🚀 ===========================");
+process.env.TZ = 'Asia/Kolkata';
 
 import dotenv from 'dotenv';
 import express from 'express';
