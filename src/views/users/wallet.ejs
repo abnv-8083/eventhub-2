@@ -437,10 +437,23 @@
             .txn-toolbar-controls { width: 100%; flex-direction: column; align-items: stretch; }
             .txn-search-wrap, .txn-search-input:focus { width: 100%; }
             .wallet-date-filter, .date-filter-inner, .items-per-page-wrap, .items-select { width: 100%; }
-            .txn-filter-wrap { justify-content: center; }
+            .txn-filter-wrap { justify-content: center; flex-wrap: wrap; }
             .txn-item { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
             .txn-amount-col { align-self: flex-end; }
             .txn-pagination-footer { flex-direction: column; align-items: center; text-align: center; }
+
+            /* Added Responsive Fixes */
+            .digital-wallet-card { padding: 1.25rem; }
+            .wallet-topup-panel, .wallet-txn-panel { padding: 1.25rem; }
+            .amount-val { font-size: 2.2rem; }
+            .currency-symbol { font-size: 1.5rem; }
+            .card-content { min-height: 180px; }
+            .topup-panel-header { flex-direction: column; align-items: flex-start; text-align: left; }
+            .topup-secure-footer { flex-direction: column; align-items: flex-start; gap: 0.2rem; margin-top: 1rem; }
+            .meta-dot { display: none; }
+            .txn-description { white-space: normal; } /* Allow wrapping on small screens */
+            .page-label, h2.fw-bold { font-size: 1.5rem; }
+            .card-number { font-size: 0.9rem; }
         }
     </style>
 
