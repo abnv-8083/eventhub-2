@@ -388,6 +388,17 @@ export const archiveEvent = async (req, res, next) => {
 };
 
 
+// ─── Extend Event Schedule ────────────────────────────────────────────────────
+export const extendEventSchedule = async (req, res, next) => {
+    try {
+        await organizerEventService.extendEventSchedule(req.params.id, req.session.organizer._id, req.body);
+        res.status(HTTP_STATUS.OK).json({ success: true, message: 'Event schedule extended successfully! Event is now live.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 // ─── COUPON MANAGEMENT ─────────────────────────────────────────
 
 // Get all coupons for a specific event

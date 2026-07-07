@@ -529,6 +529,43 @@ export const archiveEvent = async (eventId, organizerId) => {
 };
 
 
+// ─── Extend Event Schedule ────────────────────────────────────────────────────
+export const extendEventSchedule = async (eventId, organizerId, { endDate, endTime, extendTicketSales }) => {
+    const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } });
+    if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
+
+    if (event.status !== 'completed' && event.status !== 'sales_closed') {
+        throw new AppError('Only completed or sales closed events can be extended.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    if (!endDate || !endTime) {
+        throw new AppError('New end date and end time are required.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const newEndDateTime = new Date(`${endDate}T${endTime}`);
+    if (isNaN(newEndDateTime.getTime()) || newEndDateTime <= new Date()) {
+        throw new AppError('New end date and time must be in the future.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    if (new Date(event.startDate) >= newEndDateTime) {
+        throw new AppError('End date must be after the start date.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    event.endDate = new Date(endDate);
+    event.endTime = endTime;
+
+    if (extendTicketSales !== false && event.tickets && event.tickets.length > 0) {
+        event.tickets.forEach(ticket => {
+            ticket.saleEnd = new Date(endDate);
+        });
+    }
+
+    event.status = 'approved';
+    await event.save();
+    return event;
+};
+
+
 // ─── Get Sales Report for an Event ────────────────────────────────────────────
 export const getEventSalesReport = async (eventId, organizerId, { startDate, endDate } = {}) => {
     const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } }).lean();

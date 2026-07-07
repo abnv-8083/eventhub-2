@@ -78,6 +78,7 @@ organizerRouter.post('/events/:id/resubmit', eventController.resubmitEvent);
 organizerRouter.post('/events/:id/duplicate', eventController.duplicateEvent);
 organizerRouter.post('/events/:id/withdraw', eventController.withdrawReview);
 organizerRouter.post('/events/:id/archive', eventController.archiveEvent);
+organizerRouter.post('/events/:id/extend', eventController.extendEventSchedule);
 
 // Event Bookings & Payouts
 organizerRouter.get('/events/:id/bookings', bookingController.getEventBookings);
