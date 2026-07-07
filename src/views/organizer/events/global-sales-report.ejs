@@ -256,7 +256,7 @@
                                 <th>Status</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="globalTxnBody">
                             <% if(recentTransactions && recentTransactions.length > 0) { %>
                                 <% recentTransactions.forEach(txn => { %>
                                 <tr>
@@ -302,12 +302,55 @@
                         </tbody>
                     </table>
                 </div>
+                <!-- Pagination -->
+                <div id="globalTxnPagination" class="d-flex justify-content-between align-items-center px-4 py-3" style="border-top:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;gap:12px;"></div>
             </div>
 
         </main>
     </div>
 
     <script>
+    // ── Client-Side Table Pagination ─────────────────────────────────────────────
+    function initTablePagination(tbodyId, paginationId, rowsPerPage) {
+        const tbody = document.getElementById(tbodyId);
+        const container = document.getElementById(paginationId);
+        if (!tbody || !container) return;
+        const allRows = Array.from(tbody.querySelectorAll('tr'));
+        if (allRows.length <= rowsPerPage) return;
+        let currentPage = 1;
+        const totalPages = () => Math.ceil(allRows.length / rowsPerPage);
+        function renderPage(page) {
+            currentPage = page;
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            allRows.forEach((row, i) => { row.style.display = (i >= start && i < end) ? '' : 'none'; });
+            renderControls();
+        }
+        function renderControls() {
+            const total = totalPages();
+            const startRow = (currentPage - 1) * rowsPerPage + 1;
+            const endRow = Math.min(currentPage * rowsPerPage, allRows.length);
+            container.innerHTML = `
+                <span style="color:rgba(255,255,255,0.45);font-size:0.83rem;">Showing ${startRow}–${endRow} of ${allRows.length} entries</span>
+                <div class="d-flex align-items-center gap-2">
+                    <button onclick="paginateTo_${tbodyId}(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}
+                        style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:${currentPage===1?'rgba(255,255,255,0.2)':'rgba(255,255,255,0.7)'};border-radius:8px;padding:5px 12px;cursor:${currentPage===1?'default':'pointer'};font-size:0.82rem;">← Prev</button>
+                    ${Array.from({length: total}, (_, i) => i + 1).map(p => `<button onclick="paginateTo_${tbodyId}(${p})" style="background:${p===currentPage?'rgba(99,102,241,0.25)':'rgba(255,255,255,0.05)'};border:1px solid ${p===currentPage?'rgba(99,102,241,0.5)':'rgba(255,255,255,0.1)'};color:${p===currentPage?'#818CF8':'rgba(255,255,255,0.6)'};border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.82rem;min-width:32px;">${p}</button>`).join('')}
+                    <button onclick="paginateTo_${tbodyId}(${currentPage + 1})" ${currentPage === total ? 'disabled' : ''}
+                        style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:${currentPage===total?'rgba(255,255,255,0.2)':'rgba(255,255,255,0.7)'};border-radius:8px;padding:5px 12px;cursor:${currentPage===total?'default':'pointer'};font-size:0.82rem;">Next →</button>
+                </div>
+            `;
+        }
+        window[`paginateTo_${tbodyId}`] = function(page) {
+            const total = totalPages();
+            if (page < 1 || page > total) return;
+            renderPage(page);
+        };
+        renderPage(1);
+    }
+
+    initTablePagination('globalTxnBody', 'globalTxnPagination', 10);
+
     // ── Export Dropdown ──────────────────────────────────────────────────────────
     function toggleExportMenu() {
         const menu    = document.getElementById('exportMenu');

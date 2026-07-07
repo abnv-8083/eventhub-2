@@ -375,6 +375,8 @@
                         </div>
                     <% } %>
                 </div>
+                <!-- Scanning Feed Pagination -->
+                <div id="scanFeedPagination" class="d-flex justify-content-between align-items-center py-3 mt-2" style="flex-wrap:wrap;gap:12px;"></div>
             </div>
 
         </main>
@@ -399,6 +401,64 @@
         const EVENT_ID = "<%= event._id %>";
         const toastEl = document.getElementById('copyToast');
         const toast = new bootstrap.Toast(toastEl);
+
+        // ── Card Pagination for Check-in Feed ────────────────────────────────────
+        function initCardPagination(containerId, paginationId, cardsPerPage) {
+            const container = document.getElementById(containerId);
+            const paginationEl = document.getElementById(paginationId);
+            if (!container || !paginationEl) return;
+
+            function getCards() {
+                return Array.from(container.querySelectorAll('.booking-card'));
+            }
+
+            let currentPage = 1;
+
+            function totalPages() {
+                return Math.max(1, Math.ceil(getCards().length / cardsPerPage));
+            }
+
+            function renderPage(page) {
+                const cards = getCards();
+                if (cards.length <= cardsPerPage) { paginationEl.innerHTML = ''; return; }
+                currentPage = Math.min(page, totalPages());
+                const start = (currentPage - 1) * cardsPerPage;
+                const end = start + cardsPerPage;
+                cards.forEach((c, i) => { c.style.display = (i >= start && i < end) ? '' : 'none'; });
+                renderPaginationControls(cards.length);
+            }
+
+            function renderPaginationControls(total) {
+                const tp = totalPages();
+                const startIdx = (currentPage - 1) * cardsPerPage + 1;
+                const endIdx = Math.min(currentPage * cardsPerPage, total);
+                paginationEl.innerHTML = `
+                    <span style="color:rgba(255,255,255,0.45);font-size:0.83rem;">Showing ${startIdx}–${endIdx} of ${total} bookings</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <button onclick="scanFeedGoTo(${currentPage - 1})" ${currentPage===1?'disabled':''}
+                            style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:${currentPage===1?'rgba(255,255,255,0.2)':'rgba(255,255,255,0.7)'};border-radius:8px;padding:5px 12px;cursor:${currentPage===1?'default':'pointer'};font-size:0.82rem;">← Prev</button>
+                        ${Array.from({length: tp}, (_, i) => i + 1).map(p => `<button onclick="scanFeedGoTo(${p})" style="background:${p===currentPage?'rgba(16,185,129,0.25)':'rgba(255,255,255,0.05)'};border:1px solid ${p===currentPage?'rgba(16,185,129,0.5)':'rgba(255,255,255,0.1)'};color:${p===currentPage?'#34D399':'rgba(255,255,255,0.6)'};border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.82rem;min-width:32px;">${p}</button>`).join('')}
+                        <button onclick="scanFeedGoTo(${currentPage + 1})" ${currentPage===tp?'disabled':''}
+                            style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:${currentPage===tp?'rgba(255,255,255,0.2)':'rgba(255,255,255,0.7)'};border-radius:8px;padding:5px 12px;cursor:${currentPage===tp?'default':'pointer'};font-size:0.82rem;">Next →</button>
+                    </div>
+                `;
+            }
+
+            window.scanFeedGoTo = function(page) {
+                const tp = totalPages();
+                if (page < 1 || page > tp) return;
+                renderPage(page);
+            };
+
+            // Re-render after live inserts
+            window.refreshScanFeedPagination = function() {
+                renderPage(1); // new cards always go to page 1
+            };
+
+            renderPage(1);
+        }
+
+        initCardPagination('checkInFeedContainer', 'scanFeedPagination', 10);
 
         function showToast(msg) {
             document.getElementById('toastMessage').innerText = msg;
@@ -514,6 +574,7 @@
                     <div class="booking-card-tiers">${tiersHtml}</div>
                 `;
                 container.insertBefore(card, container.firstChild);
+                if (typeof window.refreshScanFeedPagination === 'function') window.refreshScanFeedPagination();
             }
         });
     </script>
