@@ -29,7 +29,7 @@
                                 <i class="fi fi-rr-user"></i>
                             </div>
                         </div>
-                        <div class="stat-number"><%= totalUsers %></div>
+                        <div class="stat-number" id="statTotalUsers" data-val="<%= totalUsers %>"><%= totalUsers %></div>
                         <p class="text-dim m-0" style="font-size: 0.75rem; margin-top: 8px !important;">Click to manage &rarr;</p>
                     </div>
                 </div>
@@ -41,7 +41,7 @@
                                 <i class="fi fi-rr-building"></i>
                             </div>
                         </div>
-                        <div class="stat-number" style="color: #3498db;"><%= totalOrganizers %></div>
+                        <div class="stat-number" id="statTotalOrganizers" data-val="<%= totalOrganizers %>" style="color: #3498db;"><%= totalOrganizers %></div>
                         <p class="text-dim m-0" style="font-size: 0.75rem; margin-top: 8px !important;">Click to review &rarr;</p>
                     </div>
                 </div>
@@ -53,7 +53,7 @@
                                 <i class="fi fi-rr-clock"></i>
                             </div>
                         </div>
-                        <div class="stat-number" style="color: #f39c12;"><%= pendingEvents %></div>
+                        <div class="stat-number" id="statPendingEvents" data-val="<%= pendingEvents %>" style="color: #f39c12;"><%= pendingEvents %></div>
                         <p class="text-dim m-0" style="font-size: 0.75rem; margin-top: 8px !important;">Awaiting approval</p>
                     </div>
                 </div>
@@ -65,7 +65,7 @@
                                 <i class="fi fi-rr-money"></i>
                             </div>
                         </div>
-                        <div class="stat-number" style="color: #2ecc71; font-size: 1.9rem;">&#8377;<%= totalRevenue.toLocaleString('en-IN') %></div>
+                        <div class="stat-number" id="statTotalRevenue" data-val="<%= totalRevenue %>" style="color: #2ecc71; font-size: 1.9rem;">&#8377;<%= totalRevenue.toLocaleString('en-IN') %></div>
                         <p class="text-dim m-0" style="font-size: 0.75rem; margin-top: 8px !important;">Platform lifetime</p>
                     </div>
                 </div>
@@ -78,7 +78,7 @@
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
                                 <p class="text-dim" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 6px;">Total Events</p>
-                                <h4 class="text-white m-0" style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display);"><%= totalEvents %></h4>
+                                <h4 class="text-white m-0" id="statTotalEvents" data-val="<%= totalEvents %>" style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display);"><%= totalEvents %></h4>
                             </div>
                             <i class="fi fi-rr-calendar-lines" style="font-size: 2rem; color: rgba(255,255,255,0.1);"></i>
                         </div>
@@ -89,7 +89,7 @@
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
                                 <p class="text-dim" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 6px;">Total Bookings</p>
-                                <h4 class="text-white m-0" style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display);"><%= totalBookings %></h4>
+                                <h4 class="text-white m-0" id="statTotalBookings" data-val="<%= totalBookings %>" style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display);"><%= totalBookings %></h4>
                             </div>
                             <i class="fi fi-rr-ticket" style="font-size: 2rem; color: rgba(255,255,255,0.1);"></i>
                         </div>
@@ -144,12 +144,60 @@
         </main>
     </div>
     <script>
-        // Listen for live admin notifications (e.g. new organizer approval requests)
-        if (window.socket) {
-            window.socket.on('bookingStatusUpdate', (data) => {
-                setTimeout(() => window.location.reload(), 2000);
-            });
-        }
+        // Listen for live admin updates
+        window.addEventListener('eh:new_booking', (e) => {
+            const data = e.detail;
+            if (typeof Toast !== 'undefined') Toast.success('New Booking Received Platform-Wide!');
+            
+            const revEl = document.getElementById('statTotalRevenue');
+            const bookingsEl = document.getElementById('statTotalBookings');
+            
+            if (revEl && data.booking && data.booking.totalAmount) {
+                let currentRev = parseFloat(revEl.getAttribute('data-val')) || 0;
+                currentRev += data.booking.totalAmount;
+                revEl.setAttribute('data-val', currentRev);
+                revEl.innerHTML = `&#8377;${currentRev.toLocaleString('en-IN')}`;
+            }
+            if (bookingsEl) {
+                let currentBookings = parseInt(bookingsEl.getAttribute('data-val')) || 0;
+                currentBookings += 1;
+                bookingsEl.setAttribute('data-val', currentBookings);
+                bookingsEl.innerText = currentBookings;
+            }
+        });
+
+        window.addEventListener('eh:event_created', (e) => {
+            if (typeof Toast !== 'undefined') Toast.success('New Event Created!');
+            
+            const pendingEl = document.getElementById('statPendingEvents');
+            const totalEventsEl = document.getElementById('statTotalEvents');
+            
+            if (pendingEl) {
+                let val = (parseInt(pendingEl.getAttribute('data-val')) || 0) + 1;
+                pendingEl.setAttribute('data-val', val);
+                pendingEl.innerText = val;
+            }
+            if (totalEventsEl) {
+                let val = (parseInt(totalEventsEl.getAttribute('data-val')) || 0) + 1;
+                totalEventsEl.setAttribute('data-val', val);
+                totalEventsEl.innerText = val;
+            }
+        });
+
+        window.addEventListener('eh:event_updated', (e) => {
+            const data = e.detail;
+            if (data.status === 'approved' || data.status === 'rejected' || data.status === 'cancelled') {
+                const pendingEl = document.getElementById('statPendingEvents');
+                if (pendingEl) {
+                    let val = parseInt(pendingEl.getAttribute('data-val')) || 0;
+                    if (val > 0) {
+                        val -= 1;
+                        pendingEl.setAttribute('data-val', val);
+                        pendingEl.innerText = val;
+                    }
+                }
+            }
+        });
     </script>
 </body>
 </html>

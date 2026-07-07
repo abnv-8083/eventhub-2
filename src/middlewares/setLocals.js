@@ -11,6 +11,22 @@ export const setLocals = (req, res, next) => {
     // Admins
     res.locals.admin = req.session.admin || null;
 
+    // Current User ID and Role for live sockets
+    let currentUserId = null;
+    let currentUserRole = null;
+    if (res.locals.user) {
+        currentUserId = res.locals.user._id;
+        currentUserRole = 'user';
+    } else if (res.locals.organizer) {
+        currentUserId = res.locals.organizer._id;
+        currentUserRole = 'organizer';
+    } else if (res.locals.admin) {
+        currentUserId = res.locals.admin._id;
+        currentUserRole = 'admin';
+    }
+    res.locals.currentUserId = currentUserId;
+    res.locals.currentUserRole = currentUserRole;
+
     // Time formatting helper (12-hour format: e.g. 18:00 -> 6:00 PM)
     res.locals.formatTime12 = (time24) => {
         if (!time24) return '';

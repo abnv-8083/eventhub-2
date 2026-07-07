@@ -30,6 +30,16 @@
         /* Grid Layout */
         .checkout-grid { display: grid; grid-template-columns: 1fr 420px; gap: 2rem; align-items: start; }
         @media (max-width: 992px) { .checkout-grid { grid-template-columns: 1fr; } }
+        
+        @media (max-width: 768px) {
+            .checkout-wrap { padding: 1rem; padding-top: 2rem; }
+            .glass-card-header { padding: 1rem; }
+            .glass-card-body { padding: 1rem; }
+            .event-snippet { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .ticket-row { padding: 0.75rem 1rem; gap: 0.5rem; }
+            .ticket-row .t-name { font-size: 0.9rem; }
+            .ticket-row .t-price { font-size: 1rem; }
+        }
 
         /* Event Snippet */
         .event-snippet { display: flex; gap: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.06); }

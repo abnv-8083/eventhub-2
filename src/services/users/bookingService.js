@@ -21,7 +21,7 @@ const razorpay = new Razorpay({
 });
 
 
-// ─── HELPER: Emit Live Booking to Organizer ─────────────────────────────────
+// ─── HELPER: Emit Live Booking ─────────────────────────────────
 async function emitNewBookingToOrganizer(bookingId) {
     try {
         const booking = await Booking.findById(bookingId)
@@ -32,15 +32,16 @@ async function emitNewBookingToOrganizer(bookingId) {
             const socketUtil = await import('../../utils/socket.js');
             const io = socketUtil.getIO();
             
-            const eventRoomId = String(booking.event._id).trim();
+            const eventRoomId = `event_${String(booking.event._id).trim()}`;
             const organizerId = String(booking.event.organizer).trim();
             
-            console.log(`📢 LIVE BOOKING: Emitting to Event Room [${eventRoomId}] & Organizer [${organizerId}]`);
+            console.log(`📢 LIVE BOOKING: Emitting to Event Room [${eventRoomId}], Organizer [${organizerId}], and admin_room`);
             
-            // Emit to event-specific room
-            io.to(eventRoomId).emit('newBooking', { booking });
-            // Emit to organizer's personal room for dashboard updates
-            io.to(organizerId).emit('dashboardUpdate', { booking });
+            // Emit to event-specific room, organizer's personal room, and admin room
+            const eventName = 'new_booking';
+            io.to(eventRoomId).emit(eventName, { booking });
+            io.to(organizerId).emit(eventName, { booking });
+            io.to('admin_room').emit(eventName, { booking });
         }
     } catch (err) {
         console.error('❌ Socket emit error for new booking:', err.message);
@@ -274,6 +275,10 @@ export const bookWithWallet = async (eventId, userId, cart, couponId, expectedTo
         appliedCoupon.usedCount += 1;
         await appliedCoupon.save();
     }
+
+    // Emit live wallet update
+    const socketUtil = await import('../../utils/socket.js');
+    socketUtil.getIO().to(userId.toString()).emit('wallet_update', { balance: updatedUser.wallet.balance });
 
     await emitNewBookingToOrganizer(newBooking._id);
 

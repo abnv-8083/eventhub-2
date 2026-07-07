@@ -71,8 +71,8 @@ export const verifyAndCreditWallet = async (userId, { razorpay_order_id, razorpa
     }
 
     const io = socketUtil.getIO();
-    io.to(String(userId).trim()).emit('walletUpdate', {
-        newBalance: updatedUser.wallet.balance,
+    io.to(String(userId).trim()).emit('wallet_update', {
+        balance: updatedUser.wallet.balance,
         transaction: {
             type: 'credit',
             amount: parsedAmount,

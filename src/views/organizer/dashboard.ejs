@@ -27,7 +27,7 @@
                                 <i class="fi fi-rr-money"></i>
                             </div>
                         </div>
-                        <div class="stat-number" style="color: #2ecc71; font-size: 2rem;">&#8377;<%= totalRevenue.toLocaleString('en-IN') %></div>
+                        <div class="stat-number" id="statTotalRevenue" style="color: #2ecc71; font-size: 2rem;" data-val="<%= totalRevenue %>">&#8377;<%= totalRevenue.toLocaleString('en-IN') %></div>
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-3">
@@ -38,7 +38,7 @@
                                 <i class="fi fi-rr-ticket"></i>
                             </div>
                         </div>
-                        <div class="stat-number"><%= totalTicketsSold %></div>
+                        <div class="stat-number" id="statTotalTicketsSold" data-val="<%= totalTicketsSold %>"><%= totalTicketsSold %></div>
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-3">
@@ -111,14 +111,30 @@
         </main>
     </div>
     <script>
-        // Listen for live dashboard updates (e.g. new bookings across any event)
-        if (window.socket) {
-            window.socket.on('dashboardUpdate', (data) => {
-                // Show toast and reload to update KPIs
-                if (typeof Toast !== 'undefined') Toast.success('New Booking Received!');
-                setTimeout(() => window.location.reload(), 1500);
-            });
-        }
+        // Listen for live dashboard updates
+        window.addEventListener('eh:new_booking', (e) => {
+            const data = e.detail;
+            if (typeof Toast !== 'undefined') Toast.success('New Booking Received!');
+            
+            // Update stats
+            const revEl = document.getElementById('statTotalRevenue');
+            const tktsEl = document.getElementById('statTotalTicketsSold');
+            
+            if (revEl && data.booking && data.booking.totalAmount) {
+                let currentRev = parseFloat(revEl.getAttribute('data-val')) || 0;
+                currentRev += data.booking.totalAmount;
+                revEl.setAttribute('data-val', currentRev);
+                revEl.innerHTML = `&#8377;${currentRev.toLocaleString('en-IN')}`;
+            }
+            
+            if (tktsEl && data.booking && data.booking.tickets) {
+                let newTkts = data.booking.tickets.reduce((sum, t) => sum + (t.quantity || 0), 0);
+                let currentTkts = parseInt(tktsEl.getAttribute('data-val')) || 0;
+                currentTkts += newTkts;
+                tktsEl.setAttribute('data-val', currentTkts);
+                tktsEl.innerText = currentTkts;
+            }
+        });
     </script>
 </body>
 </html>

@@ -83,6 +83,13 @@ export const toggleUserBlock = async (req, res, next) => {
         if (!userId) return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: 'User ID is required' });
 
         const updatedUser = await adminServices.toggleUserBlockStatus(userId);
+        
+        // Emit live block event to force logout on client
+        if (updatedUser.isBlocked) {
+            const socketUtil = await import('../../utils/socket.js');
+            socketUtil.getIO().to(String(userId).trim()).emit('user_blocked', { message: 'Account suspended' });
+        }
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: `User successfully ${updatedUser.isBlocked ? 'blocked' : 'unblocked'}.`

@@ -185,7 +185,21 @@ export const createEvent = async (organizerId, eventData, bannerUrls, ticketData
         }))
     });
 
-    return await newEvent.save();
+    const savedEvent = await newEvent.save();
+
+    // Emit live event to admins
+    try {
+        const socketUtil = await import('../../utils/socket.js');
+        socketUtil.getIO().to('admin_room').emit('event_created', {
+            eventId: savedEvent._id,
+            title: savedEvent.title,
+            organizerId: organizerId
+        });
+    } catch (err) {
+        console.error('❌ Error emitting event_created:', err.message);
+    }
+
+    return savedEvent;
 };
 
 
@@ -378,7 +392,21 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
 
     event.tickets = [...freshTiers, ...preservedSoldTiers];
 
-    return await event.save();
+    const savedEvent = await event.save();
+
+    // Emit live event to admins
+    try {
+        const socketUtil = await import('../../utils/socket.js');
+        socketUtil.getIO().to('admin_room').emit('event_updated', {
+            eventId: savedEvent._id,
+            title: savedEvent.title,
+            status: savedEvent.status
+        });
+    } catch (err) {
+        console.error('❌ Error emitting event_updated:', err.message);
+    }
+
+    return savedEvent;
 };
 
 
@@ -400,6 +428,17 @@ export const deleteEvent = async (eventId, organizerId) => {
 
     event.deleted = true;
     await event.save();
+
+    // Emit live event to admins
+    try {
+        const socketUtil = await import('../../utils/socket.js');
+        socketUtil.getIO().to('admin_room').emit('event_deleted', {
+            eventId: event._id,
+            title: event.title
+        });
+    } catch (err) {
+        console.error('❌ Error emitting event_deleted:', err.message);
+    }
 };
 
 
@@ -419,6 +458,18 @@ export const cancelEvent = async (eventId, organizerId) => {
         }
     }
     await event.save();
+
+    // Emit live event to admins
+    try {
+        const socketUtil = await import('../../utils/socket.js');
+        socketUtil.getIO().to('admin_room').emit('event_updated', {
+            eventId: event._id,
+            title: event.title,
+            status: 'cancelled'
+        });
+    } catch (err) {
+        console.error('❌ Error emitting event_updated (cancel):', err.message);
+    }
 
     // Find all active bookings for this event
     const bookings = await Booking.find({ event: eventId, status: { $ne: 'cancelled' } });

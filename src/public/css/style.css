@@ -156,6 +156,16 @@ header {
     align-items: center;
 }
 
+.mobile-menu-toggle {
+    display: none;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+}
+
 .logo {
     font-size: 1.5rem;
     font-weight: 800;
@@ -811,8 +821,8 @@ select.input option { background: var(--bg-surface); color: white; }
 ========================================== */
 /* Dashboard layout rules consolidated in Section 13 (Sidebar & Dashboard Layout) */
 
-.data-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 1rem; }
-.data-table thead th { padding: 1.25rem 1.5rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); border-bottom: 2px solid var(--border); }
+.data-table { width: 100%; min-width: 700px; border-collapse: separate; border-spacing: 0; margin-top: 1rem; }
+.data-table thead th { padding: 1.25rem 1.5rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); border-bottom: 2px solid var(--border); white-space: nowrap; }
 .data-table tbody td { padding: 1.5rem; vertical-align: middle; border-bottom: 1px solid var(--border); color: var(--text-main); font-size: 0.95rem; }
 .data-table tbody tr { transition: var(--transition); }
 .data-table tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
@@ -892,7 +902,6 @@ footer { background: var(--bg-surface); border-top: 1px solid var(--border); pad
 /* Tablet layout consolidated in Section 13 */
 
 @media (max-width: 768px) {
-    .nav-links { display: none; }
     .container { padding: 0 1rem; }
 }
 

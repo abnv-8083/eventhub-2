@@ -56,6 +56,13 @@ export const updateEventStatus = async (eventId, status) => {
     
     await sendNotification(event.organizer.toString(), `Your event "${event.title}" has been ${status}.`, notifStatus);
 
+    // Emit live event status update
+    getIO().to(event.organizer.toString()).emit('event_status_update', { 
+        eventId: event._id, 
+        title: event.title, 
+        status 
+    });
+
     return event;
 };
 

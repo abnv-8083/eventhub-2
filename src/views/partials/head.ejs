@@ -205,4 +205,10 @@
         });
     });
     </script>
+    <% if (locals.currentUserId) { %>
+        <meta name="user-id" content="<%= currentUserId %>">
+        <meta name="user-role" content="<%= currentUserRole %>">
+    <% } %>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/live.js?v=<%= Date.now() %>"></script>
 </head>

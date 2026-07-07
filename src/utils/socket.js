@@ -30,6 +30,18 @@ export const initSocket = (httpServer) => {
             console.log(`🎟️ Socket ${socket.id} joined event room: ${eventId}`);
         });
 
+        // Admin joining the global admin room
+        socket.on('joinAdmin', () => {
+            socket.join('admin_room');
+            console.log(`🛡️ Admin Socket ${socket.id} joined admin_room`);
+        });
+
+        // Organizer joining a specific event room (for live sales)
+        socket.on('joinOrganizerEvent', (eventId) => {
+            socket.join(`event_${String(eventId).trim()}`);
+            console.log(`📊 Organizer Socket ${socket.id} joined event_${eventId}`);
+        });
+
         socket.on('disconnect', () => {
             for (let [userId, socketId] of activeUsers.entries()) {
                 if (socketId === socket.id) {

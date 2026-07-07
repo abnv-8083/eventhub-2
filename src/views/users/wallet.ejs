@@ -307,7 +307,7 @@
         .balance-label { font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; display: block; margin-bottom: 0.2rem; }
         .balance-amount { display: flex; align-items: baseline; gap: 0.3rem; }
         .currency-symbol { font-size: 2rem; color: rgba(255, 255, 255, 0.6); font-weight: 300; }
-        .amount-val { font-family: var(--font-display, 'Outfit', sans-serif); font-size: 3.2rem; font-weight: 800; letter-spacing: -1px; color: white; text-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+        .amount-val { font-family: var(--font-display, 'Outfit', sans-serif); font-size: clamp(2.2rem, 8vw, 3.2rem); font-weight: 800; letter-spacing: -1px; color: white; text-shadow: 0 4px 20px rgba(0,0,0,0.6); }
         
         .holder-label { font-size: 0.68rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 2px; }
         .holder-name { font-size: 0.95rem; font-weight: 700; color: white; letter-spacing: 1px; }
@@ -761,31 +761,32 @@
         renderTransactions();
     });
 
-    // ── Live Wallet Balance Update via Socket ────────────────────────────────────
-    if (window.socket) {
-        window.socket.on('walletUpdate', (data) => {
-            // Update the balance display live
-            const balEl = document.getElementById('liveBalance');
-            if (balEl && data.newBalance !== undefined) {
-                balEl.textContent = parseFloat(data.newBalance).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            }
-            // Show a toast notification
-            if (data.transaction && typeof Toast !== 'undefined') {
-                Toast.success(`\u20b9${parseFloat(data.transaction.amount).toLocaleString('en-IN')} credited to your wallet!`);
-            }
-            // Prepend new transaction to the global array and re-paginate live
-            if (data.transaction) {
-                const now = new Date();
-                allTransactions.unshift({
-                    type: data.transaction.type || 'credit',
-                    amount: data.transaction.amount || 0,
-                    description: data.transaction.description || 'Money added to wallet',
-                    date: now.toISOString()
-                });
-                renderTransactions();
-            }
-        });
-    }
+    // ── Live Wallet Balance Update via Global Event ────────────────────────────────────
+    window.addEventListener('eh:wallet_update', (e) => {
+        const data = e.detail;
+        // Update the balance display live
+        const balEl = document.getElementById('liveBalance');
+        if (balEl && data.balance !== undefined) {
+            balEl.textContent = parseFloat(data.balance).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        // Show a toast notification
+        if (data.transaction && typeof Toast !== 'undefined') {
+            const verb = data.transaction.type === 'credit' ? 'credited to' : 'debited from';
+            const theme = data.transaction.type === 'credit' ? 'success' : 'info';
+            Toast[theme](`\u20b9${parseFloat(data.transaction.amount).toLocaleString('en-IN')} ${verb} your wallet!`);
+        }
+        // Prepend new transaction to the global array and re-paginate live
+        if (data.transaction) {
+            const now = new Date();
+            allTransactions.unshift({
+                type: data.transaction.type || 'credit',
+                amount: data.transaction.amount || 0,
+                description: data.transaction.description || 'Money added to wallet',
+                date: now.toISOString()
+            });
+            renderTransactions();
+        }
+    });
     </script>
 </body>
 </html>
