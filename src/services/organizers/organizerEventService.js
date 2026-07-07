@@ -386,15 +386,14 @@ export const deleteEvent = async (eventId, organizerId) => {
     const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } });
     if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
 
-    if (event.status !== 'draft') {
-        throw new AppError('Only draft events can be deleted. For published or completed events, please use Cancel Event or Archive instead.', HTTP_STATUS.BAD_REQUEST);
+    if (!['draft', 'cancelled', 'inactive', 'rejected', 'completed'].includes(event.status)) {
+        throw new AppError('Active published or approved events cannot be deleted directly. Please use Cancel Event first to refund attendees and close bookings.', HTTP_STATUS.BAD_REQUEST);
     }
 
-    const totalSold = (event.tickets || []).reduce((acc, t) => acc + t.sold, 0);
     const activeBookingsCount = await Booking.countDocuments({ event: eventId, status: { $ne: 'cancelled' } });
 
-    if (totalSold > 0 || activeBookingsCount > 0) {
-        throw new AppError('Cannot delete an event that has registrations. Please use Cancel Event instead to refund attendees and mark the event cancelled.', HTTP_STATUS.BAD_REQUEST);
+    if (activeBookingsCount > 0) {
+        throw new AppError('Cannot delete an event that has active registrations. Please use Cancel Event instead to refund attendees and mark the event cancelled.', HTTP_STATUS.BAD_REQUEST);
     }
 
     event.deleted = true;
@@ -412,6 +411,11 @@ export const cancelEvent = async (eventId, organizerId) => {
     }
 
     event.status = 'cancelled';
+    if (event.tickets && event.tickets.length > 0) {
+        for (const t of event.tickets) {
+            t.sold = 0;
+        }
+    }
     await event.save();
 
     // Find all active bookings for this event
