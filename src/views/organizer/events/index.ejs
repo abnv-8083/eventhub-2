@@ -149,12 +149,15 @@
                                 <i class="fi fi-rr-eye me-1"></i> View
                             </a>
                             <div class="d-flex gap-2">
-                                <% if(event.status==='approved') { %>
+                                <% if(event.status==='approved' || event.status==='published' || event.status==='completed' || event.status==='sales_closed') { %>
                                 <a href="/organizer/events/<%= event._id %>/bookings" class="action-icon-btn" title="Bookings">
                                     <i class="fi fi-rr-money"></i>
                                 </a>
                                 <a href="/organizer/events/<%= event._id %>/sales-report" class="action-icon-btn" title="Sales Report" style="color:#2ecc71;border-color:rgba(46,204,113,0.2);">
                                     <i class="fi fi-rr-chart-histogram"></i>
+                                </a>
+                                <a href="/organizer/events/<%= event._id %>/scanning-report" class="action-icon-btn" title="Scanning Report" style="color:#6366f1;border-color:rgba(99,102,241,0.2);">
+                                    <i class="fi fi-rr-expand"></i>
                                 </a>
                                 <% } %>
                                 <% if(event.status==='pending' || event.status==='approved' || event.status==='draft' || event.status==='inactive' || event.status==='under_review' || event.status==='published') { %>

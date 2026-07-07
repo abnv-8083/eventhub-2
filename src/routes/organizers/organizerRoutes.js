@@ -65,6 +65,8 @@ organizerRouter.patch('/events/coupons/:couponId/toggle', eventController.toggle
 organizerRouter.delete('/events/coupons/:couponId', eventController.deleteCoupon);
 
 
+organizerRouter.get('/events/:id/scanning-report',            eventController.getScanningReport);
+organizerRouter.post('/events/:id/regenerate-scanning-code',   eventController.regenerateScanningCode);
 organizerRouter.get('/events/:id/sales-report',            eventController.getSalesReport);
 organizerRouter.get('/events/:id/sales-report/export/excel', eventController.exportSalesReportExcel);
 organizerRouter.get('/events/:id/sales-report/export/pdf',   eventController.exportSalesReportPdf);

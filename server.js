@@ -27,6 +27,7 @@ import userRouter from './src/routes/users/userRoutes.js';
 import organizerRouter from './src/routes/organizers/organizerRoutes.js';
 import adminAuthRoutes from './src/routes/admin/adminAuthRoutes.js';
 import adminRoutes from './src/routes/admin/adminRoutes.js';
+import scannerRoutes from './src/routes/scannerRoutes.js';
 import { setLocals } from './src/middlewares/setLocals.js';
 import * as userController from './src/controllers/users/userController.js';
 
@@ -122,6 +123,7 @@ app.use('/user', userRouter)
 app.use('/organizer', organizerRouter)
 app.use('/admin', adminAuthRoutes)
 app.use('/admin', adminRoutes)
+app.use('/scanner', scannerRoutes)
 
 // Initialize cron jobs
 initCronJobs();

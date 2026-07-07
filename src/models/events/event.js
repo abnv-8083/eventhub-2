@@ -134,7 +134,15 @@ const eventSchema = new mongoose.Schema({
         default: 'draft' 
     },
     isBlocked: { type: Boolean, default: false },
-    deleted:   { type: Boolean, default: false, index: true }
+    deleted:   { type: Boolean, default: false, index: true },
+
+    // ── Ticket Scanning Portal Configuration ──
+    scanningCode: { 
+        type: String, 
+        default: () => Math.floor(100000 + Math.random() * 900000).toString(),
+        index: true 
+    },
+    isScanningActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
 

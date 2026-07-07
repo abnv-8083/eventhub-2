@@ -8,11 +8,12 @@ const bookingSchema = new mongoose.Schema({
 
     // ── Replace singular fields with an array of items ──
     tickets: [{
-        ticket:      { type: mongoose.Schema.Types.ObjectId, required: true },
-        ticketName:  { type: String, required: true },
-        ticketPrice: { type: Number, required: true },
-        quantity:    { type: Number, required: true, min: 1 },
-        status:      { type: String, enum: ['active', 'cancelled'], default: 'active' }
+        ticket:            { type: mongoose.Schema.Types.ObjectId, required: true },
+        ticketName:        { type: String, required: true },
+        ticketPrice:       { type: Number, required: true },
+        quantity:          { type: Number, required: true, min: 1 },
+        checkedInQuantity: { type: Number, default: 0, min: 0 },
+        status:            { type: String, enum: ['active', 'cancelled'], default: 'active' }
     }],
     // ─────────────────────────────────────────────────────
 
@@ -32,6 +33,13 @@ const bookingSchema = new mongoose.Schema({
     // ── QR Code Verification / Check-in State ──
     isCheckedIn:        { type: Boolean, default: false },
     checkedInAt:        { type: Date },
+    checkInLogs: [{
+        ticketId:      { type: mongoose.Schema.Types.ObjectId },
+        ticketName:    { type: String },
+        quantity:      { type: Number, min: 1 },
+        checkedInAt:   { type: Date, default: Date.now },
+        scannedByCode: { type: String }
+    }],
 
     // ── User-initiated cancellation request (awaiting organizer approval) ──
     cancellationRequest: {

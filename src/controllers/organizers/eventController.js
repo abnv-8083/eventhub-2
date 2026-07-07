@@ -6,6 +6,98 @@ import Event from '../../models/events/event.js';
 import Booking from '../../models/payments/booking.js';
 import Coupon from '../../models/payments/coupon.js';
 
+// ─── Scanning Report Page ─────────────────────────────────────────────────────
+export const getScanningReport = async (req, res, next) => {
+    try {
+        const eventId = req.params.id;
+        const organizerId = req.session.organizer._id;
+
+        const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: false });
+        if (!event) return res.redirect('/organizer/events');
+
+        // Ensure code exists
+        if (!event.scanningCode) {
+            event.scanningCode = Math.floor(100000 + Math.random() * 900000).toString();
+            await event.save();
+        }
+
+        const bookings = await Booking.find({
+            event: eventId,
+            status: { $in: ['active', 'on_hold', 'cancelled'] },
+            paymentStatus: { $in: ['completed', 'PAID', 'pending'] }
+        }).populate('user', 'fullName email phone').sort({ updatedAt: -1 });
+
+        let totalSold = 0;
+        let totalCheckedIn = 0;
+        let totalCancelled = 0;
+        const checkInFeed = [];
+
+        bookings.forEach(b => {
+            b.tickets.forEach(t => {
+                if (t.status === 'active') {
+                    totalSold += t.quantity;
+                    totalCheckedIn += (t.checkedInQuantity || 0);
+                } else {
+                    totalCancelled += t.quantity;
+                }
+            });
+
+            if (b.checkInLogs && b.checkInLogs.length > 0) {
+                b.checkInLogs.forEach(log => {
+                    checkInFeed.push({
+                        bookingId: b._id,
+                        bookingRef: b._id.toString().slice(-6).toUpperCase(),
+                        attendeeName: b.user?.fullName || 'Guest Attendee',
+                        attendeeEmail: b.user?.email || '',
+                        ticketName: log.ticketName || 'General Ticket',
+                        quantity: log.quantity,
+                        checkedInAt: log.checkedInAt,
+                        scannedByCode: log.scannedByCode || 'GATE'
+                    });
+                });
+            }
+        });
+
+        checkInFeed.sort((a, b) => new Date(b.checkedInAt) - new Date(a.checkedInAt));
+
+        res.render('organizer/events/scanning-report', {
+            title: `Scanning Report — ${event.title}`,
+            event,
+            totalSold,
+            totalCheckedIn,
+            totalCancelled,
+            bookings,
+            checkInFeed
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ─── Regenerate Scanning PIN Code ─────────────────────────────────────────────
+export const regenerateScanningCode = async (req, res, next) => {
+    try {
+        const eventId = req.params.id;
+        const organizerId = req.session.organizer._id;
+
+        const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: false });
+        if (!event) {
+            return res.status(404).json({ success: false, message: 'Event not found.' });
+        }
+
+        const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+        event.scanningCode = newCode;
+        await event.save();
+
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('json'))) {
+            return res.json({ success: true, newCode });
+        }
+        res.redirect(`/organizer/events/${eventId}/scanning-report`);
+    } catch (error) {
+        next(error);
+    }
+};
+
 // ─── Sales Report Page ────────────────────────────────────────────────────────
 export const getSalesReport = async (req, res, next) => {
     try {
