@@ -600,6 +600,17 @@ export const requestCancellation = async (bookingId, userId, reason) => {
             `\u26a0\ufe0f Cancellation Request: A user has requested cancellation for their booking at "${booking.event.title}". Reason: "${reason.trim()}". Please review and action it.`,
             'warning'
         );
+
+        // Real-time update for Organizer Cancellation Dashboard
+        try {
+            socketUtil.getIO().to(String(organizerId).trim()).emit('newCancellationRequest', {
+                bookingId: booking._id,
+                eventId: booking.event._id,
+                reason: reason.trim()
+            });
+        } catch (socketErr) {
+            console.error('Socket broadcast error for cancellation request:', socketErr.message);
+        }
     }
 
     return { message: 'Cancellation request submitted. The organizer will review it shortly.' };

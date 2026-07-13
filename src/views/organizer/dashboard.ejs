@@ -1,4 +1,12 @@
 <%- include('../partials/head') %>
+<style>
+    .stat-trend { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 100px; }
+    .trend-up   { background: rgba(46,204,113,0.12); color: #2ecc71; }
+    .trend-warn { background: rgba(243,156,18,0.12); color: #f39c12; }
+    .chart-container { position: relative; height: 220px; }
+    .top-event-bar { height: 6px; border-radius: 4px; background: linear-gradient(90deg,#E63946,#9b2335); transition: width 0.8s ease; }
+    .kpi-mini { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 14px 18px; }
+</style>
 <body class="bg-mesh">
     <%- include('../partials/navbars/organizer-nav') %>
     <div class="dashboard-layout">
@@ -8,100 +16,198 @@
             <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-5 animate stagger-1">
                 <div>
-                    <p style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary); font-weight: 700; margin-bottom: 4px;">Organizer Portal</p>
-                    <h2 class="fw-bold m-0" style="letter-spacing: -0.5px;">Overview</h2>
-                    <p class="text-dim m-0" style="margin-top: 4px;">Welcome back, <strong style="color: rgba(255,255,255,0.8)"><%= organizer.organizationName || organizer.fullName %></strong></p>
+                    <p style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--primary);font-weight:700;margin-bottom:4px;">Organizer Portal</p>
+                    <h2 class="fw-bold m-0" style="letter-spacing:-0.5px;">Analytics Overview</h2>
+                    <p class="text-dim m-0" style="margin-top:4px;">Welcome back, <strong style="color:rgba(255,255,255,0.8)"><%= organizer.organizationName || organizer.fullName %></strong></p>
                 </div>
-                <a href="/organizer/events/new" class="btn btn-primary" style="height: 44px; border-radius: 12px;">
-                    <i class="fi fi-rr-plus me-2"></i>Create Event
-                </a>
+                <div class="d-flex gap-2">
+                    <% if (pendingCancellations > 0) { %>
+                    <a href="/organizer/cancellation-requests" class="btn d-flex align-items-center gap-2" style="background:rgba(243,156,18,0.12);border:1px solid rgba(243,156,18,0.3);color:#f39c12;border-radius:12px;font-size:0.85rem;height:44px;">
+                        <i class="fi fi-rr-bell-ring"></i> <%= pendingCancellations %> Pending Cancel<% if(pendingCancellations>1){%>s<%}%>
+                    </a>
+                    <% } %>
+                    <a href="/organizer/events/new" class="btn btn-primary" style="height:44px;border-radius:12px;">
+                        <i class="fi fi-rr-plus me-2"></i>Create Event
+                    </a>
+                </div>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="row g-4 mb-5 animate stagger-2">
+            <!-- Primary KPI Cards -->
+            <div class="row g-4 mb-4 animate stagger-2">
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-premium stat-card" style="border-radius: 16px;">
+                    <div class="glass-premium stat-card" style="border-radius:16px;">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <span class="stat-label">Total Revenue</span>
-                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(46,204,113,0.12); display: flex; align-items: center; justify-content: center; color: #2ecc71; font-size: 1.1rem;">
-                                <i class="fi fi-rr-money"></i>
-                            </div>
+                            <div style="width:40px;height:40px;border-radius:10px;background:rgba(46,204,113,0.12);display:flex;align-items:center;justify-content:center;color:#2ecc71;font-size:1.1rem;"><i class="fi fi-rr-money"></i></div>
                         </div>
-                        <div class="stat-number" id="statTotalRevenue" style="color: #2ecc71; font-size: 2rem;" data-val="<%= totalRevenue %>">&#8377;<%= totalRevenue.toLocaleString('en-IN') %></div>
+                        <div class="stat-number" id="statTotalRevenue" style="color:#2ecc71;font-size:1.9rem;" data-val="<%= totalRevenue %>">&#8377;<%= totalRevenue.toLocaleString('en-IN') %></div>
+                        <p class="text-dim m-0 mt-2" style="font-size:0.75rem;">Lifetime earnings</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-premium stat-card" style="border-radius: 16px;">
+                    <div class="glass-premium stat-card" style="border-radius:16px;">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <span class="stat-label">Tickets Sold</span>
-                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(230,57,70,0.12); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.1rem;">
-                                <i class="fi fi-rr-ticket"></i>
-                            </div>
+                            <div style="width:40px;height:40px;border-radius:10px;background:rgba(230,57,70,0.12);display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:1.1rem;"><i class="fi fi-rr-ticket"></i></div>
                         </div>
                         <div class="stat-number" id="statTotalTicketsSold" data-val="<%= totalTicketsSold %>"><%= totalTicketsSold %></div>
+                        <p class="text-dim m-0 mt-2" style="font-size:0.75rem;">Across all events</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-premium stat-card" style="border-radius: 16px; border-left: 3px solid #2ecc71 !important;">
+                    <div class="glass-premium stat-card" style="border-radius:16px;border-left:3px solid #2ecc71 !important;">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <span class="stat-label">Active Events</span>
-                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(78,205,196,0.12); display: flex; align-items: center; justify-content: center; color: #4ECDC4; font-size: 1.1rem;">
-                                <i class="fi fi-rr-calendar-star"></i>
-                            </div>
+                            <div style="width:40px;height:40px;border-radius:10px;background:rgba(78,205,196,0.12);display:flex;align-items:center;justify-content:center;color:#4ECDC4;font-size:1.1rem;"><i class="fi fi-rr-calendar-star"></i></div>
                         </div>
-                        <div class="stat-number" style="color: #4ECDC4;"><%= activeEvents %></div>
+                        <div class="stat-number" style="color:#4ECDC4;"><%= activeEvents %></div>
+                        <p class="text-dim m-0 mt-2" style="font-size:0.75rem;"><%= totalEvents %> total events</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-premium stat-card" style="border-radius: 16px;">
+                    <div class="glass-premium stat-card" style="border-radius:16px;">
                         <div class="d-flex justify-content-between align-items-start mb-3">
-                            <span class="stat-label">Total Events</span>
-                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(244,162,97,0.12); display: flex; align-items: center; justify-content: center; color: #F4A261; font-size: 1.1rem;">
-                                <i class="fi fi-rr-apps"></i>
+                            <span class="stat-label">Total Bookings</span>
+                            <div style="width:40px;height:40px;border-radius:10px;background:rgba(244,162,97,0.12);display:flex;align-items:center;justify-content:center;color:#F4A261;font-size:1.1rem;"><i class="fi fi-rr-users"></i></div>
+                        </div>
+                        <div class="stat-number" style="color:#F4A261;"><%= totalBookings %></div>
+                        <p class="text-dim m-0 mt-2" style="font-size:0.75rem;"><%= activeBookings %> active · <%= cancelledBookings %> cancelled</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row g-4 mb-4 animate stagger-3">
+                <!-- Revenue Trend Chart -->
+                <div class="col-lg-8">
+                    <div class="glass-premium p-4" style="border-radius:18px;border:1px solid rgba(255,255,255,0.07);height:100%;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h6 class="fw-bold m-0">Revenue Trend</h6>
+                                <p class="text-dim small m-0">Last 6 months earnings</p>
+                            </div>
+                            <div class="d-flex gap-2 align-items-center">
+                                <span class="trend-up stat-trend"><i class="fi fi-rr-trending-up me-1"></i>6mo</span>
                             </div>
                         </div>
-                        <div class="stat-number" style="color: #F4A261;"><%= totalEvents %></div>
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <!-- Event Status Doughnut -->
+                <div class="col-lg-4">
+                    <div class="glass-premium p-4" style="border-radius:18px;border:1px solid rgba(255,255,255,0.07);height:100%;">
+                        <div class="mb-4">
+                            <h6 class="fw-bold m-0">Event Status</h6>
+                            <p class="text-dim small m-0">Distribution by status</p>
+                        </div>
+                        <div class="chart-container" style="height:180px;">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                        <div class="mt-3 d-flex flex-wrap gap-2 justify-content-center" id="statusLegend"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Second Row: Top Events + Booking Breakdown -->
+            <div class="row g-4 mb-4 animate stagger-4">
+                <!-- Top Events by Revenue -->
+                <div class="col-lg-7">
+                    <div class="glass-premium p-4" style="border-radius:18px;border:1px solid rgba(255,255,255,0.07);">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h6 class="fw-bold m-0">Top Events by Revenue</h6>
+                                <p class="text-dim small m-0">Best performing events</p>
+                            </div>
+                            <a href="/organizer/sales-report" class="text-dim" style="font-size:0.8rem;text-decoration:none;border:1px solid rgba(255,255,255,0.08);border-radius:100px;padding:4px 12px;">Full Report →</a>
+                        </div>
+                        <% if (topEvents && topEvents.length > 0) { %>
+                        <% const maxRev = topEvents[0].revenue || 1; %>
+                        <div class="d-flex flex-column gap-3">
+                            <% topEvents.forEach((ev, i) => { %>
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-semibold text-white" style="font-size:0.88rem;"><%= i+1 %>. <%= ev.title.length > 30 ? ev.title.slice(0,30)+'…' : ev.title %></span>
+                                    <span class="fw-bold" style="color:#2ecc71;font-size:0.88rem;">&#8377;<%= ev.revenue.toLocaleString('en-IN') %></span>
+                                </div>
+                                <div style="background:rgba(255,255,255,0.06);border-radius:4px;height:6px;">
+                                    <div class="top-event-bar" style="width:<%= Math.round((ev.revenue/maxRev)*100) %>%;"></div>
+                                </div>
+                            </div>
+                            <% }); %>
+                        </div>
+                        <% } else { %>
+                        <div class="text-center py-4 text-dim">
+                            <i class="fi fi-rr-chart-histogram" style="font-size:2rem;opacity:0.3;"></i>
+                            <p class="mt-2 mb-0 small">No revenue data yet. Start selling tickets!</p>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Booking Status Breakdown + Mini KPIs -->
+                <div class="col-lg-5">
+                    <div class="glass-premium p-4" style="border-radius:18px;border:1px solid rgba(255,255,255,0.07);height:100%;">
+                        <div class="mb-4">
+                            <h6 class="fw-bold m-0">Booking Breakdown</h6>
+                            <p class="text-dim small m-0">Status distribution</p>
+                        </div>
+                        <div class="chart-container" style="height:160px;">
+                            <canvas id="bookingChart"></canvas>
+                        </div>
+                        <div class="row g-2 mt-3">
+                            <div class="col-6"><div class="kpi-mini"><p class="text-dim small m-0 mb-1">Active</p><h5 class="fw-bold m-0" style="color:#2ecc71;"><%= activeBookings %></h5></div></div>
+                            <div class="col-6"><div class="kpi-mini"><p class="text-dim small m-0 mb-1">Cancelled</p><h5 class="fw-bold m-0" style="color:#E63946;"><%= cancelledBookings %></h5></div></div>
+                            <div class="col-6"><div class="kpi-mini"><p class="text-dim small m-0 mb-1">On Hold</p><h5 class="fw-bold m-0" style="color:#f39c12;"><%= onHoldBookings %></h5></div></div>
+                            <div class="col-6"><div class="kpi-mini"><p class="text-dim small m-0 mb-1">Pending Cancel</p><h5 class="fw-bold m-0" style="color:#9b59b6;"><%= pendingCancellations %></h5></div></div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Recent Events Table -->
-            <div class="glass-premium p-4 animate stagger-3" style="border-radius: 18px; border: 1px solid rgba(255,255,255,0.07);">
+            <div class="glass-premium p-4 animate stagger-5" style="border-radius:18px;border:1px solid rgba(255,255,255,0.07);">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-bold m-0">Recent Events</h5>
-                    <a href="/organizer/events" class="text-dim" style="font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,0.08); border-radius: 100px; padding: 5px 14px; transition: all 0.2s;"
-                       onmouseover="this.style.borderColor='rgba(230,57,70,0.3)'; this.style.color='white';"
-                       onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.color='';">
-                        View all <i class="fi fi-rr-arrow-right" style="font-size: 0.75rem;"></i>
+                    <div>
+                        <h6 class="fw-bold m-0">Recent Events</h6>
+                        <p class="text-dim small m-0">Your latest event activity</p>
+                    </div>
+                    <a href="/organizer/events" class="text-dim" style="font-size:0.85rem;text-decoration:none;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(255,255,255,0.08);border-radius:100px;padding:5px 14px;transition:all 0.2s;"
+                       onmouseover="this.style.borderColor='rgba(230,57,70,0.3)';this.style.color='white';"
+                       onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='';">
+                        View all <i class="fi fi-rr-arrow-right" style="font-size:0.75rem;"></i>
                     </a>
                 </div>
-                <div style="overflow-x: auto;">
+                <div style="overflow-x:auto;">
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Event</th>
                                 <th>Date</th>
                                 <th>Status</th>
+                                <th>Revenue</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <% if(recentEvents && recentEvents.length > 0) { %>
+                            <% if (recentEvents && recentEvents.length > 0) { %>
                                 <% recentEvents.forEach(event => { %>
-                                <tr style="cursor: pointer;" onclick="window.location.href='/organizer/events'">
+                                <tr style="cursor:pointer;" onclick="window.location.href='/organizer/events/<%= event._id %>'">
                                     <td>
-                                        <p class="fw-bold text-white mb-0" style="font-size: 0.9rem;"><%= event.title %></p>
-                                        <p class="text-dim mb-0" style="font-size: 0.77rem;"><%= event.category?.name %></p>
+                                        <p class="fw-bold text-white mb-0" style="font-size:0.9rem;"><%= event.title %></p>
+                                        <p class="text-dim mb-0" style="font-size:0.77rem;"><%= event.category || event.category?.name || '—' %></p>
                                     </td>
-                                    <td class="text-dim" style="font-size: 0.85rem;">
+                                    <td class="text-dim" style="font-size:0.85rem;">
                                         <%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %>
                                     </td>
-                                    <td>
-                                        <span class="status-badge status-<%= event.status %>"><%= event.status %></span>
+                                    <td><span class="status-badge status-<%= event.status %>"><%= event.status %></span></td>
+                                    <td class="fw-bold" style="color:#2ecc71;font-size:0.9rem;">
+                                        &#8377;<%= (topEvents.find(t => t.title === event.title)?.revenue || 0).toLocaleString('en-IN') %>
                                     </td>
                                 </tr>
-                                <% }) %>
+                                <% }); %>
                             <% } else { %>
-                                <tr><td colspan="3" class="text-center p-5 text-dim">No events yet. <a href="/organizer/events/new" style="color: var(--primary);">Create your first event →</a></td></tr>
+                                <tr><td colspan="4" class="text-center p-5 text-dim">No events yet. <a href="/organizer/events/new" style="color:var(--primary);">Create your first event →</a></td></tr>
                             <% } %>
                         </tbody>
                     </table>
@@ -110,29 +216,100 @@
 
         </main>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
-        // Listen for live dashboard updates
+        const monthLabels   = <%- JSON.stringify(monthLabels) %>;
+        const monthRevenues = <%- JSON.stringify(monthRevenues) %>;
+        const statusCounts  = <%- JSON.stringify(statusCounts) %>;
+        const bookingData   = [<%= activeBookings %>, <%= cancelledBookings %>, <%= onHoldBookings %>];
+
+        Chart.defaults.color = 'rgba(255,255,255,0.5)';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+
+        // ── Revenue Line Chart ───────────────────────────────────────────────
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: {
+                labels: monthLabels,
+                datasets: [{
+                    label: 'Revenue (₹)',
+                    data: monthRevenues,
+                    borderColor: '#E63946',
+                    backgroundColor: 'rgba(230,57,70,0.08)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#E63946',
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: {
+                    callbacks: { label: ctx => ' ₹' + ctx.parsed.y.toLocaleString('en-IN') }
+                }},
+                scales: {
+                    y: { ticks: { callback: v => '₹' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v) }, grid: { color: 'rgba(255,255,255,0.04)' }},
+                    x: { grid: { color: 'rgba(255,255,255,0.04)' } }
+                }
+            }
+        });
+
+        // ── Event Status Doughnut ────────────────────────────────────────────
+        const statusColors = { approved:'#2ecc71', pending:'#f39c12', rejected:'#E63946', draft:'rgba(255,255,255,0.2)', cancelled:'#9b2335', published:'#3498db', inactive:'rgba(255,255,255,0.1)', completed:'#4ECDC4' };
+        const statusKeys   = Object.keys(statusCounts);
+        const statusVals   = Object.values(statusCounts);
+        const statusColorArr = statusKeys.map(k => statusColors[k] || '#888');
+
+        new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: { labels: statusKeys, datasets: [{ data: statusVals, backgroundColor: statusColorArr, borderWidth: 0, hoverOffset: 6 }] },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}` } } }
+            }
+        });
+
+        const legendEl = document.getElementById('statusLegend');
+        statusKeys.forEach((k, i) => {
+            legendEl.innerHTML += `<span style="display:flex;align-items:center;gap:5px;font-size:0.75rem;color:rgba(255,255,255,0.6);"><span style="width:10px;height:10px;border-radius:50%;background:${statusColorArr[i]};display:inline-block;"></span>${k} (${statusVals[i]})</span>`;
+        });
+
+        // ── Booking Status Bar Chart ─────────────────────────────────────────
+        new Chart(document.getElementById('bookingChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Active', 'Cancelled', 'On Hold'],
+                datasets: [{ data: bookingData, backgroundColor: ['rgba(46,204,113,0.7)','rgba(230,57,70,0.7)','rgba(243,156,18,0.7)'], borderRadius: 6, borderSkipped: false }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { precision: 0 } }, x: { grid: { display: false } } }
+            }
+        });
+
+        // ── Live Dashboard Update on new booking ─────────────────────────────
         window.addEventListener('eh:new_booking', (e) => {
             const data = e.detail;
             if (typeof Toast !== 'undefined') Toast.success('New Booking Received!');
-            
-            // Update stats
-            const revEl = document.getElementById('statTotalRevenue');
+            const revEl  = document.getElementById('statTotalRevenue');
             const tktsEl = document.getElementById('statTotalTicketsSold');
-            
-            if (revEl && data.booking && data.booking.totalAmount) {
-                let currentRev = parseFloat(revEl.getAttribute('data-val')) || 0;
-                currentRev += data.booking.totalAmount;
-                revEl.setAttribute('data-val', currentRev);
-                revEl.innerHTML = `&#8377;${currentRev.toLocaleString('en-IN')}`;
+            if (revEl && data.booking?.totalAmount) {
+                let cur = parseFloat(revEl.getAttribute('data-val')) || 0;
+                cur += data.booking.totalAmount;
+                revEl.setAttribute('data-val', cur);
+                revEl.innerHTML = `&#8377;${cur.toLocaleString('en-IN')}`;
             }
-            
-            if (tktsEl && data.booking && data.booking.tickets) {
+            if (tktsEl && data.booking?.tickets) {
                 let newTkts = data.booking.tickets.reduce((sum, t) => sum + (t.quantity || 0), 0);
-                let currentTkts = parseInt(tktsEl.getAttribute('data-val')) || 0;
-                currentTkts += newTkts;
-                tktsEl.setAttribute('data-val', currentTkts);
-                tktsEl.innerText = currentTkts;
+                let cur = parseInt(tktsEl.getAttribute('data-val')) || 0;
+                cur += newTkts;
+                tktsEl.setAttribute('data-val', cur);
+                tktsEl.innerText = cur;
             }
         });
     </script>

@@ -1365,7 +1365,7 @@
                         </div>
                         <div class="col-md-2">
                             <label class="form-label small">Price (₹) <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" placeholder="999" value="${tier.price || 0}" min="0" onchange="updateTicket('${tierId}', 'price', parseFloat(this.value))" ${sold > 0 ? 'readonly style="background: rgba(255,255,255,0.05); cursor: not-allowed;" title="Cannot change price after tickets are sold"' : ''} required>
+                            <input type="number" class="form-control" placeholder="999" value="${tier.price || 0}" min="0" onchange="updateTicket('${tierId}', 'price', parseFloat(this.value))" required>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label small">Total Tickets <span class="text-danger">*</span></label>

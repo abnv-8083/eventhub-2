@@ -26,15 +26,12 @@ export const updateBlockedCategories = async (req, res, next) => {
             platform = new Platform();
         }
 
-        // Ensure blockedCategories is an array
-        if (blockedCategories !== undefined) {
-            platform.blockedCategories = Array.isArray(blockedCategories) ? blockedCategories : [blockedCategories];
-        } else if (req.body.hasOwnProperty('blockedCategories')) {
-            // If it was explicitly sent as empty
-            platform.blockedCategories = [];
+        if (Array.isArray(blockedCategories)) {
+            platform.blockedCategories = blockedCategories;
+        } else if (blockedCategories) {
+            platform.blockedCategories = [blockedCategories];
         } else {
-             // If no body was sent with the key due to checkboxes
-             platform.blockedCategories = [];
+            platform.blockedCategories = [];
         }
 
         await platform.save();

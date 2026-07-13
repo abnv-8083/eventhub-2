@@ -223,6 +223,10 @@ export const checkInTicket = async (req, res) => {
             return res.status(400).json({ success: false, message: `Cannot check in: Booking status is ${booking.status.toUpperCase()}` });
         }
 
+        if (booking.cancellationRequest && booking.cancellationRequest.status === 'pending') {
+            return res.status(400).json({ success: false, message: 'Cannot check in: A cancellation request is currently pending for this booking.' });
+        }
+
         const validPayments = ['completed', 'PAID', 'pending']; // allow free or wallet/razorpay paid
         if (!validPayments.includes(booking.paymentStatus)) {
             return res.status(400).json({ success: false, message: `Cannot check in: Payment status is ${booking.paymentStatus}` });

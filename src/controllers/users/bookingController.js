@@ -10,6 +10,7 @@ export const getCheckoutPage = async (req, res, next) => {
     try {
         const { id } = req.params;
         const cartParam = req.query.cart;
+        
 
         if (!cartParam) return res.redirect(`/user/events/${id}`);
 
