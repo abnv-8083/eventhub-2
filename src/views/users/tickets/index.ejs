@@ -124,11 +124,39 @@
     </div>
 
     <script>
-        if (window.socket) {
-            window.socket.on('bookingStatusUpdate', () => {
-                setTimeout(() => window.location.reload(), 2000);
-            });
+        async function refreshTicketsListDOM() {
+            try {
+                const res = await fetch(location.href);
+                const htmlText = await res.text();
+                const parser = new DOMParser();
+                const newDoc = parser.parseFromString(htmlText, 'text/html');
+                const newMain = newDoc.querySelector('.dashboard-main');
+                const currentMain = document.querySelector('.dashboard-main');
+                if (newMain && currentMain) {
+                    currentMain.innerHTML = newMain.innerHTML;
+                }
+            } catch (err) {
+                console.error('Seamless tickets list DOM refresh failed:', err);
+            }
         }
+
+        function handleLiveTicketsListUpdate(data) {
+            if (data && typeof Toast !== 'undefined') {
+                if (data.action === 'approved') {
+                    Toast.success(`✅ Your cancellation was approved! Refund of ₹${(data.refund||0).toLocaleString('en-IN')} has been credited.`);
+                } else if (data.action === 'rejected') {
+                    Toast.error('❌ Your cancellation request was rejected.');
+                }
+            }
+            refreshTicketsListDOM();
+        }
+
+        if (window.socket) {
+            window.socket.on('bookingStatusUpdate', handleLiveTicketsListUpdate);
+            window.socket.on('cancellationResolved', handleLiveTicketsListUpdate);
+        }
+        window.addEventListener('liveBookingUpdate', (e) => handleLiveTicketsListUpdate(e.detail));
+        window.addEventListener('liveCancellationResolved', (e) => handleLiveTicketsListUpdate(e.detail));
     </script>
 </body>
 </html>

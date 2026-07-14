@@ -24,7 +24,7 @@ export const getEventBookings = async (req, res, next) => {
 // ─── Event Cancellations Page ──────────────────────────────────────────────────
 export const getEventCancellations = async (req, res, next) => {
     try {
-        const { search = '', sort = 'newest', status = 'all', page = 1 } = req.query;
+        const { search = '', sort = 'newest', status = 'pending', page = 1 } = req.query;
         const data = await organizerBookingService.getEventCancellations(
             req.params.id, req.session.organizer._id, { search, sort, status, page }
         );
@@ -183,13 +183,14 @@ export const verifyTicketScan = async (req, res, next) => {
 // ─── Cancellation Requests Page ───────────────────────────────────────────────
 export const getCancellationRequests = async (req, res, next) => {
     try {
-        const { page = 1 } = req.query;
+        const { page = 1, status = 'pending' } = req.query;
         const data = await organizerBookingService.getPendingCancellationRequests(
             req.session.organizer._id,
-            { page }
+            { page, status }
         );
         res.render('organizer/cancellation-requests', {
             title: 'Cancellation Requests',
+            currentStatus: status,
             ...data
         });
     } catch (error) {

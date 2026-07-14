@@ -492,7 +492,7 @@ export const unholdBooking = async (bookingId, userId) => {
 
 // ─── Cancel Individual Ticket by User ───────────────────────────────────────
 export const cancelSingleTicketByUser = async (bookingId, ticketItemId, userId, cancelQty = 1, reason = "Partial Cancellation") => {
-    const booking = await Booking.findById(bookingId).populate('event', 'title');
+    const booking = await Booking.findById(bookingId).populate('event', 'title organizer');
     if (!booking) throw new AppError('Booking not found', HTTP_STATUS.NOT_FOUND);
     if (booking.status === 'on_hold') throw new AppError('Cannot cancel tickets for a booking that is currently on hold.', HTTP_STATUS.BAD_REQUEST);
     
@@ -559,6 +559,18 @@ export const cancelSingleTicketByUser = async (bookingId, ticketItemId, userId, 
             `⚠️ Partial Cancellation Request: A user has requested to cancel ${cancelQty}x "${ticketItem.ticketName}" for "${booking.event.title}". Please review it.`,
             'warning'
         );
+
+        // Real-time update for Organizer Cancellation Dashboard
+        try {
+            socketUtil.getIO().to(String(organizerId).trim()).emit('newCancellationRequest', {
+                bookingId: booking._id,
+                eventId: booking.event._id,
+                reason: reason.trim(),
+                isPartial: true
+            });
+        } catch (socketErr) {
+            console.error('Socket broadcast error for partial cancellation request:', socketErr.message);
+        }
     }
 
     return { message: `Cancellation request for ${cancelQty}x ${ticketItem.ticketName} submitted. The organizer will review it shortly.` };

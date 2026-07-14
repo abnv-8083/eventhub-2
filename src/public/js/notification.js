@@ -62,9 +62,32 @@ class NotificationManager {
                 const html = this.buildNotificationHtml(data, false);
                 this.notifList.insertAdjacentHTML('afterbegin', html);
 
+                // Dispatch custom event for smooth in-place DOM updates without page reloads
+                window.dispatchEvent(new CustomEvent('liveBookingUpdate', { detail: data }));
             } catch (err) {
                 console.error("❌ Error rendering live notification:", err);
             }
+        });
+
+        window.socket.on('cancellationResolved', (data) => {
+            console.log("🔥 [CANCELLATION RESOLVED RECEIVED]:", data);
+            if (typeof Toast !== 'undefined') {
+                if (data.action === 'approved') {
+                    Toast.success(`✅ Your cancellation was approved! Refund of ₹${(data.refund||0).toLocaleString('en-IN')} is on its way.`);
+                } else {
+                    Toast.error('❌ Your cancellation request was rejected by the organizer.');
+                }
+            }
+            // Dispatch custom event for smooth in-place DOM updates without page reloads
+            window.dispatchEvent(new CustomEvent('liveCancellationResolved', { detail: data }));
+        });
+
+        window.socket.on('newCancellationRequest', (data) => {
+            console.log("🔥 [NEW CANCELLATION REQUEST RECEIVED]:", data);
+            if (typeof Toast !== 'undefined') {
+                Toast.show('⚠️ New cancellation request received!', 'warning');
+            }
+            window.dispatchEvent(new CustomEvent('liveCancellationRequest', { detail: data }));
         });
     }
 

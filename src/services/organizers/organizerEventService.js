@@ -303,17 +303,17 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
             parkingAvailable:     eventData.parkingAvailable === true || eventData.parkingAvailable === 'true',
             wheelchairAccessible: eventData.wheelchairAccessible === true || eventData.wheelchairAccessible === 'true'
         };
-
-        event.startDate = eventData.startDate;
-        event.startTime = eventData.startTime;
-        event.endDate   = eventData.endDate;
-        event.endTime   = eventData.endTime;
-        if (eventData.doorsOpenTime !== undefined) event.doorsOpenTime = eventData.doorsOpenTime || null;
-        if (eventData.bookingOpenTime !== undefined) event.bookingOpenTime = eventData.bookingOpenTime || null;
-        if (eventData.bookingCloseTime !== undefined) event.bookingCloseTime = eventData.bookingCloseTime || null;
-        event.schedule  = parseArray(eventData.schedule);
         if (eventData.venueLayout) event.venueLayout = eventData.venueLayout;
     }
+
+    if (eventData.startDate) event.startDate = eventData.startDate;
+    if (eventData.startTime) event.startTime = eventData.startTime;
+    if (eventData.endDate)   event.endDate   = eventData.endDate;
+    if (eventData.endTime)   event.endTime   = eventData.endTime;
+    if (eventData.doorsOpenTime !== undefined) event.doorsOpenTime = eventData.doorsOpenTime || null;
+    if (eventData.bookingOpenTime !== undefined) event.bookingOpenTime = eventData.bookingOpenTime || null;
+    if (eventData.bookingCloseTime !== undefined) event.bookingCloseTime = eventData.bookingCloseTime || null;
+    if (eventData.schedule !== undefined) event.schedule  = parseArray(eventData.schedule);
 
     event.isFeatured = eventData.isFeatured === true || eventData.isFeatured === 'true';
     event.postStartRegistrationLimit = eventData.postStartRegistrationLimit !== undefined && eventData.postStartRegistrationLimit !== '' && !isNaN(parseInt(eventData.postStartRegistrationLimit, 10)) ? parseInt(eventData.postStartRegistrationLimit, 10) : null;
@@ -614,6 +614,72 @@ export const extendEventSchedule = async (eventId, organizerId, { endDate, endTi
     }
 
     event.status = 'approved';
+    await event.save();
+    return event;
+};
+
+
+// ─── Update / Edit Event Schedule (Comprehensive) ─────────────────────────────
+export const updateEventSchedule = async (eventId, organizerId, scheduleData) => {
+    const event = await Event.findOne({ _id: eventId, organizer: organizerId, deleted: { $ne: true } });
+    if (!event) throw new AppError('Event not found', HTTP_STATUS.NOT_FOUND);
+
+    const {
+        startDate, startTime, endDate, endTime,
+        doorsOpenTime, bookingOpenTime, bookingCloseTime,
+        extendTicketSales, schedule
+    } = scheduleData;
+
+    if (startDate) event.startDate = new Date(startDate);
+    if (startTime) event.startTime = startTime;
+    if (endDate)   event.endDate   = new Date(endDate);
+    if (endTime)   event.endTime   = endTime;
+
+    if (doorsOpenTime !== undefined)    event.doorsOpenTime    = doorsOpenTime || null;
+    if (bookingOpenTime !== undefined)  event.bookingOpenTime  = bookingOpenTime || null;
+    if (bookingCloseTime !== undefined) event.bookingCloseTime = bookingCloseTime || null;
+
+    if (schedule !== undefined) {
+        if (Array.isArray(schedule)) {
+            event.schedule = schedule.map(s => ({
+                date: s.date ? new Date(s.date) : (event.startDate || new Date()),
+                startTime: s.startTime || event.startTime || '',
+                endTime: s.endTime || event.endTime || '',
+                doorsOpenTime: s.doorsOpenTime || event.doorsOpenTime || '',
+                bookingOpenTime: s.bookingOpenTime || event.bookingOpenTime || '',
+                bookingCloseTime: s.bookingCloseTime || event.bookingCloseTime || ''
+            }));
+        } else if (typeof schedule === 'string') {
+            try {
+                const parsed = JSON.parse(schedule);
+                if (Array.isArray(parsed)) {
+                    event.schedule = parsed.map(s => ({
+                        date: s.date ? new Date(s.date) : (event.startDate || new Date()),
+                        startTime: s.startTime || event.startTime || '',
+                        endTime: s.endTime || event.endTime || '',
+                        doorsOpenTime: s.doorsOpenTime || event.doorsOpenTime || '',
+                        bookingOpenTime: s.bookingOpenTime || event.bookingOpenTime || '',
+                        bookingCloseTime: s.bookingCloseTime || event.bookingCloseTime || ''
+                    }));
+                }
+            } catch (e) {}
+        }
+    }
+
+    // Automatically sync ticket sales end dates if requested or if saleEnd < new endDate
+    if (extendTicketSales !== false && event.endDate && event.tickets && event.tickets.length > 0) {
+        event.tickets.forEach(ticket => {
+            if (!ticket.saleEnd || new Date(ticket.saleEnd) < new Date(event.endDate)) {
+                ticket.saleEnd = new Date(event.endDate);
+            }
+        });
+    }
+
+    // If event was closed/completed and new end date/time is in the future, reactivate status cleanly
+    if ((event.status === 'completed' || event.status === 'sales_closed') && event.endDate && new Date(event.endDate) >= new Date()) {
+        event.status = 'approved';
+    }
+
     await event.save();
     return event;
 };

@@ -199,7 +199,12 @@ export const getEventCancellations = async (eventId, organizerId, { search = '',
                 ]
             } : {}
         },
-        { $sort: sortStage },
+        {
+            $addFields: {
+                isPendingPriority: { $cond: [{ $eq: ["$cancellationRequest.status", "pending"] }, 1, 0] }
+            }
+        },
+        { $sort: { isPendingPriority: -1, ...sortStage, updatedAt: -1 } },
         {
             $facet: {
                 metadata: [{ $count: "total" }],
@@ -603,26 +608,82 @@ export const verifyTicketScan = async (bookingId, organizerId) => {
 
 
 // ─── Get All Pending Cancellation Requests (Across Organizer's Events) ────────
-export const getPendingCancellationRequests = async (organizerId, { page = 1, limit = 15 } = {}) => {
+export const getPendingCancellationRequests = async (organizerId, { page = 1, limit = 15, status = 'pending' } = {}) => {
     const skip = (parseInt(page) - 1) * limit;
 
     // 1. Find all events owned by this organizer
     const organizerEvents = await Event.find({ organizer: organizerId }).select('_id title');
     const eventIds        = organizerEvents.map(e => e._id);
 
-    if (!eventIds.length) return { requests: [], total: 0, totalPages: 1 };
+    if (!eventIds.length) return { requests: [], total: 0, totalPages: 1, counts: { pending: 0, approved: 0, rejected: 0, all: 0 } };
 
-    // 2. Fetch bookings with pending cancellation requests for those events
-    const query = {
-        event: { $in: eventIds },
-        'cancellationRequest.status': 'pending'
-    };
+    // 2. Build match query based on requested status
+    const query = { event: { $in: eventIds } };
+    if (status === 'all') {
+        query.$or = [
+            { 'cancellationRequest.status': { $in: ['pending', 'approved', 'rejected'] } },
+            { status: 'cancelled' },
+            { 'tickets.status': 'cancelled' }
+        ];
+    } else if (status === 'pending') {
+        query['cancellationRequest.status'] = 'pending';
+    } else if (status === 'approved') {
+        query.$or = [
+            { 'cancellationRequest.status': 'approved' },
+            { status: 'cancelled' },
+            { 'tickets.status': 'cancelled' }
+        ];
+    } else if (status === 'rejected') {
+        query['cancellationRequest.status'] = 'rejected';
+    } else {
+        query['cancellationRequest.status'] = status;
+    }
+
+    // 3. Status counts aggregation across all events
+    const statusCountsAgg = await Booking.aggregate([
+        {
+            $match: {
+                event: { $in: eventIds },
+                $or: [
+                    { 'cancellationRequest.status': { $in: ['pending', 'approved', 'rejected'] } },
+                    { status: 'cancelled' },
+                    { 'tickets.status': 'cancelled' }
+                ]
+            }
+        },
+        {
+            $group: {
+                _id: {
+                    $cond: [
+                        { $eq: ["$cancellationRequest.status", "pending"] },
+                        "pending",
+                        {
+                            $cond: [
+                                { $eq: ["$cancellationRequest.status", "rejected"] },
+                                "rejected",
+                                "approved"
+                            ]
+                        }
+                    ]
+                },
+                count: { $sum: 1 }
+            }
+        }
+    ]);
+
+    const counts = { pending: 0, approved: 0, rejected: 0, all: 0 };
+    statusCountsAgg.forEach(item => {
+        if (item._id === 'pending') counts.pending = item.count;
+        else if (item._id === 'approved') counts.approved += item.count;
+        else if (item._id === 'rejected') counts.rejected = item.count;
+    });
+    counts.all = counts.pending + counts.approved + counts.rejected;
 
     const [requests, total] = await Promise.all([
         Booking.find(query)
             .populate('user',  'fullName email phone profilePic')
             .populate('event', 'title startDate banners')
-            .sort({ 'cancellationRequest.requestedAt': -1 })
+            .sort({ 'cancellationRequest.requestedAt': -1, updatedAt: -1 })
             .skip(skip)
             .limit(limit),
         Booking.countDocuments(query)
@@ -632,7 +693,9 @@ export const getPendingCancellationRequests = async (organizerId, { page = 1, li
         requests,
         total,
         totalPages: Math.ceil(total / limit) || 1,
-        currentPage: parseInt(page)
+        currentPage: parseInt(page),
+        counts,
+        currentStatus: status
     };
 };
 
@@ -747,6 +810,17 @@ export const approveCancellationRequest = async (bookingId, organizerId) => {
             `✅ Your partial cancellation request for "${booking.event.title}" has been approved. ₹${totalRefund.toLocaleString('en-IN')} has been refunded to your wallet.`,
             'success'
         );
+
+        // Direct socket emit so the user's ticket page reloads live
+        try {
+            io.to(userId).emit('cancellationResolved', {
+                bookingId: booking._id,
+                action: 'approved',
+                isPartial: true,
+                refund: totalRefund
+            });
+        } catch (_) {}
+
         return { message: `Partial cancellation approved. ₹${totalRefund.toLocaleString('en-IN')} refunded to user's wallet.` };
 
     } else {
@@ -802,6 +876,17 @@ export const approveCancellationRequest = async (bookingId, organizerId) => {
             `✅ Your cancellation request for "${booking.event.title}" has been approved. ₹${booking.totalAmount.toLocaleString('en-IN')} has been refunded to your wallet.`,
             'success'
         );
+
+        // Direct socket emit so the user's ticket page reloads live
+        try {
+            io.to(userId).emit('cancellationResolved', {
+                bookingId: booking._id,
+                action: 'approved',
+                isPartial: false,
+                refund: booking.totalAmount
+            });
+        } catch (_) {}
+
         return { message: `Cancellation approved. ₹${booking.totalAmount.toLocaleString('en-IN')} refunded to user's wallet.` };
     }
 };
@@ -826,13 +911,22 @@ export const rejectCancellationRequest = async (bookingId, organizerId, rejectio
     booking.markModified('cancellationRequest');
     await booking.save();
 
-    // Notify the user
     const userId = String(booking.user._id || booking.user).trim();
     await sendNotification(
         userId,
-        `\u274c Your cancellation request for "${booking.event.title}" was rejected. ${booking.cancellationRequest.rejectionNote}`,
+        `❌ Your cancellation request for "${booking.event.title}" was rejected. ${booking.cancellationRequest.rejectionNote}`,
         'danger'
     );
+
+    // Direct socket emit so the user's ticket page updates live
+    try {
+        const io = socketUtil.getIO();
+        io.to(userId).emit('cancellationResolved', {
+            bookingId: booking._id,
+            action: 'rejected',
+            note: booking.cancellationRequest.rejectionNote
+        });
+    } catch (_) {}
 
     return { message: 'Cancellation request rejected and user has been notified.' };
 };

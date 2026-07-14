@@ -81,9 +81,9 @@
                     <p class="text-dim mb-0">There are no cancelled tickets or cancellation requests for this event.</p>
                 </div>
             <% } else { %>
-                <div class="row row-cols-1 g-4 animate stagger-2">
+                <div class="row row-cols-1 g-4 animate stagger-2" id="eventCancellationsList">
                     <% cancellations.forEach(booking => { %>
-                        <div class="col">
+                        <div class="col" id="card-col-<%= booking._id %>">
                             <div class="glass-premium request-card p-4">
                                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4">
                                     
@@ -143,11 +143,11 @@
                                                         <div class="p-2 rounded-3" style="background: rgba(255, 255, 255, 0.05);">
                                                             <span class="d-block text-white small fw-bold mb-1 text-uppercase">Partial Cancellation Requested:</span>
                                                             <ul class="mb-0 text-white small" style="padding-left: 1.2rem;">
-                                                                <% booking.cancellationRequest.requestedTickets.forEach(rt => { 
-                                                                    const tItem = booking.tickets.find(t => t._id.toString() === rt.ticketId.toString());
+                                                                <% (booking.cancellationRequest.requestedTickets || []).forEach(rt => { 
+                                                                    const tItem = booking.tickets.find(t => (t._id || t.ticket || t).toString() === rt.ticketId.toString());
                                                                     if (tItem) {
                                                                 %>
-                                                                    <li><strong><%= rt.quantity %>x</strong> <%= tItem.ticketName %></li>
+                                                                    <li><strong><%= rt.quantity %>x</strong> <%= tItem.ticketName %> (₹<%= (tItem.ticketPrice || 0).toLocaleString('en-IN') %> each)</li>
                                                                 <% } }) %>
                                                             </ul>
                                                         </div>
@@ -160,7 +160,7 @@
                                                     <% if (booking.cancellationRequest.status === 'rejected') { %>
                                                         <div class="mt-2 pt-2" style="border-top: 1px solid rgba(255,255,255,0.1);">
                                                             <span class="d-block text-danger small fw-bold mb-1">Rejection Note:</span>
-                                                            <p class="m-0 text-white small">"<%= booking.cancellationRequest.rejectionNote %>"</p>
+                                                            <p class="m-0 text-white small">"<%= booking.cancellationRequest.rejectionNote || 'No rejection note provided' %>"</p>
                                                         </div>
                                                     <% } %>
                                                 </div>
@@ -172,24 +172,72 @@
                                         </div>
                                     </div>
                                     
+                                    <%
+                                        let targetCancelPrice = 0;
+                                        let cancelLabel = 'Refund Amount';
+                                        let isPartialFlag = false;
+
+                                        if (booking.cancellationRequest && booking.cancellationRequest.status !== 'none') {
+                                            if (booking.cancellationRequest.isPartial && booking.cancellationRequest.requestedTickets?.length > 0) {
+                                                isPartialFlag = true;
+                                                cancelLabel = booking.cancellationRequest.status === 'pending' ? 'Requested Refund' : 'Refunded Ticket Value';
+                                                booking.cancellationRequest.requestedTickets.forEach(rt => {
+                                                    const tItem = booking.tickets.find(t => (t._id || t.ticket || t).toString() === rt.ticketId.toString());
+                                                    if (tItem) targetCancelPrice += (tItem.ticketPrice || 0) * rt.quantity;
+                                                });
+                                            } else {
+                                                cancelLabel = booking.cancellationRequest.status === 'pending' ? 'Full Booking Refund' : 'Total Refunded Value';
+                                                if (booking.totalAmount > 0 && booking.cancellationRequest.status === 'pending') {
+                                                    targetCancelPrice = booking.totalAmount;
+                                                } else {
+                                                    booking.tickets.forEach(t => targetCancelPrice += (t.ticketPrice || 0) * (t.quantity || 0));
+                                                }
+                                            }
+                                        } else if (booking.tickets?.some(t => t.status === 'cancelled')) {
+                                            isPartialFlag = true;
+                                            cancelLabel = 'Cancelled Tickets Value';
+                                            booking.tickets.forEach(t => {
+                                                if (t.status === 'cancelled') targetCancelPrice += (t.ticketPrice || 0) * (t.quantity || 0);
+                                            });
+                                        } else {
+                                            targetCancelPrice = booking.totalAmount || 0;
+                                        }
+                                    %>
+
                                     <!-- Actions & Details -->
-                                    <div class="text-end" style="min-width: 200px;">
-                                        <div class="mb-3">
-                                            <span class="d-block text-dim small mb-1">Total Booking Amount</span>
-                                            <h4 class="fw-bold m-0 text-white">₹<%= booking.totalAmount.toLocaleString('en-IN') %></h4>
-                                            <span class="badge <%= booking.paymentMethod === 'wallet' ? 'bg-primary' : 'bg-info text-dark' %> mt-2">
-                                                Via <%= booking.paymentMethod.toUpperCase() %>
+                                    <div class="text-end" style="min-width: 220px;">
+                                        <div class="p-3 rounded-4 mb-3" style="background: rgba(230, 57, 70, 0.08); border: 1px solid rgba(230, 57, 70, 0.25); text-align: right;">
+                                            <span class="d-block text-danger small fw-bold text-uppercase mb-1" style="letter-spacing: 0.8px;"><%= cancelLabel %></span>
+                                            <h3 class="fw-extrabold m-0 text-white" style="font-size: 1.6rem; letter-spacing: -0.5px;">₹<%= targetCancelPrice.toLocaleString('en-IN') %></h3>
+                                            <% if (isPartialFlag) { %>
+                                                <div class="mt-2 pt-2 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center small text-dim" style="font-size: 0.78rem;">
+                                                    <span>Active Balance:</span>
+                                                    <strong class="text-white">₹<%= booking.totalAmount.toLocaleString('en-IN') %></strong>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                        <div class="text-end mb-2">
+                                            <span class="badge <%= booking.paymentMethod === 'wallet' ? 'bg-primary' : 'bg-info text-dark' %>">
+                                                Paid Via <%= booking.paymentMethod.toUpperCase() %>
                                             </span>
                                         </div>
                                         
                                         <% if (booking.cancellationRequest.status === 'pending') { %>
-                                            <div class="d-flex flex-column gap-2">
+                                            <div class="d-flex flex-column gap-2 mt-3">
                                                 <button onclick="approveRequest('<%= booking._id %>')" class="btn btn-outline w-100 fw-bold d-flex align-items-center justify-content-center gap-2" style="color:#2ecc71; border-color:rgba(46,204,113,0.3);">
                                                     <i class="fi fi-rr-check-circle"></i> Approve & Refund
                                                 </button>
                                                 <button onclick="openRejectModal('<%= booking._id %>')" class="btn btn-outline w-100 fw-bold d-flex align-items-center justify-content-center gap-2" style="color:#E63946; border-color:rgba(230,57,70,0.3);">
                                                     <i class="fi fi-rr-cross-circle"></i> Reject Request
                                                 </button>
+                                            </div>
+                                        <% } else if (booking.cancellationRequest.status === 'approved') { %>
+                                            <div class="p-2 rounded-3 text-center mt-3" style="background: rgba(46, 204, 113, 0.1); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.3); font-weight: 700; font-size: 0.88rem;">
+                                                <i class="fi fi-rr-check-circle me-1"></i> Refund Completed
+                                            </div>
+                                        <% } else if (booking.cancellationRequest.status === 'rejected') { %>
+                                            <div class="p-2 rounded-3 text-center mt-3" style="background: rgba(230, 57, 70, 0.1); color: #E63946; border: 1px solid rgba(230, 57, 70, 0.3); font-weight: 700; font-size: 0.88rem;">
+                                                <i class="fi fi-rr-cross-circle me-1"></i> Request Rejected
                                             </div>
                                         <% } %>
                                     </div>
@@ -271,12 +319,35 @@
             const res = await axios.post(`/organizer/bookings/${bookingId}/approve-cancel`);
             if (res.data.success) {
                 Toast.success(res.data.message);
-                setTimeout(() => location.reload(), 1500);
+                const cardCol = document.getElementById(`card-col-${bookingId}`);
+                if (cardCol) {
+                    cardCol.style.transition = 'all 0.4s ease';
+                    cardCol.style.opacity = '0';
+                    cardCol.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        cardCol.remove();
+                        checkEmptyEventCancellations();
+                    }, 400);
+                }
             }
         } catch (err) {
             Toast.error(err.response?.data?.message || 'Failed to approve request.');
         } finally {
             Loader.hide();
+        }
+    }
+
+    function checkEmptyEventCancellations() {
+        const container = document.getElementById('eventCancellationsList');
+        if (container && container.children.length === 0) {
+            container.innerHTML = `
+                <div class="glass-premium text-center py-5 rounded-4 animate stagger-2 w-100">
+                    <div style="width: 80px; height: 80px; background: rgba(46,204,113,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                        <i class="fi fi-rr-check-circle" style="font-size: 2rem; color: #2ecc71;"></i>
+                    </div>
+                    <h4 class="fw-bold text-white mb-2">No Cancellations</h4>
+                    <p class="text-dim mb-0">There are no cancelled tickets or cancellation requests for this event.</p>
+                </div>`;
         }
     }
 
@@ -315,9 +386,19 @@
         try {
             const res = await axios.post(`/organizer/bookings/${rejectBookingId}/reject-cancel`, { rejectionNote: note });
             if (res.data.success) {
+                const targetId = rejectBookingId;
                 closeRejectModal();
                 Toast.success(res.data.message);
-                setTimeout(() => location.reload(), 1500);
+                const cardCol = document.getElementById(`card-col-${targetId}`);
+                if (cardCol) {
+                    cardCol.style.transition = 'all 0.4s ease';
+                    cardCol.style.opacity = '0';
+                    cardCol.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        cardCol.remove();
+                        checkEmptyEventCancellations();
+                    }, 400);
+                }
             }
         } catch (err) {
             Toast.error(err.response?.data?.message || 'Failed to reject request.');
@@ -326,33 +407,115 @@
         }
     });
 
-    // ── Search & Filter Logic ──
-    const searchInput = document.getElementById('cnSearch');
-    const sortSelect  = document.getElementById('cnSort');
-    const applyBtn    = document.getElementById('cnApply');
-    const clearBtn    = document.getElementById('cnClear');
+    // ── Rebind UI & Search Event Listeners ──
+    function rebindUIEventListeners() {
+        const searchInput = document.getElementById('cnSearch');
+        const sortSelect  = document.getElementById('cnSort');
+        const applyBtn    = document.getElementById('cnApply');
+        const clearBtn    = document.getElementById('cnClear');
 
-    function applyFilters() {
-        const urlParams = new URLSearchParams(window.location.search);
-        urlParams.set('search', searchInput.value.trim());
-        urlParams.set('sort', sortSelect.value);
-        urlParams.set('page', '1'); // reset to page 1 on new search
-        window.location.href = '?' + urlParams.toString();
+        function applyFilters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (searchInput?.value.trim()) urlParams.set('search', searchInput.value.trim());
+            else urlParams.delete('search');
+            if (sortSelect?.value) urlParams.set('sort', sortSelect.value);
+            urlParams.set('page', '1');
+            window.location.href = '?' + urlParams.toString();
+        }
+
+        applyBtn?.addEventListener('click', applyFilters);
+        searchInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') applyFilters();
+        });
+        clearBtn?.addEventListener('click', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.delete('search');
+            urlParams.delete('sort');
+            urlParams.delete('page');
+            window.location.href = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+        });
+
+        // Rebind reject modal confirm button
+        const confirmBtn = document.getElementById('confirmRejectBtn');
+        if (confirmBtn && !confirmBtn.dataset.bound) {
+            confirmBtn.dataset.bound = 'true';
+            confirmBtn.addEventListener('click', async () => {
+                const noteInput = document.getElementById('rejectNoteInput');
+                const errorEl   = document.getElementById('rejectNoteError');
+                const note      = noteInput.value.trim();
+
+                if (!note) {
+                    errorEl.style.display = 'block';
+                    noteInput.focus();
+                    return;
+                }
+                errorEl.style.display = 'none';
+
+                const originalHtml = confirmBtn.innerHTML;
+                confirmBtn.innerHTML = '<i class="fi fi-rr-spinner" style="animation:spin 1s linear infinite;"></i> Processing...';
+                confirmBtn.disabled  = true;
+
+                try {
+                    const res = await axios.post(`/organizer/bookings/${rejectBookingId}/reject-cancel`, { rejectionNote: note });
+                    if (res.data.success) {
+                        const targetId = rejectBookingId;
+                        closeRejectModal();
+                        Toast.success(res.data.message);
+                        const cardCol = document.getElementById(`card-col-${targetId}`);
+                        if (cardCol) {
+                            cardCol.style.transition = 'all 0.4s ease';
+                            cardCol.style.opacity = '0';
+                            cardCol.style.transform = 'scale(0.95)';
+                            setTimeout(() => {
+                                cardCol.remove();
+                                checkEmptyEventCancellations();
+                            }, 400);
+                        }
+                    }
+                } catch (err) {
+                    Toast.error(err.response?.data?.message || 'Failed to reject request.');
+                    confirmBtn.innerHTML = originalHtml;
+                    confirmBtn.disabled  = false;
+                }
+            });
+        }
     }
 
-    applyBtn?.addEventListener('click', applyFilters);
+    rebindUIEventListeners();
 
-    searchInput?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') applyFilters();
-    });
+    // ── Live Socket: New Cancellation Request (Seamless DOM update) ──
+    async function handleSeamlessDOMRefresh(data) {
+        if (typeof Toast !== 'undefined') {
+            Toast.show('⚠️ Live Update: New pending cancellation request received!', 'warning');
+        }
+        try {
+            const res = await fetch(location.href);
+            const htmlText = await res.text();
+            const parser = new DOMParser();
+            const newDoc = parser.parseFromString(htmlText, 'text/html');
+            const newMain = newDoc.querySelector('.dashboard-main');
+            const currentMain = document.querySelector('.dashboard-main');
+            if (newMain && currentMain) {
+                currentMain.innerHTML = newMain.innerHTML;
+                rebindUIEventListeners();
 
-    clearBtn?.addEventListener('click', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        urlParams.delete('search');
-        urlParams.delete('sort');
-        urlParams.delete('page');
-        window.location.href = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-    });
+                // Highlight first pending card nicely if visible
+                const firstPendingCard = currentMain.querySelector('.request-card');
+                if (firstPendingCard) {
+                    firstPendingCard.style.boxShadow = '0 0 25px rgba(243, 156, 18, 0.4)';
+                    firstPendingCard.style.transition = 'box-shadow 1.5s ease';
+                    setTimeout(() => { firstPendingCard.style.boxShadow = ''; }, 3000);
+                }
+            }
+        } catch (err) {
+            console.error('Live socket DOM update failed:', err);
+        }
+    }
+
+    if (window.socket) {
+        window.socket.on('newCancellationRequest', handleSeamlessDOMRefresh);
+    }
+    window.addEventListener('liveCancellationRequest', handleSeamlessDOMRefresh);
 </script>
 </body>
 </html>
