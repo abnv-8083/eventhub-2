@@ -161,7 +161,7 @@ export const verifyTicket = async (req, res) => {
             const checkedInQty = t.checkedInQuantity || 0;
             const remainingQty = t.status === 'active' ? Math.max(0, t.quantity - checkedInQty) : 0;
             return {
-                _id: t._id,
+                _id: t._id.toString(),
                 ticketId: t.ticket,
                 ticketName: t.ticketName,
                 price: t.ticketPrice,
@@ -171,6 +171,21 @@ export const verifyTicket = async (req, res) => {
                 status: t.status
             };
         });
+
+        // Normalize cancellationRequest — legacy bookings may not have this field
+        const rawCancel = booking.cancellationRequest;
+        const cancellationRequest = {
+            status:           rawCancel?.status        || 'none',
+            isPartial:        rawCancel?.isPartial     || false,
+            reason:           rawCancel?.reason        || '',
+            requestedAt:      rawCancel?.requestedAt   || null,
+            requestedTickets: (rawCancel?.requestedTickets || []).map(rt => ({
+                ticketId: rt.ticketId?.toString(),
+                quantity: rt.quantity
+            }))
+        };
+
+        console.log(`[Scanner] verifyTicket — booking ${booking._id} — cancellationRequest.status: ${cancellationRequest.status}`);
 
         res.json({
             success: true,
@@ -186,7 +201,7 @@ export const verifyTicket = async (req, res) => {
                 checkedInAt: booking.checkedInAt,
                 bookingDate: booking.bookingDate,
                 items,
-                cancellationRequest: booking.cancellationRequest
+                cancellationRequest
             }
         });
     } catch (err) {
@@ -221,6 +236,10 @@ export const checkInTicket = async (req, res) => {
 
         if (booking.status !== 'active') {
             return res.status(400).json({ success: false, message: `Cannot check in: Booking status is ${booking.status.toUpperCase()}` });
+        }
+
+        if (booking.cancellationRequest && booking.cancellationRequest.status === 'pending') {
+            return res.status(400).json({ success: false, message: 'Cannot check in: A cancellation request is currently pending for this booking.' });
         }
 
         const validPayments = ['completed', 'PAID', 'pending']; // allow free or wallet/razorpay paid

@@ -3,6 +3,12 @@
 <head>
     <%- include('../partials/head') %>
     <title>Admin Dashboard | EventHub</title>
+    <style>
+        .kpi-mini { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 14px 18px; }
+        .chart-container { position: relative; height: 230px; }
+        .top-bar { height: 7px; border-radius: 4px; background: linear-gradient(90deg,#E63946,#9b2335); transition: width 0.8s ease; }
+        .cat-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 100px; padding: 4px 12px; font-size: 0.78rem; color: rgba(255,255,255,0.65); }
+    </style>
 </head>
 <body class="bg-mesh">
     <%- include('../partials/navbars/admin-nav') %>
@@ -13,129 +19,255 @@
             <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-5 animate stagger-1">
                 <div>
-                    <p style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary); font-weight: 700; margin-bottom: 4px;">System Administration</p>
-                    <h2 class="fw-bold m-0" style="letter-spacing: -0.5px;">Command Center</h2>
-                    <p class="text-dim m-0" style="margin-top: 4px; font-size: 0.88rem;">Real-time platform oversight and control</p>
+                    <p style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--primary);font-weight:700;margin-bottom:4px;">System Administration</p>
+                    <h2 class="fw-bold m-0" style="letter-spacing:-0.5px;">Command Center</h2>
+                    <p class="text-dim m-0" style="margin-top:4px;font-size:0.88rem;">Real-time platform oversight and control</p>
                 </div>
+                <% if (pendingCancellations > 0) { %>
+                <div class="d-flex align-items-center gap-2" style="background:rgba(243,156,18,0.1);border:1px solid rgba(243,156,18,0.25);border-radius:12px;padding:10px 16px;">
+                    <i class="fi fi-rr-bell-ring" style="color:#f39c12;"></i>
+                    <span style="font-size:0.85rem;color:#f39c12;font-weight:600;"><%= pendingCancellations %> Pending Cancellation<% if(pendingCancellations>1){%>s<%}%> Platform-Wide</span>
+                </div>
+                <% } %>
             </div>
 
             <!-- Primary Stats Grid -->
             <div class="row g-4 mb-4 animate stagger-2">
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-premium stat-card" style="border-radius: 16px; cursor: pointer;" onclick="window.location.href='/admin/users'">
+                    <div class="glass-premium stat-card" style="border-radius:16px;cursor:pointer;" onclick="window.location.href='/admin/users'">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <span class="stat-label">Total Users</span>
-                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(230,57,70,0.12); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.1rem;">
-                                <i class="fi fi-rr-user"></i>
-                            </div>
+                            <div style="width:40px;height:40px;border-radius:10px;background:rgba(230,57,70,0.12);display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:1.1rem;"><i class="fi fi-rr-user"></i></div>
                         </div>
                         <div class="stat-number" id="statTotalUsers" data-val="<%= totalUsers %>"><%= totalUsers %></div>
-                        <p class="text-dim m-0" style="font-size: 0.75rem; margin-top: 8px !important;">Click to manage &rarr;</p>
+                        <p class="text-dim m-0" style="font-size:0.75rem;margin-top:8px !important;">Click to manage &rarr;</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-premium stat-card" style="border-radius: 16px; cursor: pointer;" onclick="window.location.href='/admin/organizers'">
+                    <div class="glass-premium stat-card" style="border-radius:16px;cursor:pointer;" onclick="window.location.href='/admin/organizers'">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <span class="stat-label">Organizers</span>
-                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(52,152,219,0.12); display: flex; align-items: center; justify-content: center; color: #3498db; font-size: 1.1rem;">
-                                <i class="fi fi-rr-building"></i>
-                            </div>
+                            <div style="width:40px;height:40px;border-radius:10px;background:rgba(52,152,219,0.12);display:flex;align-items:center;justify-content:center;color:#3498db;font-size:1.1rem;"><i class="fi fi-rr-building"></i></div>
                         </div>
-                        <div class="stat-number" id="statTotalOrganizers" data-val="<%= totalOrganizers %>" style="color: #3498db;"><%= totalOrganizers %></div>
-                        <p class="text-dim m-0" style="font-size: 0.75rem; margin-top: 8px !important;">Click to review &rarr;</p>
+                        <div class="stat-number" id="statTotalOrganizers" data-val="<%= totalOrganizers %>" style="color:#3498db;"><%= totalOrganizers %></div>
+                        <p class="text-dim m-0" style="font-size:0.75rem;margin-top:8px !important;">Click to review &rarr;</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-premium stat-card" style="border-radius: 16px; cursor: pointer; border-left: 3px solid #f39c12 !important;" onclick="window.location.href='/admin/events'">
+                    <div class="glass-premium stat-card" style="border-radius:16px;cursor:pointer;border-left:3px solid #f39c12 !important;" onclick="window.location.href='/admin/events'">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <span class="stat-label">Pending Events</span>
-                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(243,156,18,0.12); display: flex; align-items: center; justify-content: center; color: #f39c12; font-size: 1.1rem;">
-                                <i class="fi fi-rr-clock"></i>
-                            </div>
+                            <div style="width:40px;height:40px;border-radius:10px;background:rgba(243,156,18,0.12);display:flex;align-items:center;justify-content:center;color:#f39c12;font-size:1.1rem;"><i class="fi fi-rr-clock"></i></div>
                         </div>
-                        <div class="stat-number" id="statPendingEvents" data-val="<%= pendingEvents %>" style="color: #f39c12;"><%= pendingEvents %></div>
-                        <p class="text-dim m-0" style="font-size: 0.75rem; margin-top: 8px !important;">Awaiting approval</p>
+                        <div class="stat-number" id="statPendingEvents" data-val="<%= pendingEvents %>" style="color:#f39c12;"><%= pendingEvents %></div>
+                        <p class="text-dim m-0" style="font-size:0.75rem;margin-top:8px !important;">Awaiting approval</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-lg-3">
-                    <div class="glass-premium stat-card" style="border-radius: 16px; border-left: 3px solid #2ecc71 !important;">
+                    <div class="glass-premium stat-card" style="border-radius:16px;border-left:3px solid #2ecc71 !important;">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <span class="stat-label">Total Revenue</span>
-                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(46,204,113,0.12); display: flex; align-items: center; justify-content: center; color: #2ecc71; font-size: 1.1rem;">
-                                <i class="fi fi-rr-money"></i>
-                            </div>
+                            <div style="width:40px;height:40px;border-radius:10px;background:rgba(46,204,113,0.12);display:flex;align-items:center;justify-content:center;color:#2ecc71;font-size:1.1rem;"><i class="fi fi-rr-money"></i></div>
                         </div>
-                        <div class="stat-number" id="statTotalRevenue" data-val="<%= totalRevenue %>" style="color: #2ecc71; font-size: 1.9rem;">&#8377;<%= totalRevenue.toLocaleString('en-IN') %></div>
-                        <p class="text-dim m-0" style="font-size: 0.75rem; margin-top: 8px !important;">Platform lifetime</p>
+                        <div class="stat-number" id="statTotalRevenue" data-val="<%= totalRevenue %>" style="color:#2ecc71;font-size:1.9rem;">&#8377;<%= totalRevenue.toLocaleString('en-IN') %></div>
+                        <p class="text-dim m-0" style="font-size:0.75rem;margin-top:8px !important;">Platform lifetime</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Secondary Stats -->
-            <div class="row g-4 mb-5 animate stagger-3">
-                <div class="col-sm-6">
-                    <div class="glass-premium p-4" style="border-radius: 16px; border: 1px solid rgba(255,255,255,0.07);">
+            <!-- Secondary KPIs -->
+            <div class="row g-4 mb-4 animate stagger-3">
+                <div class="col-sm-6 col-lg-3">
+                    <div class="glass-premium p-4" style="border-radius:16px;border:1px solid rgba(255,255,255,0.07);">
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
-                                <p class="text-dim" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 6px;">Total Events</p>
-                                <h4 class="text-white m-0" id="statTotalEvents" data-val="<%= totalEvents %>" style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display);"><%= totalEvents %></h4>
+                                <p class="text-dim" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;margin-bottom:6px;">Total Events</p>
+                                <h4 class="text-white m-0" id="statTotalEvents" data-val="<%= totalEvents %>" style="font-size:1.8rem;font-weight:800;font-family:var(--font-display);"><%= totalEvents %></h4>
                             </div>
-                            <i class="fi fi-rr-calendar-lines" style="font-size: 2rem; color: rgba(255,255,255,0.1);"></i>
+                            <i class="fi fi-rr-calendar-lines" style="font-size:2rem;color:rgba(255,255,255,0.1);"></i>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-6">
-                    <div class="glass-premium p-4" style="border-radius: 16px; border: 1px solid rgba(255,255,255,0.07);">
+                <div class="col-sm-6 col-lg-3">
+                    <div class="glass-premium p-4" style="border-radius:16px;border:1px solid rgba(255,255,255,0.07);">
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
-                                <p class="text-dim" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 6px;">Total Bookings</p>
-                                <h4 class="text-white m-0" id="statTotalBookings" data-val="<%= totalBookings %>" style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-display);"><%= totalBookings %></h4>
+                                <p class="text-dim" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;margin-bottom:6px;">Total Bookings</p>
+                                <h4 class="text-white m-0" id="statTotalBookings" data-val="<%= totalBookings %>" style="font-size:1.8rem;font-weight:800;font-family:var(--font-display);"><%= totalBookings %></h4>
                             </div>
-                            <i class="fi fi-rr-ticket" style="font-size: 2rem; color: rgba(255,255,255,0.1);"></i>
+                            <i class="fi fi-rr-ticket" style="font-size:2rem;color:rgba(255,255,255,0.1);"></i>
                         </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="glass-premium p-4" style="border-radius:16px;border:1px solid rgba(255,255,255,0.07);">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="text-dim" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;margin-bottom:6px;">Active Bookings</p>
+                                <h4 class="m-0" style="font-size:1.8rem;font-weight:800;font-family:var(--font-display);color:#2ecc71;"><%= activeBookings %></h4>
+                            </div>
+                            <i class="fi fi-rr-check-circle" style="font-size:2rem;color:rgba(46,204,113,0.15);"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="glass-premium p-4" style="border-radius:16px;border:1px solid rgba(255,255,255,0.07);">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="text-dim" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;margin-bottom:6px;">Cancelled Bookings</p>
+                                <h4 class="m-0" style="font-size:1.8rem;font-weight:800;font-family:var(--font-display);color:#E63946;"><%= cancelledBookings %></h4>
+                            </div>
+                            <i class="fi fi-rr-cross-circle" style="font-size:2rem;color:rgba(230,57,70,0.15);"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row 1: Revenue + User Growth -->
+            <div class="row g-4 mb-4 animate stagger-4">
+                <div class="col-lg-8">
+                    <div class="glass-premium p-4" style="border-radius:18px;border:1px solid rgba(255,255,255,0.07);">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h6 class="fw-bold m-0">Platform Revenue Trend</h6>
+                                <p class="text-dim small m-0">Monthly earnings over last 6 months</p>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="glass-premium p-4" style="border-radius:18px;border:1px solid rgba(255,255,255,0.07);height:100%;">
+                        <div class="mb-4">
+                            <h6 class="fw-bold m-0">Event Status Breakdown</h6>
+                            <p class="text-dim small m-0">All events by status</p>
+                        </div>
+                        <div class="chart-container" style="height:180px;">
+                            <canvas id="eventStatusChart"></canvas>
+                        </div>
+                        <div class="mt-3 d-flex flex-wrap gap-2 justify-content-center" id="eventStatusLegend"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row 2: User Growth + Categories + Top Orgs -->
+            <div class="row g-4 mb-4 animate stagger-5">
+                <div class="col-lg-4">
+                    <div class="glass-premium p-4" style="border-radius:18px;border:1px solid rgba(255,255,255,0.07);height:100%;">
+                        <div class="mb-4">
+                            <h6 class="fw-bold m-0">New User Growth</h6>
+                            <p class="text-dim small m-0">Monthly user registrations</p>
+                        </div>
+                        <div class="chart-container" style="height:180px;">
+                            <canvas id="userGrowthChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="glass-premium p-4" style="border-radius:18px;border:1px solid rgba(255,255,255,0.07);height:100%;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h6 class="fw-bold m-0">Top Categories</h6>
+                                <p class="text-dim small m-0">Events per category</p>
+                            </div>
+                        </div>
+                        <% if (topCategories && topCategories.length > 0) { %>
+                        <% const maxCat = topCategories[0].count || 1; %>
+                        <div class="d-flex flex-column gap-3">
+                            <% topCategories.forEach(c => { %>
+                            <div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-dim" style="font-size:0.82rem;text-transform:capitalize;"><%= c.cat %></span>
+                                    <span class="fw-bold text-white" style="font-size:0.82rem;"><%= c.count %></span>
+                                </div>
+                                <div style="background:rgba(255,255,255,0.06);border-radius:4px;height:5px;">
+                                    <div style="width:<%= Math.round((c.count/maxCat)*100) %>%;height:5px;border-radius:4px;background:linear-gradient(90deg,#3498db,#2ecc71);transition:width 0.8s ease;"></div>
+                                </div>
+                            </div>
+                            <% }); %>
+                        </div>
+                        <% } else { %>
+                        <p class="text-dim small text-center mt-4">No event data yet.</p>
+                        <% } %>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="glass-premium p-4" style="border-radius:18px;border:1px solid rgba(255,255,255,0.07);height:100%;">
+                        <div class="mb-4">
+                            <h6 class="fw-bold m-0">Top Organizers</h6>
+                            <p class="text-dim small m-0">By total revenue generated</p>
+                        </div>
+                        <% if (topOrganizers && topOrganizers.length > 0) { %>
+                        <% const maxOrgRev = topOrganizers[0].revenue || 1; %>
+                        <div class="d-flex flex-column gap-3">
+                            <% topOrganizers.forEach((org, i) => { %>
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-white fw-semibold" style="font-size:0.84rem;"><%= i+1 %>. <%= (org.name||'').slice(0,20) %></span>
+                                    <span style="color:#2ecc71;font-size:0.82rem;font-weight:700;">&#8377;<%= org.revenue.toLocaleString('en-IN') %></span>
+                                </div>
+                                <div style="background:rgba(255,255,255,0.06);border-radius:4px;height:5px;">
+                                    <div class="top-bar" style="width:<%= Math.round((org.revenue/maxOrgRev)*100) %>%;height:5px;border-radius:4px;background:linear-gradient(90deg,#2ecc71,#3498db);transition:width 0.8s ease;"></div>
+                                </div>
+                            </div>
+                            <% }); %>
+                        </div>
+                        <% } else { %>
+                        <p class="text-dim small text-center mt-4">No revenue data yet.</p>
+                        <% } %>
                     </div>
                 </div>
             </div>
 
             <!-- Recent Events Table -->
-            <div class="glass-premium p-4 animate stagger-4" style="border-radius: 18px; border: 1px solid rgba(255,255,255,0.07);">
+            <div class="glass-premium p-4 animate stagger-6" style="border-radius:18px;border:1px solid rgba(255,255,255,0.07);">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-bold m-0">Recent Events</h5>
-                    <a href="/admin/events" class="text-dim" style="font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,0.08); border-radius: 100px; padding: 5px 14px; transition: all 0.2s;"
-                       onmouseover="this.style.borderColor='rgba(230,57,70,0.3)'; this.style.color='white';"
-                       onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.color='';">
-                        View all <i class="fi fi-rr-arrow-right" style="font-size: 0.75rem;"></i>
+                    <div>
+                        <h6 class="fw-bold m-0">Recent Events</h6>
+                        <p class="text-dim small m-0">Latest submitted & updated events</p>
+                    </div>
+                    <a href="/admin/events" class="text-dim" style="font-size:0.85rem;text-decoration:none;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(255,255,255,0.08);border-radius:100px;padding:5px 14px;transition:all 0.2s;"
+                       onmouseover="this.style.borderColor='rgba(230,57,70,0.3)';this.style.color='white';"
+                       onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='';">
+                        View all <i class="fi fi-rr-arrow-right" style="font-size:0.75rem;"></i>
                     </a>
                 </div>
-                <div style="overflow-x: auto;">
+                <div style="overflow-x:auto;">
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Event</th>
                                 <th>Organizer</th>
+                                <th>Category</th>
                                 <th>Date</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <% if(recentEvents && recentEvents.length > 0) { %>
+                            <% if (recentEvents && recentEvents.length > 0) { %>
                                 <% recentEvents.forEach(event => { %>
-                                <tr>
+                                <tr style="cursor:pointer;" onclick="window.location.href='/admin/events/<%= event._id %>'">
                                     <td>
-                                        <p class="fw-bold text-white mb-0" style="font-size: 0.9rem;"><%= event.title %></p>
-                                        <p class="text-dim mb-0" style="font-size: 0.76rem;"><%= event.category?.name %></p>
+                                        <p class="fw-bold text-white mb-0" style="font-size:0.9rem;"><%= event.title %></p>
                                     </td>
-                                    <td class="text-dim" style="font-size: 0.85rem;">
+                                    <td class="text-dim" style="font-size:0.85rem;">
                                         <%= event.organizer?.organizationName || event.organizer?.fullName || '—' %>
                                     </td>
-                                    <td class="text-dim" style="font-size: 0.85rem;">
+                                    <td>
+                                        <% if(event.category) { %>
+                                        <span class="cat-pill"><%= event.category %></span>
+                                        <% } else { %><span class="text-dim" style="font-size:0.8rem;">—</span><% } %>
+                                    </td>
+                                    <td class="text-dim" style="font-size:0.85rem;">
                                         <%= new Date(event.startDate).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}) %>
                                     </td>
                                     <td><span class="status-badge status-<%= event.status %>"><%= event.status %></span></td>
                                 </tr>
-                                <% }) %>
+                                <% }); %>
                             <% } else { %>
-                                <tr><td colspan="4" class="text-center p-5 text-dim">No events found.</td></tr>
+                                <tr><td colspan="5" class="text-center p-5 text-dim">No events found.</td></tr>
                             <% } %>
                         </tbody>
                     </table>
@@ -143,58 +275,122 @@
             </div>
         </main>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
-        // Listen for live admin updates
+        const monthLabels      = <%- JSON.stringify(monthLabels) %>;
+        const monthRevenues    = <%- JSON.stringify(monthRevenues) %>;
+        const monthUsers       = <%- JSON.stringify(monthUsers) %>;
+        const eventStatusCounts= <%- JSON.stringify(eventStatusCounts) %>;
+
+        Chart.defaults.color = 'rgba(255,255,255,0.5)';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+
+        // ── Revenue Line Chart ───────────────────────────────────────────────
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: {
+                labels: monthLabels,
+                datasets: [{
+                    label: 'Revenue (₹)',
+                    data: monthRevenues,
+                    borderColor: '#E63946',
+                    backgroundColor: 'rgba(230,57,70,0.07)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#E63946',
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ₹' + ctx.parsed.y.toLocaleString('en-IN') } } },
+                scales: {
+                    y: { ticks: { callback: v => '₹' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v) }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                    x: { grid: { color: 'rgba(255,255,255,0.04)' } }
+                }
+            }
+        });
+
+        // ── Event Status Doughnut ────────────────────────────────────────────
+        const statusColors = { approved:'#2ecc71', pending:'#f39c12', rejected:'#E63946', draft:'rgba(255,255,255,0.2)', cancelled:'#9b2335', published:'#3498db', inactive:'rgba(255,255,255,0.15)', completed:'#4ECDC4' };
+        const statusKeys   = Object.keys(eventStatusCounts);
+        const statusVals   = Object.values(eventStatusCounts);
+        const statusColorArr = statusKeys.map(k => statusColors[k] || '#888');
+
+        new Chart(document.getElementById('eventStatusChart'), {
+            type: 'doughnut',
+            data: { labels: statusKeys, datasets: [{ data: statusVals, backgroundColor: statusColorArr, borderWidth: 0, hoverOffset: 6 }] },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}` } } }
+            }
+        });
+        const legendEl = document.getElementById('eventStatusLegend');
+        statusKeys.forEach((k, i) => {
+            legendEl.innerHTML += `<span style="display:flex;align-items:center;gap:5px;font-size:0.75rem;color:rgba(255,255,255,0.6);"><span style="width:10px;height:10px;border-radius:50%;background:${statusColorArr[i]};display:inline-block;"></span>${k} (${statusVals[i]})</span>`;
+        });
+
+        // ── User Growth Bar Chart ────────────────────────────────────────────
+        new Chart(document.getElementById('userGrowthChart'), {
+            type: 'bar',
+            data: {
+                labels: monthLabels,
+                datasets: [{
+                    label: 'New Users',
+                    data: monthUsers,
+                    backgroundColor: 'rgba(52,152,219,0.6)',
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { precision: 0 } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // ── Live Socket Updates ──────────────────────────────────────────────
         window.addEventListener('eh:new_booking', (e) => {
             const data = e.detail;
             if (typeof Toast !== 'undefined') Toast.success('New Booking Received Platform-Wide!');
-            
             const revEl = document.getElementById('statTotalRevenue');
             const bookingsEl = document.getElementById('statTotalBookings');
-            
-            if (revEl && data.booking && data.booking.totalAmount) {
-                let currentRev = parseFloat(revEl.getAttribute('data-val')) || 0;
-                currentRev += data.booking.totalAmount;
-                revEl.setAttribute('data-val', currentRev);
-                revEl.innerHTML = `&#8377;${currentRev.toLocaleString('en-IN')}`;
+            if (revEl && data.booking?.totalAmount) {
+                let cur = parseFloat(revEl.getAttribute('data-val')) || 0;
+                cur += data.booking.totalAmount;
+                revEl.setAttribute('data-val', cur);
+                revEl.innerHTML = `&#8377;${cur.toLocaleString('en-IN')}`;
             }
             if (bookingsEl) {
-                let currentBookings = parseInt(bookingsEl.getAttribute('data-val')) || 0;
-                currentBookings += 1;
-                bookingsEl.setAttribute('data-val', currentBookings);
-                bookingsEl.innerText = currentBookings;
+                let cur = parseInt(bookingsEl.getAttribute('data-val')) || 0;
+                bookingsEl.setAttribute('data-val', cur + 1);
+                bookingsEl.innerText = cur + 1;
             }
         });
 
         window.addEventListener('eh:event_created', (e) => {
             if (typeof Toast !== 'undefined') Toast.success('New Event Created!');
-            
             const pendingEl = document.getElementById('statPendingEvents');
             const totalEventsEl = document.getElementById('statTotalEvents');
-            
-            if (pendingEl) {
-                let val = (parseInt(pendingEl.getAttribute('data-val')) || 0) + 1;
-                pendingEl.setAttribute('data-val', val);
-                pendingEl.innerText = val;
-            }
-            if (totalEventsEl) {
-                let val = (parseInt(totalEventsEl.getAttribute('data-val')) || 0) + 1;
-                totalEventsEl.setAttribute('data-val', val);
-                totalEventsEl.innerText = val;
-            }
+            if (pendingEl) { let v = (parseInt(pendingEl.getAttribute('data-val'))||0)+1; pendingEl.setAttribute('data-val',v); pendingEl.innerText = v; }
+            if (totalEventsEl) { let v = (parseInt(totalEventsEl.getAttribute('data-val'))||0)+1; totalEventsEl.setAttribute('data-val',v); totalEventsEl.innerText = v; }
         });
 
         window.addEventListener('eh:event_updated', (e) => {
             const data = e.detail;
-            if (data.status === 'approved' || data.status === 'rejected' || data.status === 'cancelled') {
+            if (['approved','rejected','cancelled'].includes(data.status)) {
                 const pendingEl = document.getElementById('statPendingEvents');
                 if (pendingEl) {
-                    let val = parseInt(pendingEl.getAttribute('data-val')) || 0;
-                    if (val > 0) {
-                        val -= 1;
-                        pendingEl.setAttribute('data-val', val);
-                        pendingEl.innerText = val;
-                    }
+                    let v = parseInt(pendingEl.getAttribute('data-val')) || 0;
+                    if (v > 0) { v -= 1; pendingEl.setAttribute('data-val', v); pendingEl.innerText = v; }
                 }
             }
         });

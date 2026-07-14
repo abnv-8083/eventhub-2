@@ -701,10 +701,27 @@
             const sub = document.getElementById('modalStatusSub');
             const btnApprove = document.getElementById('btnConfirmCheckIn');
 
+            const cancReq = booking.cancellationRequest || {};
+            const hasPendingCancel = String(cancReq.status) === 'pending';
+
+            // Debug log to help diagnose
+            console.log('[Scanner UI] cancellationRequest:', JSON.stringify(cancReq));
+            console.log('[Scanner UI] hasPendingCancel:', hasPendingCancel);
+
             if (booking.status !== 'active') {
                 banner.className = 'status-banner danger';
                 title.innerText = `⚠️ BOOKING IS ${booking.status.toUpperCase()}`;
                 sub.innerText = 'This booking has been cancelled or is on hold. DO NOT ALLOW ENTRY.';
+                btnApprove.disabled = true;
+            } else if (hasPendingCancel) {
+                banner.className = 'status-banner danger';
+                if (cancReq.isPartial) {
+                    title.innerText = '🚫 PARTIAL CANCELLATION PENDING';
+                    sub.innerText = `The guest has requested to cancel ${cancReq.requestedTickets?.length || 'some'} ticket type(s). Check-in is BLOCKED until the organizer resolves this request.`;
+                } else {
+                    title.innerText = '🚫 FULL CANCELLATION PENDING';
+                    sub.innerText = 'The guest has requested to cancel this entire booking. Check-in is BLOCKED until the organizer resolves this request.';
+                }
                 btnApprove.disabled = true;
             } else if (booking.isCheckedIn) {
                 banner.className = 'status-banner warning';
@@ -722,6 +739,13 @@
             const container = document.getElementById('modalTicketItemsContainer');
             container.innerHTML = '';
 
+            // Build a quick lookup of which ticket IDs have a pending cancel request
+            const pendingCancelTicketIds = new Set(
+                (hasPendingCancel && cancReq.requestedTickets)
+                    ? cancReq.requestedTickets.map(rt => rt.ticketId?.toString())
+                    : []
+            );
+
             let totalRemainingAcrossBooking = 0;
 
             booking.items.forEach(item => {
@@ -731,6 +755,7 @@
                 
                 const isCancelled = item.status !== 'active';
                 const isFullyChecked = item.remainingQty === 0;
+                const hasPendingCancelForThisItem = pendingCancelTicketIds.has(item._id?.toString());
 
                 row.innerHTML = `
                     <div>
@@ -738,6 +763,7 @@
                         <small class="text-secondary">
                             Total: ${item.totalQty} · Checked in: ${item.checkedInQty}
                             ${isCancelled ? '<span class="badge bg-danger ms-2">CANCELLED</span>' : ''}
+                            ${hasPendingCancelForThisItem ? '<span class="badge ms-2" style="background:rgba(243,156,18,0.9);">⏳ CANCEL PENDING</span>' : ''}
                         </small>
                     </div>
                     <div class="d-flex align-items-center gap-2">
@@ -749,7 +775,7 @@
                             min="0" 
                             max="${item.remainingQty}" 
                             value="${item.remainingQty}" 
-                            ${isCancelled || isFullyChecked ? 'disabled' : ''}
+                            ${isCancelled || isFullyChecked || hasPendingCancel ? 'disabled' : ''}
                         >
                     </div>
                 `;

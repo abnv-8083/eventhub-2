@@ -29,6 +29,7 @@
                     <h2 class="fw-bold mb-1"><i class="fi fi-rr-bell-ring text-warning me-2"></i>Cancellation Requests</h2>
                     <p class="text-dim m-0">Review and action user cancellation requests across all your events.</p>
                 </div>
+                <span id="liveCancellationBadge" style="display:none; align-items:center; gap:6px; background: rgba(230,57,70,0.12); border: 1px solid rgba(230,57,70,0.3); color:#E63946; border-radius: 100px; padding: 6px 14px; font-size: 0.82rem; font-weight: 700;"></span>
             </div>
 
             <% if (requests.length === 0) { %>
@@ -239,6 +240,22 @@
             btn.disabled  = false;
         }
     });
+
+    // ── Live Socket: New Cancellation Request ──────────────────────────────
+    if (window.socket) {
+        window.socket.on('newCancellationRequest', (data) => {
+            if (typeof Toast !== 'undefined') {
+                Toast.show('⚠️ New cancellation request received! Page will refresh...', 'warning');
+            }
+            // Show live badge on page
+            const badge = document.getElementById('liveCancellationBadge');
+            if (badge) {
+                badge.style.display = 'inline-flex';
+                badge.innerText = '🔴 New Request — Refreshing...';
+            }
+            setTimeout(() => location.reload(), 2500);
+        });
+    }
 </script>
 </body>
 </html>

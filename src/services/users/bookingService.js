@@ -173,6 +173,8 @@ export const verifyAndBook = async (eventId, userId, { razorpay_order_id, razorp
     }));
     const updatedTickets = await incrementTicketsOrRollback(eventId, validatedItems);
 
+    
+
     // 4. Create Booking
     const newBooking = await Booking.create({
         event:         eventId,
@@ -184,6 +186,8 @@ export const verifyAndBook = async (eventId, userId, { razorpay_order_id, razorp
         paymentId:     razorpay_payment_id,
         coupon:        appliedCoupon ? appliedCoupon._id : undefined
     });
+
+    const totalBooking = newBooking.user
 
     // ✨ INCREMENT THE COUPON USAGE COUNT ✨
     if (appliedCoupon) {
@@ -542,6 +546,9 @@ export const cancelSingleTicketByUser = async (bookingId, ticketItemId, userId, 
         });
     }
 
+    // markModified is required because cancellationRequest is a plain nested object,
+    // not a sub-document array. Without this, Mongoose won't detect the mutations.
+    booking.markModified('cancellationRequest');
     await booking.save();
 
     // Notify the event organizer
@@ -586,6 +593,7 @@ export const requestCancellation = async (bookingId, userId, reason) => {
         isPartial:     false,
         requestedTickets: []
     };
+    booking.markModified('cancellationRequest');
     await booking.save();
 
     // Notify the event organizer
@@ -596,6 +604,17 @@ export const requestCancellation = async (bookingId, userId, reason) => {
             `\u26a0\ufe0f Cancellation Request: A user has requested cancellation for their booking at "${booking.event.title}". Reason: "${reason.trim()}". Please review and action it.`,
             'warning'
         );
+
+        // Real-time update for Organizer Cancellation Dashboard
+        try {
+            socketUtil.getIO().to(String(organizerId).trim()).emit('newCancellationRequest', {
+                bookingId: booking._id,
+                eventId: booking.event._id,
+                reason: reason.trim()
+            });
+        } catch (socketErr) {
+            console.error('Socket broadcast error for cancellation request:', socketErr.message);
+        }
     }
 
     return { message: 'Cancellation request submitted. The organizer will review it shortly.' };
