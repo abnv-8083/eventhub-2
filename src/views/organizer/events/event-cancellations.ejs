@@ -143,11 +143,11 @@
                                                         <div class="p-2 rounded-3" style="background: rgba(255, 255, 255, 0.05);">
                                                             <span class="d-block text-white small fw-bold mb-1 text-uppercase">Partial Cancellation Requested:</span>
                                                             <ul class="mb-0 text-white small" style="padding-left: 1.2rem;">
-                                                                <% booking.cancellationRequest.requestedTickets.forEach(rt => { 
-                                                                    const tItem = booking.tickets.find(t => t._id.toString() === rt.ticketId.toString());
+                                                                <% (booking.cancellationRequest.requestedTickets || []).forEach(rt => { 
+                                                                    const tItem = booking.tickets.find(t => (t._id || t.ticket || t).toString() === rt.ticketId.toString());
                                                                     if (tItem) {
                                                                 %>
-                                                                    <li><strong><%= rt.quantity %>x</strong> <%= tItem.ticketName %></li>
+                                                                    <li><strong><%= rt.quantity %>x</strong> <%= tItem.ticketName %> (₹<%= (tItem.ticketPrice || 0).toLocaleString('en-IN') %> each)</li>
                                                                 <% } }) %>
                                                             </ul>
                                                         </div>
@@ -160,7 +160,7 @@
                                                     <% if (booking.cancellationRequest.status === 'rejected') { %>
                                                         <div class="mt-2 pt-2" style="border-top: 1px solid rgba(255,255,255,0.1);">
                                                             <span class="d-block text-danger small fw-bold mb-1">Rejection Note:</span>
-                                                            <p class="m-0 text-white small">"<%= booking.cancellationRequest.rejectionNote %>"</p>
+                                                            <p class="m-0 text-white small">"<%= booking.cancellationRequest.rejectionNote || 'No rejection note provided' %>"</p>
                                                         </div>
                                                     <% } %>
                                                 </div>
@@ -172,24 +172,72 @@
                                         </div>
                                     </div>
                                     
+                                    <%
+                                        let targetCancelPrice = 0;
+                                        let cancelLabel = 'Refund Amount';
+                                        let isPartialFlag = false;
+
+                                        if (booking.cancellationRequest && booking.cancellationRequest.status !== 'none') {
+                                            if (booking.cancellationRequest.isPartial && booking.cancellationRequest.requestedTickets?.length > 0) {
+                                                isPartialFlag = true;
+                                                cancelLabel = booking.cancellationRequest.status === 'pending' ? 'Requested Refund' : 'Refunded Ticket Value';
+                                                booking.cancellationRequest.requestedTickets.forEach(rt => {
+                                                    const tItem = booking.tickets.find(t => (t._id || t.ticket || t).toString() === rt.ticketId.toString());
+                                                    if (tItem) targetCancelPrice += (tItem.ticketPrice || 0) * rt.quantity;
+                                                });
+                                            } else {
+                                                cancelLabel = booking.cancellationRequest.status === 'pending' ? 'Full Booking Refund' : 'Total Refunded Value';
+                                                if (booking.totalAmount > 0 && booking.cancellationRequest.status === 'pending') {
+                                                    targetCancelPrice = booking.totalAmount;
+                                                } else {
+                                                    booking.tickets.forEach(t => targetCancelPrice += (t.ticketPrice || 0) * (t.quantity || 0));
+                                                }
+                                            }
+                                        } else if (booking.tickets?.some(t => t.status === 'cancelled')) {
+                                            isPartialFlag = true;
+                                            cancelLabel = 'Cancelled Tickets Value';
+                                            booking.tickets.forEach(t => {
+                                                if (t.status === 'cancelled') targetCancelPrice += (t.ticketPrice || 0) * (t.quantity || 0);
+                                            });
+                                        } else {
+                                            targetCancelPrice = booking.totalAmount || 0;
+                                        }
+                                    %>
+
                                     <!-- Actions & Details -->
-                                    <div class="text-end" style="min-width: 200px;">
-                                        <div class="mb-3">
-                                            <span class="d-block text-dim small mb-1">Total Booking Amount</span>
-                                            <h4 class="fw-bold m-0 text-white">₹<%= booking.totalAmount.toLocaleString('en-IN') %></h4>
-                                            <span class="badge <%= booking.paymentMethod === 'wallet' ? 'bg-primary' : 'bg-info text-dark' %> mt-2">
-                                                Via <%= booking.paymentMethod.toUpperCase() %>
+                                    <div class="text-end" style="min-width: 220px;">
+                                        <div class="p-3 rounded-4 mb-3" style="background: rgba(230, 57, 70, 0.08); border: 1px solid rgba(230, 57, 70, 0.25); text-align: right;">
+                                            <span class="d-block text-danger small fw-bold text-uppercase mb-1" style="letter-spacing: 0.8px;"><%= cancelLabel %></span>
+                                            <h3 class="fw-extrabold m-0 text-white" style="font-size: 1.6rem; letter-spacing: -0.5px;">₹<%= targetCancelPrice.toLocaleString('en-IN') %></h3>
+                                            <% if (isPartialFlag) { %>
+                                                <div class="mt-2 pt-2 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center small text-dim" style="font-size: 0.78rem;">
+                                                    <span>Active Balance:</span>
+                                                    <strong class="text-white">₹<%= booking.totalAmount.toLocaleString('en-IN') %></strong>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                        <div class="text-end mb-2">
+                                            <span class="badge <%= booking.paymentMethod === 'wallet' ? 'bg-primary' : 'bg-info text-dark' %>">
+                                                Paid Via <%= booking.paymentMethod.toUpperCase() %>
                                             </span>
                                         </div>
                                         
                                         <% if (booking.cancellationRequest.status === 'pending') { %>
-                                            <div class="d-flex flex-column gap-2">
+                                            <div class="d-flex flex-column gap-2 mt-3">
                                                 <button onclick="approveRequest('<%= booking._id %>')" class="btn btn-outline w-100 fw-bold d-flex align-items-center justify-content-center gap-2" style="color:#2ecc71; border-color:rgba(46,204,113,0.3);">
                                                     <i class="fi fi-rr-check-circle"></i> Approve & Refund
                                                 </button>
                                                 <button onclick="openRejectModal('<%= booking._id %>')" class="btn btn-outline w-100 fw-bold d-flex align-items-center justify-content-center gap-2" style="color:#E63946; border-color:rgba(230,57,70,0.3);">
                                                     <i class="fi fi-rr-cross-circle"></i> Reject Request
                                                 </button>
+                                            </div>
+                                        <% } else if (booking.cancellationRequest.status === 'approved') { %>
+                                            <div class="p-2 rounded-3 text-center mt-3" style="background: rgba(46, 204, 113, 0.1); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.3); font-weight: 700; font-size: 0.88rem;">
+                                                <i class="fi fi-rr-check-circle me-1"></i> Refund Completed
+                                            </div>
+                                        <% } else if (booking.cancellationRequest.status === 'rejected') { %>
+                                            <div class="p-2 rounded-3 text-center mt-3" style="background: rgba(230, 57, 70, 0.1); color: #E63946; border: 1px solid rgba(230, 57, 70, 0.3); font-weight: 700; font-size: 0.88rem;">
+                                                <i class="fi fi-rr-cross-circle me-1"></i> Request Rejected
                                             </div>
                                         <% } %>
                                     </div>

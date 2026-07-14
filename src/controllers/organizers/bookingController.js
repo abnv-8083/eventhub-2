@@ -183,13 +183,14 @@ export const verifyTicketScan = async (req, res, next) => {
 // ─── Cancellation Requests Page ───────────────────────────────────────────────
 export const getCancellationRequests = async (req, res, next) => {
     try {
-        const { page = 1 } = req.query;
+        const { page = 1, status = 'pending' } = req.query;
         const data = await organizerBookingService.getPendingCancellationRequests(
             req.session.organizer._id,
-            { page }
+            { page, status }
         );
         res.render('organizer/cancellation-requests', {
             title: 'Cancellation Requests',
+            currentStatus: status,
             ...data
         });
     } catch (error) {
