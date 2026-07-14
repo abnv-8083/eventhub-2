@@ -62,8 +62,28 @@ class NotificationManager {
                 const html = this.buildNotificationHtml(data, false);
                 this.notifList.insertAdjacentHTML('afterbegin', html);
 
+                // If user is currently viewing their tickets list or ticket detail page, reload so the status changes immediately
+                if (window.location.pathname.startsWith('/user/tickets')) {
+                    console.log("⚡ [SOCKET] On ticket page — triggering automatic reload after status update...");
+                    setTimeout(() => window.location.reload(), 2000);
+                }
             } catch (err) {
                 console.error("❌ Error rendering live notification:", err);
+            }
+        });
+
+        window.socket.on('cancellationResolved', (data) => {
+            console.log("🔥 [CANCELLATION RESOLVED RECEIVED]:", data);
+            if (typeof Toast !== 'undefined') {
+                if (data.action === 'approved') {
+                    Toast.success(`✅ Your cancellation was approved! Refund of ₹${(data.refund||0).toLocaleString('en-IN')} is on its way.`);
+                } else {
+                    Toast.error('❌ Your cancellation request was rejected by the organizer.');
+                }
+            }
+            if (window.location.pathname.startsWith('/user/tickets')) {
+                console.log("⚡ [SOCKET] On ticket page — triggering automatic reload after cancellation resolved...");
+                setTimeout(() => window.location.reload(), 2500);
             }
         });
     }
