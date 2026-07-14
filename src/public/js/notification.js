@@ -80,7 +80,14 @@ class NotificationManager {
             }
             // Dispatch custom event for smooth in-place DOM updates without page reloads
             window.dispatchEvent(new CustomEvent('liveCancellationResolved', { detail: data }));
+        });
+
+        window.socket.on('newCancellationRequest', (data) => {
+            console.log("🔥 [NEW CANCELLATION REQUEST RECEIVED]:", data);
+            if (typeof Toast !== 'undefined') {
+                Toast.show('⚠️ New cancellation request received!', 'warning');
             }
+            window.dispatchEvent(new CustomEvent('liveCancellationRequest', { detail: data }));
         });
     }
 

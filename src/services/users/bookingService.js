@@ -492,7 +492,7 @@ export const unholdBooking = async (bookingId, userId) => {
 
 // ─── Cancel Individual Ticket by User ───────────────────────────────────────
 export const cancelSingleTicketByUser = async (bookingId, ticketItemId, userId, cancelQty = 1, reason = "Partial Cancellation") => {
-    const booking = await Booking.findById(bookingId).populate('event', 'title');
+    const booking = await Booking.findById(bookingId).populate('event', 'title organizer');
     if (!booking) throw new AppError('Booking not found', HTTP_STATUS.NOT_FOUND);
     if (booking.status === 'on_hold') throw new AppError('Cannot cancel tickets for a booking that is currently on hold.', HTTP_STATUS.BAD_REQUEST);
     

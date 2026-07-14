@@ -275,31 +275,31 @@
     });
 
     // ── Live Socket: New Cancellation Request (Seamless DOM update) ──
-    if (window.socket) {
-        window.socket.on('newCancellationRequest', async (data) => {
-            if (typeof Toast !== 'undefined') {
-                Toast.show('⚠️ New cancellation request received!', 'warning');
+    async function handleSeamlessDOMRefresh() {
+        const badge = document.getElementById('liveCancellationBadge');
+        if (badge) {
+            badge.style.display = 'inline-flex';
+            badge.innerText = '🔴 New Request Received';
+        }
+        try {
+            const res = await fetch(location.href);
+            const htmlText = await res.text();
+            const parser = new DOMParser();
+            const newDoc = parser.parseFromString(htmlText, 'text/html');
+            const newMain = newDoc.querySelector('.dashboard-main');
+            const currentMain = document.querySelector('.dashboard-main');
+            if (newMain && currentMain) {
+                currentMain.innerHTML = newMain.innerHTML;
             }
-            const badge = document.getElementById('liveCancellationBadge');
-            if (badge) {
-                badge.style.display = 'inline-flex';
-                badge.innerText = '🔴 New Request Received';
-            }
-            try {
-                const res = await fetch(location.href);
-                const htmlText = await res.text();
-                const parser = new DOMParser();
-                const newDoc = parser.parseFromString(htmlText, 'text/html');
-                const newMain = newDoc.querySelector('.dashboard-main');
-                const currentMain = document.querySelector('.dashboard-main');
-                if (newMain && currentMain) {
-                    currentMain.innerHTML = newMain.innerHTML;
-                }
-            } catch (err) {
-                console.error('Live socket DOM update failed:', err);
-            }
-        });
+        } catch (err) {
+            console.error('Live socket DOM update failed:', err);
+        }
     }
+
+    if (window.socket) {
+        window.socket.on('newCancellationRequest', handleSeamlessDOMRefresh);
+    }
+    window.addEventListener('liveCancellationRequest', handleSeamlessDOMRefresh);
 </script>
 </body>
 </html>
