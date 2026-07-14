@@ -340,7 +340,7 @@
                 if (res.data.success) {
                     closeCancelRequestModal();
                     Toast.success(res.data.message);
-                    setTimeout(() => location.reload(), 1800);
+                    await refreshTicketDOM();
                 }
             } catch (err) {
                 Toast.error(err.response?.data?.message || 'Failed to submit request.');
@@ -395,22 +395,41 @@
             openCancelRequestModal(ticketId, cancelQty);
         }
         
-        // Listen for Real-Time Status Updates
-        if (window.socket) {
-            window.socket.on('bookingStatusUpdate', () => {
-                setTimeout(() => window.location.reload(), 2000);
-            });
-            window.socket.on('cancellationResolved', (data) => {
-                if (typeof Toast !== 'undefined') {
-                    if (data.action === 'approved') {
-                        Toast.success(`✅ Your cancellation was approved! Refund of ₹${(data.refund||0).toLocaleString('en-IN')} is on its way.`);
-                    } else {
-                        Toast.error('❌ Your cancellation request was rejected by the organizer.');
-                    }
+        // Seamless DOM Refresh Helper (replaces window.location.reload completely)
+        async function refreshTicketDOM() {
+            try {
+                const res = await fetch(location.href);
+                const htmlText = await res.text();
+                const parser = new DOMParser();
+                const newDoc = parser.parseFromString(htmlText, 'text/html');
+                const newWrapper = newDoc.querySelector('.premium-ticket-wrapper');
+                const currentWrapper = document.querySelector('.premium-ticket-wrapper');
+                if (newWrapper && currentWrapper) {
+                    currentWrapper.innerHTML = newWrapper.innerHTML;
                 }
-                setTimeout(() => window.location.reload(), 2500);
-            });
+            } catch (err) {
+                console.error('Seamless ticket DOM refresh failed:', err);
+            }
         }
+
+        // Listen for Real-Time Status & Cancellation Updates without page reloads
+        function handleLiveStatusChange(data) {
+            if (data && typeof Toast !== 'undefined') {
+                if (data.action === 'approved') {
+                    Toast.success(`✅ Your cancellation was approved! Refund of ₹${(data.refund||0).toLocaleString('en-IN')} has been credited.`);
+                } else if (data.action === 'rejected') {
+                    Toast.error('❌ Your cancellation request was rejected by the organizer.');
+                }
+            }
+            refreshTicketDOM();
+        }
+
+        if (window.socket) {
+            window.socket.on('bookingStatusUpdate', handleLiveStatusChange);
+            window.socket.on('cancellationResolved', handleLiveStatusChange);
+        }
+        window.addEventListener('liveBookingUpdate', (e) => handleLiveStatusChange(e.detail));
+        window.addEventListener('liveCancellationResolved', (e) => handleLiveStatusChange(e.detail));
     </script>
 </body>
 </html>

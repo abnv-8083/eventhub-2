@@ -62,11 +62,8 @@ class NotificationManager {
                 const html = this.buildNotificationHtml(data, false);
                 this.notifList.insertAdjacentHTML('afterbegin', html);
 
-                // If user is currently viewing their tickets list or ticket detail page, reload so the status changes immediately
-                if (window.location.pathname.startsWith('/user/tickets')) {
-                    console.log("⚡ [SOCKET] On ticket page — triggering automatic reload after status update...");
-                    setTimeout(() => window.location.reload(), 2000);
-                }
+                // Dispatch custom event for smooth in-place DOM updates without page reloads
+                window.dispatchEvent(new CustomEvent('liveBookingUpdate', { detail: data }));
             } catch (err) {
                 console.error("❌ Error rendering live notification:", err);
             }
@@ -81,9 +78,8 @@ class NotificationManager {
                     Toast.error('❌ Your cancellation request was rejected by the organizer.');
                 }
             }
-            if (window.location.pathname.startsWith('/user/tickets')) {
-                console.log("⚡ [SOCKET] On ticket page — triggering automatic reload after cancellation resolved...");
-                setTimeout(() => window.location.reload(), 2500);
+            // Dispatch custom event for smooth in-place DOM updates without page reloads
+            window.dispatchEvent(new CustomEvent('liveCancellationResolved', { detail: data }));
             }
         });
     }

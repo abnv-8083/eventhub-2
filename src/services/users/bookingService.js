@@ -559,6 +559,18 @@ export const cancelSingleTicketByUser = async (bookingId, ticketItemId, userId, 
             `⚠️ Partial Cancellation Request: A user has requested to cancel ${cancelQty}x "${ticketItem.ticketName}" for "${booking.event.title}". Please review it.`,
             'warning'
         );
+
+        // Real-time update for Organizer Cancellation Dashboard
+        try {
+            socketUtil.getIO().to(String(organizerId).trim()).emit('newCancellationRequest', {
+                bookingId: booking._id,
+                eventId: booking.event._id,
+                reason: reason.trim(),
+                isPartial: true
+            });
+        } catch (socketErr) {
+            console.error('Socket broadcast error for partial cancellation request:', socketErr.message);
+        }
     }
 
     return { message: `Cancellation request for ${cancelQty}x ${ticketItem.ticketName} submitted. The organizer will review it shortly.` };

@@ -81,9 +81,9 @@
                     <p class="text-dim mb-0">There are no cancelled tickets or cancellation requests for this event.</p>
                 </div>
             <% } else { %>
-                <div class="row row-cols-1 g-4 animate stagger-2">
+                <div class="row row-cols-1 g-4 animate stagger-2" id="eventCancellationsList">
                     <% cancellations.forEach(booking => { %>
-                        <div class="col">
+                        <div class="col" id="card-col-<%= booking._id %>">
                             <div class="glass-premium request-card p-4">
                                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4">
                                     
@@ -271,12 +271,35 @@
             const res = await axios.post(`/organizer/bookings/${bookingId}/approve-cancel`);
             if (res.data.success) {
                 Toast.success(res.data.message);
-                setTimeout(() => location.reload(), 1500);
+                const cardCol = document.getElementById(`card-col-${bookingId}`);
+                if (cardCol) {
+                    cardCol.style.transition = 'all 0.4s ease';
+                    cardCol.style.opacity = '0';
+                    cardCol.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        cardCol.remove();
+                        checkEmptyEventCancellations();
+                    }, 400);
+                }
             }
         } catch (err) {
             Toast.error(err.response?.data?.message || 'Failed to approve request.');
         } finally {
             Loader.hide();
+        }
+    }
+
+    function checkEmptyEventCancellations() {
+        const container = document.getElementById('eventCancellationsList');
+        if (container && container.children.length === 0) {
+            container.innerHTML = `
+                <div class="glass-premium text-center py-5 rounded-4 animate stagger-2 w-100">
+                    <div style="width: 80px; height: 80px; background: rgba(46,204,113,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                        <i class="fi fi-rr-check-circle" style="font-size: 2rem; color: #2ecc71;"></i>
+                    </div>
+                    <h4 class="fw-bold text-white mb-2">No Cancellations</h4>
+                    <p class="text-dim mb-0">There are no cancelled tickets or cancellation requests for this event.</p>
+                </div>`;
         }
     }
 
@@ -315,9 +338,19 @@
         try {
             const res = await axios.post(`/organizer/bookings/${rejectBookingId}/reject-cancel`, { rejectionNote: note });
             if (res.data.success) {
+                const targetId = rejectBookingId;
                 closeRejectModal();
                 Toast.success(res.data.message);
-                setTimeout(() => location.reload(), 1500);
+                const cardCol = document.getElementById(`card-col-${targetId}`);
+                if (cardCol) {
+                    cardCol.style.transition = 'all 0.4s ease';
+                    cardCol.style.opacity = '0';
+                    cardCol.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        cardCol.remove();
+                        checkEmptyEventCancellations();
+                    }, 400);
+                }
             }
         } catch (err) {
             Toast.error(err.response?.data?.message || 'Failed to reject request.');
@@ -325,6 +358,28 @@
             btn.disabled  = false;
         }
     });
+
+    // ── Live Socket: New Cancellation Request (Seamless DOM update) ──
+    if (window.socket) {
+        window.socket.on('newCancellationRequest', async (data) => {
+            if (typeof Toast !== 'undefined') {
+                Toast.show('⚠️ New cancellation request received!', 'warning');
+            }
+            try {
+                const res = await fetch(location.href);
+                const htmlText = await res.text();
+                const parser = new DOMParser();
+                const newDoc = parser.parseFromString(htmlText, 'text/html');
+                const newMain = newDoc.querySelector('.dashboard-main');
+                const currentMain = document.querySelector('.dashboard-main');
+                if (newMain && currentMain) {
+                    currentMain.innerHTML = newMain.innerHTML;
+                }
+            } catch (err) {
+                console.error('Live socket DOM update failed:', err);
+            }
+        });
+    }
 
     // ── Search & Filter Logic ──
     const searchInput = document.getElementById('cnSearch');
