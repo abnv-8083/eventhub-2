@@ -546,6 +546,9 @@ export const cancelSingleTicketByUser = async (bookingId, ticketItemId, userId, 
         });
     }
 
+    // markModified is required because cancellationRequest is a plain nested object,
+    // not a sub-document array. Without this, Mongoose won't detect the mutations.
+    booking.markModified('cancellationRequest');
     await booking.save();
 
     // Notify the event organizer
@@ -590,6 +593,7 @@ export const requestCancellation = async (bookingId, userId, reason) => {
         isPartial:     false,
         requestedTickets: []
     };
+    booking.markModified('cancellationRequest');
     await booking.save();
 
     // Notify the event organizer

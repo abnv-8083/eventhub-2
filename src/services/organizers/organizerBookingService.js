@@ -713,6 +713,7 @@ export const approveCancellationRequest = async (bookingId, organizerId) => {
         // Mark the request as approved
         booking.cancellationRequest.status     = 'approved';
         booking.cancellationRequest.resolvedAt = new Date();
+        booking.markModified('cancellationRequest');
         await booking.save();
 
         // Emit live socket stock update
@@ -757,6 +758,7 @@ export const approveCancellationRequest = async (bookingId, organizerId) => {
         // Mark the request as approved
         booking.cancellationRequest.status     = 'approved';
         booking.cancellationRequest.resolvedAt = new Date();
+        booking.markModified('cancellationRequest');
         await booking.save();
 
         // Release inventory seats
@@ -821,6 +823,7 @@ export const rejectCancellationRequest = async (bookingId, organizerId, rejectio
     booking.cancellationRequest.status        = 'rejected';
     booking.cancellationRequest.resolvedAt    = new Date();
     booking.cancellationRequest.rejectionNote = (rejectionNote || 'Request denied by organizer.').trim();
+    booking.markModified('cancellationRequest');
     await booking.save();
 
     // Notify the user

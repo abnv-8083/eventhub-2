@@ -701,8 +701,12 @@
             const sub = document.getElementById('modalStatusSub');
             const btnApprove = document.getElementById('btnConfirmCheckIn');
 
-            const cancReq = booking.cancellationRequest;
-            const hasPendingCancel = cancReq && cancReq.status === 'pending';
+            const cancReq = booking.cancellationRequest || {};
+            const hasPendingCancel = String(cancReq.status) === 'pending';
+
+            // Debug log to help diagnose
+            console.log('[Scanner UI] cancellationRequest:', JSON.stringify(cancReq));
+            console.log('[Scanner UI] hasPendingCancel:', hasPendingCancel);
 
             if (booking.status !== 'active') {
                 banner.className = 'status-banner danger';
