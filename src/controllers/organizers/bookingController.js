@@ -24,7 +24,7 @@ export const getEventBookings = async (req, res, next) => {
 // ─── Event Cancellations Page ──────────────────────────────────────────────────
 export const getEventCancellations = async (req, res, next) => {
     try {
-        const { search = '', sort = 'newest', status = 'all', page = 1 } = req.query;
+        const { search = '', sort = 'newest', status = 'pending', page = 1 } = req.query;
         const data = await organizerBookingService.getEventCancellations(
             req.params.id, req.session.organizer._id, { search, sort, status, page }
         );

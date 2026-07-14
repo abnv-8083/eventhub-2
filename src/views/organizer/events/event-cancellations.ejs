@@ -407,8 +407,87 @@
         }
     });
 
+    // ── Rebind UI & Search Event Listeners ──
+    function rebindUIEventListeners() {
+        const searchInput = document.getElementById('cnSearch');
+        const sortSelect  = document.getElementById('cnSort');
+        const applyBtn    = document.getElementById('cnApply');
+        const clearBtn    = document.getElementById('cnClear');
+
+        function applyFilters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (searchInput?.value.trim()) urlParams.set('search', searchInput.value.trim());
+            else urlParams.delete('search');
+            if (sortSelect?.value) urlParams.set('sort', sortSelect.value);
+            urlParams.set('page', '1');
+            window.location.href = '?' + urlParams.toString();
+        }
+
+        applyBtn?.addEventListener('click', applyFilters);
+        searchInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') applyFilters();
+        });
+        clearBtn?.addEventListener('click', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.delete('search');
+            urlParams.delete('sort');
+            urlParams.delete('page');
+            window.location.href = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+        });
+
+        // Rebind reject modal confirm button
+        const confirmBtn = document.getElementById('confirmRejectBtn');
+        if (confirmBtn && !confirmBtn.dataset.bound) {
+            confirmBtn.dataset.bound = 'true';
+            confirmBtn.addEventListener('click', async () => {
+                const noteInput = document.getElementById('rejectNoteInput');
+                const errorEl   = document.getElementById('rejectNoteError');
+                const note      = noteInput.value.trim();
+
+                if (!note) {
+                    errorEl.style.display = 'block';
+                    noteInput.focus();
+                    return;
+                }
+                errorEl.style.display = 'none';
+
+                const originalHtml = confirmBtn.innerHTML;
+                confirmBtn.innerHTML = '<i class="fi fi-rr-spinner" style="animation:spin 1s linear infinite;"></i> Processing...';
+                confirmBtn.disabled  = true;
+
+                try {
+                    const res = await axios.post(`/organizer/bookings/${rejectBookingId}/reject-cancel`, { rejectionNote: note });
+                    if (res.data.success) {
+                        const targetId = rejectBookingId;
+                        closeRejectModal();
+                        Toast.success(res.data.message);
+                        const cardCol = document.getElementById(`card-col-${targetId}`);
+                        if (cardCol) {
+                            cardCol.style.transition = 'all 0.4s ease';
+                            cardCol.style.opacity = '0';
+                            cardCol.style.transform = 'scale(0.95)';
+                            setTimeout(() => {
+                                cardCol.remove();
+                                checkEmptyEventCancellations();
+                            }, 400);
+                        }
+                    }
+                } catch (err) {
+                    Toast.error(err.response?.data?.message || 'Failed to reject request.');
+                    confirmBtn.innerHTML = originalHtml;
+                    confirmBtn.disabled  = false;
+                }
+            });
+        }
+    }
+
+    rebindUIEventListeners();
+
     // ── Live Socket: New Cancellation Request (Seamless DOM update) ──
-    async function handleSeamlessDOMRefresh() {
+    async function handleSeamlessDOMRefresh(data) {
+        if (typeof Toast !== 'undefined') {
+            Toast.show('⚠️ Live Update: New pending cancellation request received!', 'warning');
+        }
         try {
             const res = await fetch(location.href);
             const htmlText = await res.text();
@@ -418,6 +497,15 @@
             const currentMain = document.querySelector('.dashboard-main');
             if (newMain && currentMain) {
                 currentMain.innerHTML = newMain.innerHTML;
+                rebindUIEventListeners();
+
+                // Highlight first pending card nicely if visible
+                const firstPendingCard = currentMain.querySelector('.request-card');
+                if (firstPendingCard) {
+                    firstPendingCard.style.boxShadow = '0 0 25px rgba(243, 156, 18, 0.4)';
+                    firstPendingCard.style.transition = 'box-shadow 1.5s ease';
+                    setTimeout(() => { firstPendingCard.style.boxShadow = ''; }, 3000);
+                }
             }
         } catch (err) {
             console.error('Live socket DOM update failed:', err);
@@ -428,34 +516,6 @@
         window.socket.on('newCancellationRequest', handleSeamlessDOMRefresh);
     }
     window.addEventListener('liveCancellationRequest', handleSeamlessDOMRefresh);
-
-    // ── Search & Filter Logic ──
-    const searchInput = document.getElementById('cnSearch');
-    const sortSelect  = document.getElementById('cnSort');
-    const applyBtn    = document.getElementById('cnApply');
-    const clearBtn    = document.getElementById('cnClear');
-
-    function applyFilters() {
-        const urlParams = new URLSearchParams(window.location.search);
-        urlParams.set('search', searchInput.value.trim());
-        urlParams.set('sort', sortSelect.value);
-        urlParams.set('page', '1'); // reset to page 1 on new search
-        window.location.href = '?' + urlParams.toString();
-    }
-
-    applyBtn?.addEventListener('click', applyFilters);
-
-    searchInput?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') applyFilters();
-    });
-
-    clearBtn?.addEventListener('click', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        urlParams.delete('search');
-        urlParams.delete('sort');
-        urlParams.delete('page');
-        window.location.href = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-    });
 </script>
 </body>
 </html>

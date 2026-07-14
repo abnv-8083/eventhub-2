@@ -199,7 +199,12 @@ export const getEventCancellations = async (eventId, organizerId, { search = '',
                 ]
             } : {}
         },
-        { $sort: sortStage },
+        {
+            $addFields: {
+                isPendingPriority: { $cond: [{ $eq: ["$cancellationRequest.status", "pending"] }, 1, 0] }
+            }
+        },
+        { $sort: { isPendingPriority: -1, ...sortStage, updatedAt: -1 } },
         {
             $facet: {
                 metadata: [{ $count: "total" }],
