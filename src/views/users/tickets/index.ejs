@@ -128,6 +128,16 @@
             window.socket.on('bookingStatusUpdate', () => {
                 setTimeout(() => window.location.reload(), 2000);
             });
+            window.socket.on('cancellationResolved', (data) => {
+                if (typeof Toast !== 'undefined') {
+                    if (data.action === 'approved') {
+                        Toast.success(`✅ Your cancellation was approved! Refund of ₹${(data.refund||0).toLocaleString('en-IN')} is on its way.`);
+                    } else {
+                        Toast.error('❌ Your cancellation request was rejected by the organizer.');
+                    }
+                }
+                setTimeout(() => window.location.reload(), 2500);
+            });
         }
     </script>
 </body>

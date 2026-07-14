@@ -747,6 +747,17 @@ export const approveCancellationRequest = async (bookingId, organizerId) => {
             `✅ Your partial cancellation request for "${booking.event.title}" has been approved. ₹${totalRefund.toLocaleString('en-IN')} has been refunded to your wallet.`,
             'success'
         );
+
+        // Direct socket emit so the user's ticket page reloads live
+        try {
+            io.to(userId).emit('cancellationResolved', {
+                bookingId: booking._id,
+                action: 'approved',
+                isPartial: true,
+                refund: totalRefund
+            });
+        } catch (_) {}
+
         return { message: `Partial cancellation approved. ₹${totalRefund.toLocaleString('en-IN')} refunded to user's wallet.` };
 
     } else {
@@ -802,6 +813,17 @@ export const approveCancellationRequest = async (bookingId, organizerId) => {
             `✅ Your cancellation request for "${booking.event.title}" has been approved. ₹${booking.totalAmount.toLocaleString('en-IN')} has been refunded to your wallet.`,
             'success'
         );
+
+        // Direct socket emit so the user's ticket page reloads live
+        try {
+            io.to(userId).emit('cancellationResolved', {
+                bookingId: booking._id,
+                action: 'approved',
+                isPartial: false,
+                refund: booking.totalAmount
+            });
+        } catch (_) {}
+
         return { message: `Cancellation approved. ₹${booking.totalAmount.toLocaleString('en-IN')} refunded to user's wallet.` };
     }
 };
@@ -826,13 +848,22 @@ export const rejectCancellationRequest = async (bookingId, organizerId, rejectio
     booking.markModified('cancellationRequest');
     await booking.save();
 
-    // Notify the user
     const userId = String(booking.user._id || booking.user).trim();
     await sendNotification(
         userId,
-        `\u274c Your cancellation request for "${booking.event.title}" was rejected. ${booking.cancellationRequest.rejectionNote}`,
+        `❌ Your cancellation request for "${booking.event.title}" was rejected. ${booking.cancellationRequest.rejectionNote}`,
         'danger'
     );
+
+    // Direct socket emit so the user's ticket page updates live
+    try {
+        const io = socketUtil.getIO();
+        io.to(userId).emit('cancellationResolved', {
+            bookingId: booking._id,
+            action: 'rejected',
+            note: booking.cancellationRequest.rejectionNote
+        });
+    } catch (_) {}
 
     return { message: 'Cancellation request rejected and user has been notified.' };
 };
