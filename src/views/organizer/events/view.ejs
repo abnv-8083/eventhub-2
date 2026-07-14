@@ -42,14 +42,17 @@
                         <i class="fi fi-rr-money me-1"></i> Booking
                     </a>
                     <% } %>
-                    <% if(event.status === 'pending' || event.status === 'approved' || event.status === 'draft' || event.status === 'inactive' || event.status === 'under_review' || event.status === 'published') { %>
+                    <% if(event.status === 'pending' || event.status === 'approved' || event.status === 'draft' || event.status === 'inactive' || event.status === 'under_review' || event.status === 'published' || event.status === 'scheduled') { %>
+                        <button type="button" onclick="openEditScheduleModal('<%= event._id %>', '<%= event.startDate ? new Date(event.startDate).toISOString().split('T')[0] : '' %>', '<%= event.startTime || '' %>', '<%= event.endDate ? new Date(event.endDate).toISOString().split('T')[0] : '' %>', '<%= event.endTime || '' %>', '<%= event.doorsOpenTime || '' %>', '<%= event.bookingOpenTime || '' %>', '<%= event.bookingCloseTime || '' %>')" class="btn mb-2 me-2" style="border-radius:12px; font-weight:600; background: linear-gradient(135deg, #00b4d8, #0077b6); color:#fff; border:none; box-shadow: 0 4px 15px rgba(0,180,216,0.3);">
+                            <i class="fi fi-rr-calendar-clock me-1"></i> Edit Schedule
+                        </button>
                         <a href="/organizer/events/<%= event._id %>/edit" class="btn btn-outline-light me-2 mb-2" style="border-radius:12px;">
-                        <i class="fi fi-rr-edit me-1"></i> <%= event.status === 'draft' ? 'Continue Editing' : 'Edit Event' %>
+                            <i class="fi fi-rr-edit me-1"></i> <%= event.status === 'draft' ? 'Continue Editing' : 'Edit Event' %>
                         </a>
                     <% } %>
                     <% if(event.status === 'completed' || event.status === 'sales_closed') { %>
-                        <button type="button" onclick="openExtendModal('<%= event._id %>', '<%= event.endDate ? new Date(event.endDate).toISOString().split('T')[0] : '' %>', '<%= event.endTime || '' %>')" class="btn mb-2 me-2" style="border-radius:12px; font-weight:600; background:#ffb703; color:#000; border:none; box-shadow: 0 4px 15px rgba(255,183,3,0.3);">
-                            <i class="fi fi-rr-calendar-clock me-1"></i> Extend Schedule
+                        <button type="button" onclick="openEditScheduleModal('<%= event._id %>', '<%= event.startDate ? new Date(event.startDate).toISOString().split('T')[0] : '' %>', '<%= event.startTime || '' %>', '<%= event.endDate ? new Date(event.endDate).toISOString().split('T')[0] : '' %>', '<%= event.endTime || '' %>', '<%= event.doorsOpenTime || '' %>', '<%= event.bookingOpenTime || '' %>', '<%= event.bookingCloseTime || '' %>')" class="btn mb-2 me-2" style="border-radius:12px; font-weight:600; background: linear-gradient(135deg, #ffb703, #fb8500); color:#000; border:none; box-shadow: 0 4px 15px rgba(255,183,3,0.3);">
+                            <i class="fi fi-rr-calendar-clock me-1"></i> Extend / Edit Schedule
                         </button>
                     <% } %>
                     <button type="button" onclick="duplicateEvent('<%= event._id %>')" class="btn btn-outline-info mb-2" style="border-radius:12px;">
@@ -506,44 +509,64 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="extendModal" style="z-index: 9999; backdrop-filter: blur(8px);">
-        <div class="modal-container" style="max-width: 500px; background: linear-gradient(165deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.98) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02) inset; overflow: hidden; padding: 0;">
-            <div style="background: rgba(255,255,255,0.02); padding: 2rem 2.5rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+    <div class="modal-overlay" id="editScheduleModal" style="z-index: 9999; backdrop-filter: blur(8px);">
+        <div class="modal-container" style="max-width: 620px; background: linear-gradient(165deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.98) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02) inset; overflow: hidden; padding: 0;">
+            <div style="background: rgba(255,255,255,0.02); padding: 1.75rem 2.5rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div style="width: 50px; height: 50px; border-radius: 14px; background: linear-gradient(135deg, rgba(255, 183, 3, 0.2), rgba(255, 183, 3, 0.05)); color: #ffb703; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 1px solid rgba(255, 183, 3, 0.2);">
+                    <div style="width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, rgba(0, 180, 216, 0.2), rgba(0, 180, 216, 0.05)); color: #00b4d8; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 1px solid rgba(0, 180, 216, 0.2);">
                         <i class="fi fi-rr-calendar-clock"></i>
                     </div>
-                    <button class="action-btn" onclick="closeExtendModal()" style="width: 36px; height: 36px; border-radius: 50%;"><i class="fi fi-rr-cross-small"></i></button>
+                    <button class="action-btn" onclick="closeEditScheduleModal()" style="width: 36px; height: 36px; border-radius: 50%;"><i class="fi fi-rr-cross-small"></i></button>
                 </div>
-                <h4 class="text-white m-0 fw-bold" style="letter-spacing: -0.5px;">Extend Event Schedule</h4>
-                <p class="text-dim small m-0 mt-1">Set a new closing date and time to re-activate this event and reopen ticket sales.</p>
+                <h4 class="text-white m-0 fw-bold" style="letter-spacing: -0.5px;">Edit Event Schedule & Timings</h4>
+                <p class="text-dim small m-0 mt-1">Update event dates, start/end times, doors open time, and booking sales window.</p>
             </div>
-            <form id="extendScheduleForm" onsubmit="submitExtendSchedule(event)" style="padding: 2rem 2.5rem;">
-                <input type="hidden" id="extendEventId" value="">
-                <div class="row g-3 mb-4">
+            <form id="editScheduleForm" onsubmit="submitEditSchedule(event)" style="padding: 1.75rem 2.5rem; max-height: 75vh; overflow-y: auto;">
+                <input type="hidden" id="editScheduleEventId" value="">
+                <div class="row g-3 mb-3">
                     <div class="col-6">
-                        <label class="form-label text-dim small fw-bold" style="letter-spacing: 1px;">NEW END DATE</label>
-                        <div class="position-relative">
-                            <input type="date" id="newEndDate" name="endDate" class="input text-white" required style="color-scheme: dark; height: 50px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);">
-                        </div>
+                        <label class="form-label text-dim small fw-bold" style="letter-spacing: 1px;">START DATE</label>
+                        <input type="date" id="editStartDate" name="startDate" class="input text-white" required style="color-scheme: dark; height: 46px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);">
                     </div>
                     <div class="col-6">
-                        <label class="form-label text-dim small fw-bold" style="letter-spacing: 1px;">NEW END TIME</label>
-                        <div class="position-relative">
-                            <input type="time" id="newEndTime" name="endTime" class="input text-white" required style="color-scheme: dark; height: 50px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);">
-                        </div>
+                        <label class="form-label text-dim small fw-bold" style="letter-spacing: 1px;">START TIME</label>
+                        <input type="time" id="editStartTime" name="startTime" class="input text-white" required style="color-scheme: dark; height: 46px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);">
                     </div>
                 </div>
-                <div class="mb-5">
-                    <label class="d-flex align-items-center gap-2 cursor-pointer" style="cursor: pointer;">
-                        <input type="checkbox" id="extendTicketSales" checked style="width: 18px; height: 18px; accent-color: var(--primary);">
-                        <span class="text-white small">Automatically extend ticket sales end date to match new closing date</span>
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="form-label text-dim small fw-bold" style="letter-spacing: 1px;">END DATE</label>
+                        <input type="date" id="editEndDate" name="endDate" class="input text-white" required style="color-scheme: dark; height: 46px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label text-dim small fw-bold" style="letter-spacing: 1px;">END TIME</label>
+                        <input type="time" id="editEndTime" name="endTime" class="input text-white" required style="color-scheme: dark; height: 46px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);">
+                    </div>
+                </div>
+                <div class="row g-3 mb-4">
+                    <div class="col-4">
+                        <label class="form-label text-dim small fw-bold" style="font-size: 10px; letter-spacing: 0.5px;">DOORS OPEN</label>
+                        <input type="time" id="editDoorsOpenTime" name="doorsOpenTime" class="input text-white" style="color-scheme: dark; height: 44px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label text-dim small fw-bold" style="font-size: 10px; letter-spacing: 0.5px;">OPEN SALES</label>
+                        <input type="time" id="editBookingOpenTime" name="bookingOpenTime" class="input text-white" style="color-scheme: dark; height: 44px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label text-dim small fw-bold" style="font-size: 10px; letter-spacing: 0.5px;">CLOSE SALES</label>
+                        <input type="time" id="editBookingCloseTime" name="bookingCloseTime" class="input text-white" style="color-scheme: dark; height: 44px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);">
+                    </div>
+                </div>
+                <div class="mb-4" style="background: rgba(0, 180, 216, 0.08); border: 1px solid rgba(0, 180, 216, 0.2); border-radius: 14px; padding: 1rem;">
+                    <label class="d-flex align-items-center gap-2 m-0" style="cursor: pointer;">
+                        <input type="checkbox" id="editExtendTicketSales" checked style="width: 18px; height: 18px; accent-color: #00b4d8;">
+                        <span class="text-white small">Automatically align ticket tier sales end date to match updated event schedule</span>
                     </label>
                 </div>
                 <div class="d-flex gap-3">
-                    <button type="button" class="btn btn-outline flex-grow-1" onclick="closeExtendModal()" style="border-color: rgba(255,255,255,0.1) !important; color: white !important; height: 50px; border-radius: 12px; font-weight: 600;">Cancel</button>
-                    <button type="submit" class="btn btn-primary flex-grow-1 d-flex justify-content-center align-items-center gap-2" style="height: 50px; border-radius: 12px; font-weight: 700; background: linear-gradient(135deg, #ffb703 0%, #fb8500 100%); color: #000; border: none; box-shadow: 0 8px 20px rgba(255, 183, 3, 0.3);">
-                        <i class="fi fi-rr-calendar-clock"></i> Extend &amp; Go Live
+                    <button type="button" class="btn btn-outline flex-grow-1" onclick="closeEditScheduleModal()" style="border-color: rgba(255,255,255,0.1) !important; color: white !important; height: 48px; border-radius: 12px; font-weight: 600;">Cancel</button>
+                    <button type="submit" class="btn btn-primary flex-grow-1 d-flex justify-content-center align-items-center gap-2" style="height: 48px; border-radius: 12px; font-weight: 700; background: linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color: #fff; border: none; box-shadow: 0 8px 20px rgba(0, 180, 216, 0.3);">
+                        <i class="fi fi-rr-check"></i> Save Schedule Changes
                     </button>
                 </div>
             </form>
@@ -738,30 +761,65 @@
                 Loader.hide();
             }
         }
+        function openEditScheduleModal(id, startDate, startTime, endDate, endTime, doorsOpen, bookingOpen, bookingClose) {
+            document.getElementById('editScheduleEventId').value = id;
+            if (startDate) document.getElementById('editStartDate').value = startDate;
+            if (startTime) document.getElementById('editStartTime').value = startTime;
+            if (endDate)   document.getElementById('editEndDate').value   = endDate;
+            if (endTime)   document.getElementById('editEndTime').value   = endTime;
+            if (doorsOpen) document.getElementById('editDoorsOpenTime').value = doorsOpen;
+            if (bookingOpen) document.getElementById('editBookingOpenTime').value = bookingOpen;
+            if (bookingClose) document.getElementById('editBookingCloseTime').value = bookingClose;
+            document.getElementById('editScheduleModal').classList.add('active');
+        }
+        function closeEditScheduleModal() {
+            document.getElementById('editScheduleModal').classList.remove('active');
+            document.getElementById('editScheduleForm').reset();
+        }
+        // Alias for backward compatibility
         function openExtendModal(id, currentEndDate, currentEndTime) {
-            document.getElementById('extendEventId').value = id;
-            if (currentEndDate) document.getElementById('newEndDate').value = currentEndDate;
-            if (currentEndTime) document.getElementById('newEndTime').value = currentEndTime;
-            document.getElementById('newEndDate').min = new Date().toISOString().split('T')[0];
-            document.getElementById('extendModal').classList.add('active');
+            openEditScheduleModal(id, '', '', currentEndDate, currentEndTime, '', '', '');
         }
-        function closeExtendModal() {
-            document.getElementById('extendModal').classList.remove('active');
-            document.getElementById('extendScheduleForm').reset();
-        }
-        async function submitExtendSchedule(e) {
+        function closeExtendModal() { closeEditScheduleModal(); }
+
+        async function submitEditSchedule(e) {
             e.preventDefault();
-            const id = document.getElementById('extendEventId').value;
-            const endDate = document.getElementById('newEndDate').value;
-            const endTime = document.getElementById('newEndTime').value;
-            const extendTicketSales = document.getElementById('extendTicketSales').checked;
-            if (!endDate || !endTime) { Toast.error('Please select both date and time'); return; }
-            Loader.show('Extending Event Schedule...');
+            const id = document.getElementById('editScheduleEventId').value;
+            const startDate = document.getElementById('editStartDate').value;
+            const startTime = document.getElementById('editStartTime').value;
+            const endDate   = document.getElementById('editEndDate').value;
+            const endTime   = document.getElementById('editEndTime').value;
+            const doorsOpenTime    = document.getElementById('editDoorsOpenTime').value;
+            const bookingOpenTime  = document.getElementById('editBookingOpenTime').value;
+            const bookingCloseTime = document.getElementById('editBookingCloseTime').value;
+            const extendTicketSales = document.getElementById('editExtendTicketSales').checked;
+
+            if (!startDate || !startTime || !endDate || !endTime) {
+                Toast.error('Please select both start and end date/time');
+                return;
+            }
+            if (new Date(`${startDate}T${startTime}`) >= new Date(`${endDate}T${endTime}`)) {
+                Toast.error('End date/time must be after start date/time');
+                return;
+            }
+
+            Loader.show('Updating Event Schedule & Timings...');
             try {
-                const res = await axios.post(`/organizer/events/${id}/extend`, { endDate, endTime, extendTicketSales });
-                if (res.data.success) { Toast.success(res.data.message); closeExtendModal(); setTimeout(() => location.reload(), 1200); }
-            } catch (err) { Toast.error(err.response?.data?.message || 'Failed to extend event schedule'); }
-            finally { Loader.hide(); }
+                const res = await axios.post(`/organizer/events/${id}/update-schedule`, {
+                    startDate, startTime, endDate, endTime,
+                    doorsOpenTime, bookingOpenTime, bookingCloseTime,
+                    extendTicketSales
+                });
+                if (res.data.success) {
+                    Toast.success(res.data.message);
+                    closeEditScheduleModal();
+                    setTimeout(() => location.reload(), 1200);
+                }
+            } catch (err) {
+                Toast.error(err.response?.data?.message || 'Failed to update event schedule');
+            } finally {
+                Loader.hide();
+            }
         }
         async function duplicateEvent(id) {
             const c=await CustomConfirm.show({title:'Duplicate Event?',message:'Create a clone of this event as a draft?',confirmText:'Yes, Duplicate',actionType:'primary',icon:'fi-rr-copy'});

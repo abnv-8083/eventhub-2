@@ -578,10 +578,10 @@
                             <p class="text-secondary small mb-4">Configure dates, start/end times, doors open time, and last entry.</p>
 
                             <% if (hasSoldTickets) { %>
-                            <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" style="background: rgba(255, 183, 3, 0.15); border: 1px solid rgba(255, 183, 3, 0.3); color: #ffb703; border-radius: 12px; padding: 1rem 1.25rem;">
-                                <i class="fi fi-rr-lock" style="font-size: 1.25rem;"></i>
+                            <div class="alert alert-info d-flex align-items-center gap-2 mb-4" style="background: rgba(0, 180, 216, 0.15); border: 1px solid rgba(0, 180, 216, 0.3); color: #00b4d8; border-radius: 12px; padding: 1rem 1.25rem;">
+                                <i class="fi fi-rr-calendar-clock" style="font-size: 1.25rem;"></i>
                                 <div>
-                                    <strong>🔒 Restricted Field:</strong> Because this event is active or already has bookings, event schedule and dates are disabled and cannot be modified.
+                                    <strong>ℹ️ Schedule Editable:</strong> You may update event dates and timings freely. Existing ticket holders and bookings will be preserved with the updated schedule.
                                 </div>
                             </div>
                             <% } %>
@@ -589,30 +589,30 @@
                             <div class="row g-4 mb-4">
                                 <div class="col-md-4">
                                     <label class="form-label">Event Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="startDate" id="startDate" value="<%= event.startDate ? new Date(event.startDate).toISOString().split('T')[0] : '' %>" min="<%= event.startDate && new Date(event.startDate) < new Date() ? new Date(event.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0] %>" onchange="syncEndDate(); renderScheduleSlots();" <%= hasSoldTickets ? 'disabled' : '' %> required>
+                                    <input type="date" class="form-control" name="startDate" id="startDate" value="<%= event.startDate ? new Date(event.startDate).toISOString().split('T')[0] : '' %>" min="<%= event.startDate && new Date(event.startDate) < new Date() ? new Date(event.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0] %>" onchange="syncEndDate(); renderScheduleSlots();" required>
                                     <input type="hidden" name="endDate" id="endDate" value="<%= event.endDate ? new Date(event.endDate).toISOString().split('T')[0] : (event.startDate ? new Date(event.startDate).toISOString().split('T')[0] : '') %>">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Start Time <span class="text-danger">*</span></label>
-                                    <input type="time" class="form-control" name="startTime" id="startTime" value="<%= event.startTime || '' %>" <%= hasSoldTickets ? 'disabled' : '' %> required>
+                                    <input type="time" class="form-control" name="startTime" id="startTime" value="<%= event.startTime || '' %>" required>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">End Time <span class="text-danger">*</span></label>
-                                    <input type="time" class="form-control" name="endTime" id="endTime" value="<%= event.endTime || '' %>" <%= hasSoldTickets ? 'disabled' : '' %> required>
+                                    <input type="time" class="form-control" name="endTime" id="endTime" value="<%= event.endTime || '' %>" required>
                                 </div>
                             </div>
                             <div class="row g-4 mb-4">
                                 <div class="col-md-4">
                                     <label class="form-label">Doors Open Time <span class="text-secondary small">(Optional)</span></label>
-                                    <input type="time" class="form-control" name="doorsOpenTime" id="doorsOpenTime" value="<%= event.doorsOpenTime || '' %>" <%= hasSoldTickets ? 'disabled' : '' %>>
+                                    <input type="time" class="form-control" name="doorsOpenTime" id="doorsOpenTime" value="<%= event.doorsOpenTime || '' %>">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Open Booking Time <span class="text-secondary small">(Time to open sales)</span></label>
-                                    <input type="time" class="form-control" name="bookingOpenTime" id="bookingOpenTime" value="<%= event.bookingOpenTime || '' %>" <%= hasSoldTickets ? 'disabled' : '' %>>
+                                    <input type="time" class="form-control" name="bookingOpenTime" id="bookingOpenTime" value="<%= event.bookingOpenTime || '' %>">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Close Booking Time <span class="text-secondary small">(Time to close sales)</span></label>
-                                    <input type="time" class="form-control" name="bookingCloseTime" id="bookingCloseTime" value="<%= event.bookingCloseTime || '' %>" <%= hasSoldTickets ? 'disabled' : '' %>>
+                                    <input type="time" class="form-control" name="bookingCloseTime" id="bookingCloseTime" value="<%= event.bookingCloseTime || '' %>">
                                 </div>
                             </div>
 
@@ -623,7 +623,7 @@
                                     <h6 class="fw-bold m-0">Additional Day Schedules</h6>
                                     <small class="text-secondary">Add schedule slots for subsequent days of the event</small>
                                 </div>
-                                <button type="button" class="btn btn-outline-danger btn-sm px-3 py-2" onclick="addScheduleSlot()" <%= hasSoldTickets ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : 'style="border-radius: 10px;"' %>>
+                                <button type="button" class="btn btn-outline-danger btn-sm px-3 py-2" onclick="addScheduleSlot()" style="border-radius: 10px;">
                                     <i class="fi fi-rr-plus me-1"></i> Add Schedule for Another Day
                                 </button>
                             </div>
@@ -1283,34 +1283,34 @@
                 const slotDate = slot.date ? new Date(slot.date).toISOString().split('T')[0] : '';
                 return `
                 <div class="builder-card">
-                    <button type="button" class="btn-remove" onclick="removeScheduleSlot('${slotId}')" ${hasSoldTickets ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}><i class="fi fi-rr-trash"></i></button>
+                    <button type="button" class="btn-remove" onclick="removeScheduleSlot('${slotId}')"><i class="fi fi-rr-trash"></i></button>
                     <h6 class="fw-bold mb-3 text-secondary">Additional Day #${idx + 1}</h6>
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
                             <label class="form-label small">Date</label>
-                            <input type="date" class="form-control" min="${minDate}" onchange="updateSchedule('${slotId}', 'date', this.value); syncEndDate();" value="${slotDate}" ${hasSoldTickets ? 'disabled' : ''}>
+                            <input type="date" class="form-control" min="${minDate}" onchange="updateSchedule('${slotId}', 'date', this.value); syncEndDate();" value="${slotDate}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small">Start Time</label>
-                            <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'startTime', this.value)" value="${slot.startTime || ''}" ${hasSoldTickets ? 'disabled' : ''}>
+                            <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'startTime', this.value)" value="${slot.startTime || ''}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small">End Time</label>
-                            <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'endTime', this.value)" value="${slot.endTime || ''}" ${hasSoldTickets ? 'disabled' : ''}>
+                            <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'endTime', this.value)" value="${slot.endTime || ''}">
                         </div>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label small">Doors Open Time <span class="text-secondary">(Optional)</span></label>
-                            <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'doorsOpenTime', this.value)" value="${slot.doorsOpenTime || ''}" ${hasSoldTickets ? 'disabled' : ''}>
+                            <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'doorsOpenTime', this.value)" value="${slot.doorsOpenTime || ''}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small">Open Booking Time <span class="text-secondary">(Time to open sales)</span></label>
-                            <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'bookingOpenTime', this.value)" value="${slot.bookingOpenTime || ''}" ${hasSoldTickets ? 'disabled' : ''}>
+                            <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'bookingOpenTime', this.value)" value="${slot.bookingOpenTime || ''}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small">Close Booking Time <span class="text-secondary">(Time to close sales)</span></label>
-                            <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'bookingCloseTime', this.value)" value="${slot.bookingCloseTime || ''}" ${hasSoldTickets ? 'disabled' : ''}>
+                            <input type="time" class="form-control" onchange="updateSchedule('${slotId}', 'bookingCloseTime', this.value)" value="${slot.bookingCloseTime || ''}">
                         </div>
                     </div>
                 </div>

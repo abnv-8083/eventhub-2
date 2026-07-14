@@ -491,6 +491,17 @@ export const extendEventSchedule = async (req, res, next) => {
 };
 
 
+// ─── Update / Edit Event Schedule (Comprehensive) ─────────────────────────────
+export const updateEventSchedule = async (req, res, next) => {
+    try {
+        await organizerEventService.updateEventSchedule(req.params.id, req.session.organizer._id, req.body);
+        res.status(HTTP_STATUS.OK).json({ success: true, message: 'Event schedule and timings updated successfully!' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 // ─── COUPON MANAGEMENT ─────────────────────────────────────────
 
 // Get all coupons for a specific event
