@@ -16,20 +16,20 @@ import MongoStore from 'connect-mongo';
 import passport from 'passport';
 const {authenticate} = passport
 import AppError from './src/utils/AppError.js';
-import errorHandler from './src/middlewares/errorHandler.js';
+import errorHandler from './src/middlewares/errorHandler.middleware.js';
 import './src/config/passport.js'
-import noCacheMiddleware from './src/middlewares/nocache.js';
-import { checkBlocked } from './src/middlewares/checkBlocked.js';
+import noCacheMiddleware from './src/middlewares/nocache.middleware.js';
+import { checkBlocked } from './src/middlewares/checkBlocked.middleware.js';
 
 //Routes Import
-import userAuthRouter from './src/routes/users/userAuthRoutes.js';
-import userRouter from './src/routes/users/userRoutes.js';
-import organizerRouter from './src/routes/organizers/organizerRoutes.js';
-import adminAuthRoutes from './src/routes/admin/adminAuthRoutes.js';
-import adminRoutes from './src/routes/admin/adminRoutes.js';
-import scannerRoutes from './src/routes/scannerRoutes.js';
-import { setLocals } from './src/middlewares/setLocals.js';
-import * as userController from './src/controllers/users/userController.js';
+import userAuthRouter from './src/routes/users/userAuth.routes.js';
+import userRouter from './src/routes/users/user.routes.js';
+import organizerRouter from './src/routes/organizers/organizer.routes.js';
+import adminAuthRoutes from './src/routes/admin/adminAuth.routes.js';
+import adminRoutes from './src/routes/admin/admin.routes.js';
+import scannerRoutes from './src/routes/scanner.routes.js';
+import { setLocals } from './src/middlewares/setLocals.middleware.js';
+import * as userController from './src/controllers/users/user.controller.js';
 
 // Initialize environment variables
 dotenv.config();

@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { NO_SPECIAL_CHARS, FORBIDDEN_CHARS_MSG } from '../common.js';
+import { NO_SPECIAL_CHARS, FORBIDDEN_CHARS_MSG } from '../common.validation.js';
 
 // ─── Text field with no-special-chars constraint ────────────────────────────
 const safeStr = (base) =>

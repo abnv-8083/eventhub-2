@@ -1,7 +1,7 @@
 // src/utils/notify.js
-import Notification from '../models/notifications/notification.js';
+import Notification from '../models/notifications/notification.model.js';
 import * as socketUtil from './socket.js';
-import User from '../models/users/user.js'; // ✨ Imported the User model
+import User from '../models/users/user.model.js'; // ✨ Imported the User model
 
 export const sendNotification = async (userId, message, status = 'info') => {
     try {

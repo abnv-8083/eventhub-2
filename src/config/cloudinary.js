@@ -14,6 +14,8 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+const maxFileSize = parseInt(process.env.CLOUDINARY_MAX_FILE_SIZE, 10) || 5242880;
+
 // --- 🚨 BACKEND VALIDATION FILTER ---
 const fileFilter = (req, file, cb) => {
     // 1. Allowed ext
@@ -44,7 +46,7 @@ export const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 2 * 1024 * 1024 // 2MB limit (enforced by Multer before uploading)
+        fileSize: maxFileSize
     }
 });
 
@@ -63,6 +65,6 @@ export const eventUpload = multer({
     storage: eventStorage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB limit for larger event banners
+        fileSize:  maxFileSize
     }
 });
