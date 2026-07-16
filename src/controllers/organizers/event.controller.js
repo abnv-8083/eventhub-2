@@ -291,7 +291,7 @@ export const createEvent = async (req, res, next) => {
         if (action !== 'draft' && (!req.files || req.files.length === 0))
             return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: 'At least 1 banner is required' });
 
-        const bannerUrls = req.files ? req.files.map(file => file.path) : [];
+        const bannerUrls = req.files ? req.files.map(file => file.location || file.path) : [];
         const status = action === 'draft' ? 'draft' : 'pending';
         const newEvent = await organizerEventService.createEvent(req.session.organizer._id, value, bannerUrls, value.tickets, status);
 

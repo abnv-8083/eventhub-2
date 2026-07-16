@@ -144,10 +144,11 @@ export const getUserProfile = async (req, res, next) => {
 // ─── Update Avatar ────────────────────────────────────────────────────────────
 export const updateUserAvatar = async (req, res, next) => {
     try {
-        if (!req.file || !req.file.path)
+        const filePath = req.file?.location || req.file?.path;
+        if (!req.file || !filePath)
             return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: 'No image provided' });
 
-        const result = await userServices.updateUserAvatar(req.session.user._id, req.file.path);
+        const result = await userServices.updateUserAvatar(req.session.user._id, filePath);
 
         req.session.user.avatar = result.avatar;
         req.session.save((err) => {

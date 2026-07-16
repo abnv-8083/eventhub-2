@@ -5,7 +5,7 @@ import * as eventController from '../../controllers/organizers/event.controller.
 import * as bookingController from '../../controllers/organizers/booking.controller.js'
 import { isOrganizerAuthenticated, isBlocked, isOrganizerGuest} from '../../middlewares/auth.middleware.js';
 import { validateUpdateOrganizerProfile, validatePasswordUpdate } from '../../middlewares/validate.middleware.js';
-import { eventUpload } from '../../config/s3.js';
+import { eventUpload, upload } from '../../config/s3.js';
 
 const organizerRouter = Router();
 
@@ -42,7 +42,7 @@ organizerRouter.post('/logout', organizerAuthController.postLogout);
 organizerRouter.route('/profile')
     .get(organizerController.getProfile)
     .post(validateUpdateOrganizerProfile, organizerController.updateProfile);
-organizerRouter.post('/avatar', eventUpload.single('avatar'), organizerController.updateAvatar);
+organizerRouter.post('/avatar', upload.single('avatar'), organizerController.updateAvatar);
 organizerRouter.post('/generate-ai', organizerController.generateAIAvatar);
 organizerRouter.post('/update-email', organizerController.updateEmail);
 organizerRouter.post('/update-password', validatePasswordUpdate, organizerController.updatePassword);

@@ -104,10 +104,11 @@ export const updateProfile = async (req, res, next) => {
 
 export const updateAvatar = async (req, res, next) => {
     try {
-        if (!req.file || !req.file.path)
+        const filePath = req.file?.location || req.file?.path;
+        if (!req.file || !filePath)
             return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: 'No image provided' });
 
-        const result = await userServices.updateUserAvatar(req.session.organizer._id, req.file.path);
+        const result = await userServices.updateUserAvatar(req.session.organizer._id, filePath);
 
         req.session.organizer.avatar = result.avatar;
         req.session.save((err) => {
