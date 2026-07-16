@@ -6,7 +6,7 @@ import * as walletController from '../../controllers/users/wallet.controller.js'
 import * as referralController from '../../controllers/users/referral.controller.js'
 const userRouter = Router()
 import { isUserAuthenticated, isBlocked, isUserLogged } from "../../middlewares/auth.middleware.js";
-import { upload } from "../../config/cloudinary.js";
+import { upload } from "../../config/s3.js";
 import { validateUpdateProfile, validatePasswordUpdate } from "../../middlewares/validate.middleware.js";
 import noCacheMiddleware from "../../middlewares/nocache.middleware.js";
 
