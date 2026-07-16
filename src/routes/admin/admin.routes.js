@@ -5,7 +5,7 @@ import * as adminPayoutController from '../../controllers/admin/adminPayout.cont
 import { isAdminAuthenticated, isBlocked} from '../../middlewares/auth.middleware.js';
 import noCacheMiddleware from "../../middlewares/nocache.middleware.js";
 import { validateAdminLogin, validatePasswordUpdate } from "../../middlewares/validate.middleware.js";
-import { upload } from "../../config/cloudinary.js";
+import { upload } from "../../config/s3.js";
 import * as adminSettingsController from '../../controllers/admin/adminSettings.controller.js';
 import * as adminCategoryController from '../../controllers/admin/category.controller.js';
 

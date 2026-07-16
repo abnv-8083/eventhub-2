@@ -5,7 +5,7 @@ import * as eventController from '../../controllers/organizers/event.controller.
 import * as bookingController from '../../controllers/organizers/booking.controller.js'
 import { isOrganizerAuthenticated, isBlocked, isOrganizerGuest} from '../../middlewares/auth.middleware.js';
 import { validateUpdateOrganizerProfile, validatePasswordUpdate } from '../../middlewares/validate.middleware.js';
-import { eventUpload } from '../../config/cloudinary.js';
+import { eventUpload } from '../../config/s3.js';
 
 const organizerRouter = Router();
 
