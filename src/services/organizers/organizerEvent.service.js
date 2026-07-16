@@ -341,7 +341,7 @@ export const updateEvent = async (eventId, organizerId, eventData, newBannerFile
     let finalBanners = (eventData.existingBanners || []).filter(b => b);
     
     if (newBannerFiles && newBannerFiles.length > 0) {
-        const newBanners = newBannerFiles.map(file => file.path);
+        const newBanners = newBannerFiles.map(file => file.location || file.path);
         finalBanners = [...finalBanners, ...newBanners];
     }
     event.banners = finalBanners.slice(0, 2);
