@@ -646,9 +646,7 @@
 
                 try {
                     // Send to our NEW dedicated avatar route
-                    const response = await axios.post('/user/avatar', formData, {
-                        headers: { 'Content-Type': 'multipart/form-data' }
-                    });
+                    const response = await axios.post('/user/avatar', formData);
 
                     if (response.data.success) {
                         // 1. Grab the real Cloudinary URL returned from the backend
