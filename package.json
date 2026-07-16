@@ -15,10 +15,10 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1087.0",
     "argon2": "^0.44.0",
     "axios": "^1.16.0",
     "bcrypt": "^6.0.0",
-    "cloudinary": "^1.41.3",
     "connect-flash-plus": "^0.2.1",
     "connect-mongo": "^6.0.0",
     "connect-mongodb-session": "^5.0.0",
@@ -34,7 +34,7 @@
     "mongoose": "^9.3.1",
     "morgan": "^1.10.1",
     "multer": "^2.1.1",
-    "multer-storage-cloudinary": "^4.0.0",
+    "multer-s3": "^3.0.1",
     "ngrok": "^5.0.0-beta.2",
     "node-cron": "^4.2.1",
     "nodemailer": "^8.0.3",
@@ -46,5 +46,10 @@
     "razorpay": "^2.9.6",
     "redis": "^5.11.0",
     "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.7.0",
+    "globals": "^17.7.0"
   }
 }
