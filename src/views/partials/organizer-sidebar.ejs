@@ -36,7 +36,7 @@
         try {
             const response = await axios.post('/organizer/logout');
             if (response.data.success) {
-                window.location.href = '/';
+                window.location.href = '/organizer/login?message=Logged out successfully';
             }
         } catch (error) {
             console.error('Logout failed', error);

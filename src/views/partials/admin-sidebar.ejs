@@ -36,25 +36,24 @@
 
     <!-- mt-auto pushes this to the bottom, sidebar-footer adds the separator line -->
     <div class="sidebar-footer mt-auto px-2 pb-3">
-        <a id="adminLogoutButton" class="text-danger d-flex align-center gap-2" style="font-weight: 600;">
+        <a id="adminSideLogoutBtn" class="text-danger d-flex align-center gap-2" style="font-weight: 600; cursor: pointer;">
             <i class="fi fi-rr-exit"></i> <span>Secure Logout</span>
         </a>
     </div>
 </aside>
 
 <script>
-
-    document.getElementById('adminLogoutButton')?.addEventListener('click', async (e)=>{
+    document.getElementById('adminSideLogoutBtn')?.addEventListener('click', async (e)=>{
         e.preventDefault()
         try {
             const response = await axios.post('/admin/logout')
             if (response.data.success) {
-                window.location.href = '/admin/login';
+                window.location.href = '/admin/login?message=Logged out successfully';
             }
         } catch (error) {
             console.error('Logout failed', error);
         }
-    } )
+    })
     // Sidebar Toggle Logic
     const layout = document.querySelector('.dashboard-layout');
     const toggleBtn = document.getElementById('adminSidebarToggleBtn');

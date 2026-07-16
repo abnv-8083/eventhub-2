@@ -43,21 +43,32 @@ export const postAdminLogin = async (req,res, next)=>{
 }
 
 
-export const postLogout = (req,res, next)=>{
+export const postLogout = (req, res, next) => {
     try {
-        delete req.session.admin
-
-        req.session.save((err)=>{
-            if(err){
-                return next(err)
+        if (req.session) {
+            delete req.session.admin;
+            req.session.save((err) => {
+                if (err) return next(err);
+                const isAjax = req.xhr || req.headers.accept?.includes('application/json') || req.method === 'POST';
+                if (isAjax) {
+                    return res.status(HTTP_STATUS.OK).json({
+                        success: true,
+                        message: 'Logout Successfully'
+                    });
+                }
+                return res.redirect('/admin/login?message=Logged out successfully');
+            });
+        } else {
+            const isAjax = req.xhr || req.headers.accept?.includes('application/json') || req.method === 'POST';
+            if (isAjax) {
+                return res.status(HTTP_STATUS.OK).json({
+                    success: true,
+                    message: 'Logout Successfully'
+                });
             }
-            return res.status(HTTP_STATUS.OK).json({
-                success:true,
-                message:'Logout Successfully'
-
-            })
-        })
+            return res.redirect('/admin/login?message=Logged out successfully');
+        }
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
+};

@@ -68,6 +68,6 @@ userAuthRouter.route('/verify-otp')
     .get(userAuthController.getOtpPage)
     .post(userAuthController.postOtpPage)
 
-userAuthRouter.post('/logout', userAuthController.userLogout)
+userAuthRouter.all('/logout', userAuthController.userLogout);
  
-export default userAuthRouter
+export default userAuthRouter;

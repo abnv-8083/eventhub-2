@@ -17,7 +17,7 @@ adminAuthRoutes.route('/login')
 adminAuthRoutes.use(isAdminAuthenticated)
 
 
-adminAuthRoutes.post('/logout',adminAuthController.postLogout )
+adminAuthRoutes.all('/logout', adminAuthController.postLogout);
 
 
 export default adminAuthRoutes;

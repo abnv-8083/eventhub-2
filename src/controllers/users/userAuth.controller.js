@@ -374,23 +374,47 @@ export const postResetPassword = async (req,res,next)=>{
 
 
 
-export const userLogout = (req,res,next) =>{
+export const userLogout = (req, res, next) => {
     try {
-        delete req.session.user
-
-        req.session.save((err)=>{
-            if(err){
-                return next(err)
+        const finalizeLogout = () => {
+            if (req.session) {
+                delete req.session.user;
+                delete req.session.passport;
+                req.session.save((err) => {
+                    if (err) return next(err);
+                    const isAjax = req.xhr || req.headers.accept?.includes('application/json') || req.method === 'POST';
+                    if (isAjax) {
+                        return res.status(HTTP_STATUS.OK).json({
+                            success: true,
+                            message: 'Logout Successfully'
+                        });
+                    }
+                    return res.redirect('/user/login?message=Logged out successfully');
+                });
+            } else {
+                const isAjax = req.xhr || req.headers.accept?.includes('application/json') || req.method === 'POST';
+                if (isAjax) {
+                    return res.status(HTTP_STATUS.OK).json({
+                        success: true,
+                        message: 'Logout Successfully'
+                    });
+                }
+                return res.redirect('/user/login?message=Logged out successfully');
             }
-            return res.status(HTTP_STATUS.OK).json({
-                success:true,
-                message:'Logout Successfully'
-            })
-        })
+        };
+
+        if (typeof req.logout === 'function') {
+            req.logout((err) => {
+                if (err) console.error("Passport logout error:", err);
+                finalizeLogout();
+            });
+        } else {
+            finalizeLogout();
+        }
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
+};
 
 
 

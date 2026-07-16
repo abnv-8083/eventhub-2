@@ -49,16 +49,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Centralized Logout Logic
-    const handleLogout = async (route) => {
+    const handleLogout = async (route, redirectUrl, e) => {
+        if (e && e.preventDefault) e.preventDefault();
         try {
             const response = await axios.post(route);
-            if (response.data.success) window.location.href = route.includes('admin') ? '/admin' : '/';
-        } catch (error) { console.error("Logout failed", error); }
+            if (response.data.success) {
+                window.location.href = redirectUrl;
+            }
+        } catch (error) { 
+            console.error("Logout failed", error); 
+        }
     };
 
-    document.getElementById('userLogoutButton')?.addEventListener('click', () => handleLogout('/user/logout'));
-    document.getElementById('adminLogoutButton')?.addEventListener('click', () => handleLogout('/admin/logout'));
-    document.getElementById('organizerLogoutButton')?.addEventListener('click', () => handleLogout('/organizer/logout'));
+    document.getElementById('userLogoutButton')?.addEventListener('click', (e) => handleLogout('/user/logout', '/user/login?message=Logged out successfully', e));
+    document.getElementById('adminLogoutButton')?.addEventListener('click', (e) => handleLogout('/admin/logout', '/admin/login?message=Logged out successfully', e));
+    document.getElementById('organizerLogoutButton')?.addEventListener('click', (e) => handleLogout('/organizer/logout', '/organizer/login?message=Logged out successfully', e));
 });
 
 // --- DATABASE & SOCKET NOTIFICATION UI LOGIC ---

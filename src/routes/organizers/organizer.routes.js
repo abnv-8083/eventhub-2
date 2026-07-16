@@ -36,7 +36,7 @@ organizerRouter.get('/apply', isOrganizerGuest, (req, res) => {
 organizerRouter.use(isOrganizerAuthenticated, isBlocked);
 
 organizerRouter.get('/dashboard', organizerController.getDashboard);
-organizerRouter.post('/logout', organizerAuthController.postLogout);
+organizerRouter.all('/logout', organizerAuthController.postLogout);
 
 // Profile Management
 organizerRouter.route('/profile')

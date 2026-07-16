@@ -146,38 +146,4 @@
     window.addEventListener('resize', () => {
         if (menu && menu.style.display === 'flex') positionMenu();
     });
-
-    // FIXED: Added optional chaining (?.) so JS doesn't crash if the button isn't on the screen
-    document.getElementById('userLogoutButton')?.addEventListener('click', async () => {
-        try {
-            const response = await axios.post('/user/logout');
-            if(response.data.success){
-                window.location.href = '/';
-            }
-        } catch (error) {
-            console.log(error);
-        }
-    });
-
-    document.getElementById('organizerLogoutButton')?.addEventListener('click', async () => {
-        try {
-            const response = await axios.post('/organizer/logout');
-            if(response.data.success){
-                window.location.href = '/';
-            }
-        } catch (error) {
-            console.log(error);
-        }
-    });
-
-    document.getElementById('adminLogoutButton')?.addEventListener('click', async () => {
-        try {
-            const response = await axios.post('/admin/logout');
-            if(response.data.success){
-                window.location.href = '/admin';
-            }
-        } catch (error) {
-            console.log(error);
-        }
-    });
 </script>

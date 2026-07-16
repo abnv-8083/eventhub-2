@@ -49,11 +49,18 @@ export const login = async (req, res) => {
 };
 
 // ─── 3. Logout ─────────────────────────────────────────────────────────────
-export const logout = (req, res) => {
-    delete req.session.scannerEventId;
-    delete req.session.scannerCode;
-    delete req.session.scannerEventTitle;
-    res.redirect('/scanner');
+export const logout = (req, res, next) => {
+    if (req.session) {
+        delete req.session.scannerEventId;
+        delete req.session.scannerCode;
+        delete req.session.scannerEventTitle;
+        req.session.save((err) => {
+            if (err) console.error("Scanner session save error:", err);
+            res.redirect('/scanner');
+        });
+    } else {
+        res.redirect('/scanner');
+    }
 };
 
 // ─── 4. Render Main Scanner Dashboard ──────────────────────────────────────
